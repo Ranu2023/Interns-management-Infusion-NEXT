@@ -1,22 +1,17 @@
-'use client';
 
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
-import { useEffect, useState } from 'react';
+import { getDb } from '@/lib/mongodb';
+import { Suspense } from 'react';
 
-// Note: In a real app, we would fetch this data from an API endpoint
-// that is connected to the database. For this example, we will simulate
-// fetching data on the client side for the HR dashboard.
-// Other pages have been converted to server components to fetch data directly.
-
-function HRDashboard() {
-  // These would be replaced by API calls
-  const [internCount, setInternCount] = useState(125);
-  const [ppoCount, setPpoCount] = useState(33);
-  const [projectCount, setProjectCount] = useState(42);
-
+// Server component to fetch data for HR
+async function HRDashboardData() {
+  const db = await getDb();
+  const internCount = await db.collection('interns').countDocuments();
+  const ppoCount = await db.collection('interns').countDocuments({ ppoStatus: 'Recommended' });
+  const projectCount = await db.collection('projects').countDocuments({ status: 'In Progress' });
 
   return (
     <div className="grid gap-4 md:gap-8">
@@ -85,16 +80,19 @@ function GenericDashboard({ name, role }: { name: string; role: string }) {
     );
 }
 
-export default function DashboardPage() {
+// This client component wraps the logic to decide which dashboard to show
+// based on the user's role from the AuthContext.
+function DashboardView() {
   const { user } = useAuth();
 
   if (!user) {
-    return <div>Loading...</div>;
+    return <div>Loading...</div>; // Or a loading skeleton
   }
 
   switch (user.role) {
     case 'hr':
-      return <HRDashboard />;
+      // Suspense boundary for streaming server component data
+      return <Suspense fallback={<div>Loading dashboard...</div>}><HRDashboardData /></Suspense>;
     case 'mentor':
       return <GenericDashboard name={user.name} role="Mentor" />;
     case 'intern':
@@ -104,4 +102,9 @@ export default function DashboardPage() {
     default:
       return <div>Invalid role.</div>;
   }
+}
+
+// The main page component remains a client component to access useAuth
+export default function DashboardPage() {
+  return <DashboardView />;
 }
