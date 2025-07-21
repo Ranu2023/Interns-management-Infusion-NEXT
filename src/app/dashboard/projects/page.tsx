@@ -1,6 +1,4 @@
 
-'use client';
-
 import {
   Card,
   CardHeader,
@@ -12,21 +10,17 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { getDb } from "@/lib/mongodb";
+import { type Project } from "@/lib/types";
 
-const projects = [
-  { id: 1, title: "AI Chatbot Integration", description: "Integrate a new AI-powered chatbot into the customer support platform.", status: "In Progress", progress: 60, team: ["Alice", "Fiona"], mentor: "Dr. Guide" },
-  { id: 2, title: "Data Analytics Dashboard", description: "Develop a dashboard for visualizing key business metrics and KPIs.", status: "In Progress", progress: 45, team: ["Bob", "George"], mentor: "Jane Doe" },
-  { id: 3, title: "Mobile App Redesign", description: "Complete redesign of the flagship mobile application for iOS and Android.", status: "Completed", progress: 100, team: ["Charlie", "Hannah"], mentor: "John Smith" },
-  { id: 4, title: "UI/UX Improvement", description: "Conduct user research and implement UI/UX improvements across the website.", status: "In Progress", progress: 75, team: ["Diana", "Ian"], mentor: "Emily White" },
-  { id: 5, title: "Cloud Migration Strategy", description: "Plan and execute the migration of legacy systems to a cloud-based infrastructure.", status: "On-Hold", progress: 20, team: ["Ethan", "Jasmine"], mentor: "Michael Green" },
-  { id: 6, title: "E-commerce Platform", description: "Build a new e-commerce platform from scratch.", status: "Not Started", progress: 0, team: [], mentor: "Sarah Black" },
-  { id: 7, title: "Internal Tooling", description: "Develop internal tools to improve developer productivity.", status: "In Progress", progress: 80, team: [], mentor: "David King" },
-  { id: 8, title: "API Security Audit", description: "Perform a comprehensive security audit of all public-facing APIs.", status: "In Progress", progress: 30, team: [], mentor: "Kevin Scott" },
-  { id: 9, title: "Marketing Website", description: "Create a new marketing website to showcase products.", status: "Completed", progress: 100, team: [], mentor: "Olivia Adams" },
-  { id: 10, title: "Onboarding Flow", description: "Redesign the user onboarding flow for new customers.", status: "Not Started", progress: 0, team: [], mentor: "Emily White" },
-];
+async function getProjects() {
+    const db = await getDb();
+    const projects = await db.collection<Project>('projects').find({}, { projection: { _id: 0 } }).toArray();
+    return projects;
+}
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+    const projects = await getProjects();
     return (
         <div>
             <div className="mb-6">
@@ -70,3 +64,6 @@ export default function ProjectsPage() {
         </div>
     );
 }
+
+// Revalidate the page every 60 seconds to fetch fresh data
+export const revalidate = 60;

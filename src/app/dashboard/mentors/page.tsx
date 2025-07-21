@@ -1,6 +1,4 @@
 
-'use client';
-
 import {
   Table,
   TableBody,
@@ -17,21 +15,17 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { getDb } from "@/lib/mongodb";
+import { type Mentor } from "@/lib/types";
 
-const mentors = [
-  { id: 1, name: "Dr. Guide", email: "mentor@synergy.com", expertise: "AI/ML", interns: 2, avatar: "https://placehold.co/100x100.png" },
-  { id: 2, name: "Jane Doe", email: "jane.d@synergy.com", expertise: "Data Science", interns: 2, avatar: "https://placehold.co/100x100.png" },
-  { id: 3, name: "John Smith", email: "john.s@synergy.com", expertise: "Mobile Development", interns: 2, avatar: "https://placehold.co/100x100.png" },
-  { id: 4, name: "Emily White", email: "emily.w@synergy.com", expertise: "UI/UX Design", interns: 2, avatar: "https://placehold.co/100x100.png" },
-  { id: 5, name: "Michael Green", email: "michael.g@synergy.com", expertise: "Cloud Architecture", interns: 2, avatar: "https://placehold.co/100x100.png" },
-  { id: 6, name: "Sarah Black", email: "sarah.b@synergy.com", expertise: "Backend Systems", interns: 0, avatar: "https://placehold.co/100x100.png" },
-  { id: 7, name: "David King", email: "david.k@synergy.com", expertise: "DevOps", interns: 0, avatar: "https://placehold.co/100x100.png" },
-  { id: 8, name: "Laura Hill", email: "laura.h@synergy.com", expertise: "Product Management", interns: 0, avatar: "https://placehold.co/100x100.png" },
-  { id: 9, name: "Kevin Scott", email: "kevin.s@synergy.com", expertise: "Cybersecurity", interns: 0, avatar: "https://placehold.co/100x100.png" },
-  { id: 10, name: "Olivia Adams", email: "olivia.a@synergy.com", expertise: "Frontend Development", interns: 0, avatar: "https://placehold.co/100x100.png" },
-];
+async function getMentors() {
+    const db = await getDb();
+    const mentors = await db.collection<Mentor>('mentors').find({}, { projection: { _id: 0 } }).toArray();
+    return mentors;
+}
 
-export default function MentorsPage() {
+export default async function MentorsPage() {
+    const mentors = await getMentors();
     return (
         <Card>
             <CardHeader>
@@ -72,3 +66,6 @@ export default function MentorsPage() {
         </Card>
     );
 }
+
+// Revalidate the page every 60 seconds to fetch fresh data
+export const revalidate = 60;

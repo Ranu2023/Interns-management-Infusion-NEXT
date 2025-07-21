@@ -1,6 +1,4 @@
 
-'use client';
-
 import {
   Table,
   TableBody,
@@ -19,21 +17,19 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { FileSearch } from "lucide-react";
+import { getDb } from "@/lib/mongodb";
+import { type Application } from "@/lib/types";
 
-const applications = [
-  { id: 1, name: "Liam Smith", university: "Tech University", date: "2024-06-01", status: "Pending" },
-  { id: 2, name: "Olivia Jones", university: "State College", date: "2024-06-02", status: "Reviewed" },
-  { id: 3, name: "Noah Taylor", university: "Ivy League Institute", date: "2024-06-02", status: "Accepted" },
-  { id: 4, name: "Emma Brown", university: "City University", date: "2024-06-03", status: "Rejected" },
-  { id: 5, name: "Oliver Wilson", university: "Tech University", date: "2024-06-04", status: "Pending" },
-  { id: 6, name: "Ava Garcia", university: "State College", date: "2024-06-05", status: "Pending" },
-  { id: 7, name: "Elijah Martinez", university: "Ivy League Institute", date: "2024-06-05", status: "Reviewed" },
-  { id: 8, name: "Sophia Anderson", university: "City University", date: "2024-06-06", status: "Accepted" },
-  { id: 9, name: "James Thomas", university: "Tech University", date: "2024-06-07", status: "Pending" },
-  { id: 10, name: "Isabella Hernandez", university: "State College", date: "2024-06-08", status: "Rejected" },
-];
+async function getApplications() {
+  const db = await getDb();
+  const applications = await db.collection<Application>('applications').find({}, { projection: { _id: 0 } }).toArray();
+  return applications;
+}
 
-export default function ApplicationsPage() {
+
+export default async function ApplicationsPage() {
+    const applications = await getApplications();
+
     return (
         <Card>
             <CardHeader>
@@ -80,3 +76,6 @@ export default function ApplicationsPage() {
         </Card>
     );
 }
+
+// Revalidate the page every 60 seconds to fetch fresh data
+export const revalidate = 60;
