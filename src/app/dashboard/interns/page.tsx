@@ -1,4 +1,5 @@
 
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -17,6 +18,8 @@ import {
 } from "@/components/ui/card";
 import { getDb } from "@/lib/mongodb";
 import { type Intern } from "@/lib/types";
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 async function getInterns() {
   const db = await getDb();
@@ -43,6 +46,7 @@ export default async function InternsPage() {
                             <TableHead>Project</TableHead>
                             <TableHead>Mentor</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Profile</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -56,6 +60,13 @@ export default async function InternsPage() {
                                     <Badge variant={intern.status === 'Active' ? 'default' : intern.status === 'Completed' ? 'secondary' : 'destructive'}>
                                         {intern.status}
                                     </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/dashboard/intern/${intern.id}`}>
+                                            View <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}

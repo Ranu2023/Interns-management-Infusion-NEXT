@@ -6,6 +6,9 @@ export interface Intern {
     project: string;
     mentor: string;
     status: 'Active' | 'Completed' | 'On-Hold';
+    assessmentScore?: number;
+    ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
+    ppoReasoning?: string;
 }
 
 export interface Mentor {

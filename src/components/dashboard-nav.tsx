@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -34,11 +35,12 @@ interface NavItem {
   href: string;
   label: string;
   icon: LucideIcon;
+  exact?: boolean;
 }
 
 const navItems: Record<Role, NavItem[]> = {
   hr: [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/interns', label: 'Interns', icon: Users },
     { href: '/dashboard/mentors', label: 'Mentors', icon: UserCheck },
     { href: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
@@ -47,7 +49,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
   ],
   mentor: [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/my-interns', label: 'My Interns', icon: Users },
     { href: '/dashboard/projects', label: 'All Projects', icon: FolderKanban },
     { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
@@ -55,7 +57,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/mentorship', label: 'Mentorship', icon: Handshake },
   ],
   intern: [
-    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/my-projects', label: 'My Projects', icon: FolderKanban },
     { href: '/dashboard/daily-report', label: 'Daily Report', icon: FileText },
     { href: '/dashboard/my-feedback', label: 'My Feedback', icon: Star },
@@ -65,7 +67,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/my-review', label: 'My Review', icon: PenSquare },
   ],
   employee: [
-    { href: '/dashboard', label: 'My Profile', icon: User },
+    { href: '/dashboard', label: 'My Profile', icon: User, exact: true },
     { href: '/dashboard/documents', label: 'My Documents', icon: FileDown },
   ],
 };
@@ -82,7 +84,7 @@ export function DashboardNav({ isCollapsed }: { isCollapsed: boolean }) {
     <TooltipProvider>
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
         {items.map((item, index) => {
-          const isActive = item.href === '/dashboard' ? pathname === item.href : pathname.startsWith(item.href);
+          const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
           return isCollapsed ? (
             <Tooltip key={index} delayDuration={0}>
               <TooltipTrigger asChild>

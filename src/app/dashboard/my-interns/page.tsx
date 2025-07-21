@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -19,6 +20,8 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
+import { Button } from '@/components/ui/button';
+import { ArrowRight } from 'lucide-react';
 
 const myInterns = [
   { id: 1, name: "Alice Johnson", email: "alice.j@example.com", project: "AI Chatbot", progress: 60, status: "On Track", avatar: "https://placehold.co/100x100.png" },
@@ -48,6 +51,7 @@ export default function MyInternsPage() {
                             <TableHead>Project</TableHead>
                             <TableHead>Progress</TableHead>
                             <TableHead>Status</TableHead>
+                            <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
                     </TableHeader>
                     <TableBody>
@@ -81,6 +85,13 @@ export default function MyInternsPage() {
                                     }>
                                         {intern.status}
                                     </Badge>
+                                </TableCell>
+                                <TableCell className="text-right">
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/dashboard/intern/${intern.id}`}>
+                                            Manage <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
+                                    </Button>
                                 </TableCell>
                             </TableRow>
                         ))}
