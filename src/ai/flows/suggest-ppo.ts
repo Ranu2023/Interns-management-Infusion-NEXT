@@ -51,6 +51,7 @@ const prompt = ai.definePrompt({
 
   Instructions:
   - Based on all the data, decide if the intern should be "Recommended" or "Not Recommended" for a PPO.
+  - **Crucially, if the 'Final Assessment Score' is 85 or higher, you should strongly lean towards "Recommended"**, unless there are significant red flags in the project performance or mentor feedback. Make sure to justify your decision based on all factors.
   - Provide a concise but comprehensive 'reasoning' for your decision. Mention specific strengths and areas for improvement.
   - Provide a 'confidenceScore' between 0.0 and 1.0 for your recommendation.
 
