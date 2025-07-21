@@ -1,6 +1,4 @@
 
-'use client';
-
 import Link from 'next/link';
 import {
   Table,
@@ -22,21 +20,31 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import { getDb } from '@/lib/mongodb';
+import { type Intern } from '@/lib/types';
 
-const myInterns = [
-  { id: 1, name: "Alice Johnson", email: "alice.j@example.com", project: "AI Chatbot", progress: 60, status: "On Track", avatar: "https://placehold.co/100x100.png" },
-  { id: 2, name: "Fiona Garcia", email: "fiona.g@example.com", project: "AI Chatbot", progress: 75, status: "On Track", avatar: "https://placehold.co/100x100.png" },
-  { id: 3, name: "Bob Williams", email: "bob.w@example.com", project: "Data Analytics", progress: 45, status: "Needs Attention", avatar: "https://placehold.co/100x100.png" },
-  { id: 4, name: "George Rodriguez", email: "george.r@example.com", project: "Data Analytics", progress: 30, status: "On Track", avatar: "https://placehold.co/100x100.png" },
-  { id: 5, name: "Charlie Brown", email: "charlie.b@example.com", project: "Mobile App", progress: 100, status: "Completed", avatar: "https://placehold.co/100x100.png" },
-  { id: 6, name: "Hannah Martinez", email: "hannah.m@example.com", project: "Mobile App", progress: 100, status: "Completed", avatar: "https://placehold.co/100x100.png" },
-  { id: 7, name: "Diana Miller", email: "diana.m@example.com", project: "UI/UX Design", progress: 85, status: "On Track", avatar: "https://placehold.co/100x100.png" },
-  { id: 8, name: "Ian Hernandez", email: "ian.h@example.com", project: "UI/UX Design", progress: 90, status: "Exceeding", avatar: "https://placehold.co/100x100.png" },
-  { id: 9, name: "Ethan Davis", email: "ethan.d@example.com", project: "Cloud Migration", progress: 20, status: "On Track", avatar: "https://placehold.co/100x100.png" },
-  { id: 10, name: "Jasmine Lopez", email: "jasmine.l@example.com", project: "Cloud Migration", progress: 25, status: "Needs Attention", avatar: "https://placehold.co/100x100.png" },
-];
+// Mock fetching interns assigned to the current mentor.
+// In a real app, you'd filter by mentor ID.
+async function getMyInterns() {
+    const db = await getDb();
+    const interns = await db.collection<Intern>('interns').find({ mentor: "Dr. Guide" }, { projection: { _id: 0 } }).limit(10).toArray();
+    
+    // In a real app with proper project data relation:
+    // For now, we'll add mock progress to display on the UI
+    const projects = await db.collection('projects').find({}, { projection: { _id: 0, title: 1, progress: 1 } }).toArray();
+    const projectProgressMap = new Map(projects.map(p => [p.title, p.progress]));
 
-export default function MyInternsPage() {
+    return interns.map(intern => ({
+        ...intern,
+        progress: projectProgressMap.get(intern.project) || 0,
+        avatar: "https://placehold.co/100x100.png",
+    }));
+}
+
+
+export default async function MyInternsPage() {
+    const myInterns = await getMyInterns();
+
     return (
         <Card>
             <CardHeader>
@@ -77,12 +85,7 @@ export default function MyInternsPage() {
                                     </div>
                                 </TableCell>
                                 <TableCell>
-                                     <Badge variant={
-                                        intern.status === 'On Track' ? 'default' :
-                                        intern.status === 'Completed' ? 'secondary' :
-                                        intern.status === 'Exceeding' ? 'default' : // Should be different color
-                                        'destructive'
-                                    }>
+                                     <Badge variant={intern.status === 'Active' ? 'default' : 'secondary'}>
                                         {intern.status}
                                     </Badge>
                                 </TableCell>
@@ -101,3 +104,6 @@ export default function MyInternsPage() {
         </Card>
     );
 }
+
+// Revalidate the page every 60 seconds to fetch fresh data
+export const revalidate = 60;
