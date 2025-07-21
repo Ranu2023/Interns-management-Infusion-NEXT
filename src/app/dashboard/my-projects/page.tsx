@@ -1,6 +1,7 @@
 
 'use client';
 
+import { useState } from 'react';
 import {
   Card,
   CardHeader,
@@ -12,31 +13,29 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, ListTodo, GitFork } from 'lucide-react';
+import { CheckCircle2, ListTodo, GitFork, FileText, Download } from 'lucide-react';
+import { Slider } from '@/components/ui/slider';
+import { Button } from '@/components/ui/button';
+import { Label } from '@/components/ui/label';
 
-const projects = [
-  { id: 1, title: "AI Chatbot Integration", status: "In Progress", progress: 60, mentor: "Dr. Guide", tasksCompleted: 8, tasksTotal: 12, recentActivity: "Pushed new intent recognition model." },
-  { id: 2, title: "Data Analytics Dashboard", status: "In Progress", progress: 45, mentor: "Jane Doe", tasksCompleted: 5, tasksTotal: 15, recentActivity: "Added new chart for user engagement." },
-  { id: 3, title: "Mobile App Redesign", status: "Completed", progress: 100, mentor: "John Smith", tasksCompleted: 20, tasksTotal: 20, recentActivity: "Final version approved and merged." },
+const initialProjects = [
+  { id: 1, title: "AI Chatbot Integration", status: "In Progress", progress: 60, mentor: "Dr. Guide", tasksCompleted: 8, tasksTotal: 12, recentActivity: "Pushed new intent recognition model.", document: "https://example.com/chatbot-brief.pdf" },
+  { id: 2, title: "Data Analytics Dashboard", status: "In Progress", progress: 45, mentor: "Jane Doe", tasksCompleted: 5, tasksTotal: 15, recentActivity: "Added new chart for user engagement.", document: null },
+  { id: 3, title: "Mobile App Redesign", status: "Completed", progress: 100, mentor: "John Smith", tasksCompleted: 20, tasksTotal: 20, recentActivity: "Final version approved and merged.", document: "https://example.com/mobile-redesign-spec.pdf" },
 ];
 
-const otherProjects = [
-    { id: 4, title: "UI/UX Improvement", status: "In Progress", progress: 75, mentor: "Emily White", },
-    { id: 5, title: "Cloud Migration Strategy", status: "On-Hold", progress: 20, mentor: "Michael Green", },
-    { id: 6, title: "E-commerce Platform", status: "Not Started", progress: 0, mentor: "Sarah Black" },
-    { id: 7, title: "Internal Tooling", status: "In Progress", progress: 80, mentor: "David King" },
-    { id: 8, title: "API Security Audit", status: "In Progress", progress: 30, mentor: "Kevin Scott" },
-    { id: 9, title: "Marketing Website", status: "Completed", progress: 100, mentor: "Olivia Adams" },
-    { id: 10, title: "Onboarding Flow", status: "Not Started", progress: 0, mentor: "Emily White" },
-]
-
-
 export default function MyProjectsPage() {
+    const [projects, setProjects] = useState(initialProjects);
+
+    const handleProgressChange = (projectId: number, newProgress: number) => {
+        setProjects(projects.map(p => p.id === projectId ? { ...p, progress: newProgress } : p));
+    };
+
     return (
         <div>
             <div className="mb-6">
                 <h1 className="text-2xl font-bold tracking-tight font-headline">My Projects</h1>
-                <p className="text-muted-foreground">View your assigned projects and tasks.</p>
+                <p className="text-muted-foreground">View your assigned projects and update your progress.</p>
             </div>
             <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-6">
                 {projects.map((project) => (
@@ -56,14 +55,21 @@ export default function MyProjectsPage() {
                              <span className="text-sm text-muted-foreground">Mentor: {project.mentor}</span>
                            </div>
                         </CardHeader>
-                        <CardContent className="flex-grow">
+                        <CardContent className="flex-grow space-y-6">
                             <div className="space-y-4">
                                 <div>
                                     <div className="flex justify-between items-center text-sm mb-1">
-                                        <span className="text-muted-foreground">Overall Progress</span>
+                                        <Label htmlFor={`progress-${project.id}`}>Overall Progress</Label>
                                         <span>{project.progress}%</span>
                                     </div>
-                                    <Progress value={project.progress} />
+                                    <Slider
+                                        id={`progress-${project.id}`}
+                                        value={[project.progress]}
+                                        onValueChange={(value) => handleProgressChange(project.id, value[0])}
+                                        max={100}
+                                        step={5}
+                                        disabled={project.status === 'Completed'}
+                                    />
                                 </div>
                                 <div className="flex justify-around text-center text-sm">
                                     <div>
@@ -76,41 +82,28 @@ export default function MyProjectsPage() {
                                         <p className="font-semibold">{project.tasksTotal}</p>
                                         <p className="text-xs text-muted-foreground">Total Tasks</p>
                                     </div>
+                                    {project.document && (
+                                    <div>
+                                        <FileText className="h-5 w-5 mx-auto text-primary" />
+                                        <p className="font-semibold">1</p>
+                                        <p className="text-xs text-muted-foreground">Document</p>
+                                    </div>
+                                    )}
                                 </div>
                             </div>
+                            {project.document && (
+                                 <Button variant="outline" className="w-full" asChild>
+                                     <a href={project.document} target="_blank" rel="noopener noreferrer">
+                                        <Download className="mr-2" />
+                                        Download Project Brief
+                                     </a>
+                                 </Button>
+                            )}
                         </CardContent>
                         <CardFooter className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-4 mt-4">
                             <GitFork className="h-4 w-4" />
                             <span>{project.recentActivity}</span>
                         </CardFooter>
-                    </Card>
-                ))}
-                 {otherProjects.map((project) => (
-                    <Card key={project.id} className="flex flex-col bg-muted/30">
-                         <CardHeader>
-                            <div className="flex justify-between items-start">
-                                <CardTitle className="text-lg">{project.title}</CardTitle>
-                                <Badge variant={project.status === 'In Progress' ? 'default' : project.status === 'Completed' ? 'secondary' : project.status === 'On-Hold' ? 'destructive' : 'outline'}>
-                                    {project.status}
-                                </Badge>
-                            </div>
-                           <div className="flex items-center pt-2 gap-2">
-                             <Avatar className="h-6 w-6">
-                                <AvatarImage src="https://placehold.co/100x100.png" alt={project.mentor} data-ai-hint="avatar person" />
-                                <AvatarFallback>{project.mentor.charAt(0)}</AvatarFallback>
-                             </Avatar>
-                             <span className="text-sm text-muted-foreground">Mentor: {project.mentor}</span>
-                           </div>
-                        </CardHeader>
-                        <CardContent>
-                             <div className="space-y-2">
-                                <div className="flex justify-between items-center text-sm">
-                                    <span className="text-muted-foreground">Progress</span>
-                                    <span>{project.progress}%</span>
-                                </div>
-                                <Progress value={project.progress} />
-                            </div>
-                        </CardContent>
                     </Card>
                 ))}
             </div>

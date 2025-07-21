@@ -17,6 +17,7 @@ import {
   PenSquare,
   User,
   LayoutDashboard,
+  ClipboardPlus,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -48,7 +49,8 @@ const navItems: Record<Role, NavItem[]> = {
   mentor: [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { href: '/dashboard/my-interns', label: 'My Interns', icon: Users },
-    { href: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
+    { href: '/dashboard/projects', label: 'All Projects', icon: FolderKanban },
+    { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
     { href: '/dashboard/reports', label: 'Reports', icon: FileBarChart2 },
     { href: '/dashboard/mentorship', label: 'Mentorship', icon: Handshake },
   ],
