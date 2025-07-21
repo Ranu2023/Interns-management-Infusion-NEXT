@@ -19,6 +19,7 @@ import {
   User,
   LayoutDashboard,
   ClipboardPlus,
+  GraduationCap,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -65,6 +66,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/ppo-status', label: 'PPO Status', icon: Briefcase },
     { href: '/dashboard/documents', label: 'Documents', icon: FileDown },
     { href: '/dashboard/my-review', label: 'My Review', icon: PenSquare },
+    { href: '/dashboard/assessment', label: 'Final Assessment', icon: GraduationCap },
   ],
   employee: [
     { href: '/dashboard', label: 'My Profile', icon: User, exact: true },
