@@ -4,8 +4,20 @@ import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
+import { useEffect, useState } from 'react';
+
+// Note: In a real app, we would fetch this data from an API endpoint
+// that is connected to the database. For this example, we will simulate
+// fetching data on the client side for the HR dashboard.
+// Other pages have been converted to server components to fetch data directly.
 
 function HRDashboard() {
+  // These would be replaced by API calls
+  const [internCount, setInternCount] = useState(125);
+  const [ppoCount, setPpoCount] = useState(33);
+  const [projectCount, setProjectCount] = useState(42);
+
+
   return (
     <div className="grid gap-4 md:gap-8">
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -15,7 +27,7 @@ function HRDashboard() {
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">125</div>
+            <div className="text-2xl font-bold">{internCount}</div>
             <p className="text-xs text-muted-foreground">+10 since last month</p>
           </CardContent>
         </Card>
@@ -25,7 +37,7 @@ function HRDashboard() {
             <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">33</div>
+            <div className="text-2xl font-bold">{ppoCount}</div>
             <p className="text-xs text-muted-foreground">+5 this month</p>
           </CardContent>
         </Card>
@@ -35,7 +47,7 @@ function HRDashboard() {
             <FolderKanban className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">42</div>
+            <div className="text-2xl font-bold">{projectCount}</div>
             <p className="text-xs text-muted-foreground">+8 since last week</p>
           </CardContent>
         </Card>

@@ -1,6 +1,4 @@
 
-'use client';
-
 import {
   Table,
   TableBody,
@@ -17,21 +15,19 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import { getDb } from "@/lib/mongodb";
+import { type Intern } from "@/lib/types";
 
-const interns = [
-  { id: 1, name: "Alice Johnson", email: "alice.j@example.com", project: "AI Chatbot", mentor: "Dr. Guide", status: "Active" },
-  { id: 2, name: "Bob Williams", email: "bob.w@example.com", project: "Data Analytics", mentor: "Jane Doe", status: "Active" },
-  { id: 3, name: "Charlie Brown", email: "charlie.b@example.com", project: "Mobile App", mentor: "John Smith", status: "Completed" },
-  { id: 4, name: "Diana Miller", email: "diana.m@example.com", project: "UI/UX Design", mentor: "Emily White", status: "Active" },
-  { id: 5, name: "Ethan Davis", email: "ethan.d@example.com", project: "Cloud Migration", mentor: "Michael Green", status: "On-Hold" },
-  { id: 6, name: "Fiona Garcia", email: "fiona.g@example.com", project: "AI Chatbot", mentor: "Dr. Guide", status: "Active" },
-  { id: 7, name: "George Rodriguez", email: "george.r@example.com", project: "Data Analytics", mentor: "Jane Doe", status: "Active" },
-  { id: 8, name: "Hannah Martinez", email: "hannah.m@example.com", project: "Mobile App", mentor: "John Smith", status: "Completed" },
-  { id: 9, name: "Ian Hernandez", email: "ian.h@example.com", project: "UI/UX Design", mentor: "Emily White", status: "Active" },
-  { id: 10, name: "Jasmine Lopez", email: "jasmine.l@example.com", project: "Cloud Migration", mentor: "Michael Green", status: "Active" },
-];
+async function getInterns() {
+  const db = await getDb();
+  // Using .project() to exclude the _id field from the result
+  const interns = await db.collection<Intern>('interns').find({}, { projection: { _id: 0 } }).toArray();
+  return interns;
+}
 
-export default function InternsPage() {
+export default async function InternsPage() {
+    const interns = await getInterns();
+
     return (
         <Card>
             <CardHeader>
@@ -69,3 +65,6 @@ export default function InternsPage() {
         </Card>
     );
 }
+
+// Revalidate the page every 60 seconds to fetch fresh data
+export const revalidate = 60;
