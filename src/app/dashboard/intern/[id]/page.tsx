@@ -1,5 +1,5 @@
 
-import { getDb } from '@/lib/mongodb';
+import { initialData } from '@/lib/seed-data';
 import { type Intern, type Project } from '@/lib/types';
 import { notFound } from 'next/navigation';
 import {
@@ -17,15 +17,13 @@ import { Briefcase, Star, User } from 'lucide-react';
 import { InternProfileClient } from './InternProfileClient';
 
 async function getInternData(id: number): Promise<{ intern: Intern | null, project: Project | null }> {
-    const db = await getDb();
-    const intern = await db.collection('interns').findOne<Intern>({ id: id }, { projection: { _id: 0 } });
+    const intern = initialData.interns.find(i => i.id === id) || null;
     if (!intern) return { intern: null, project: null };
 
-    const project = await db.collection('projects').findOne<Project>({ title: intern.project }, { projection: { _id: 0 } });
+    const project = initialData.projects.find(p => p.title === intern.project) || null;
     return { intern, project };
 }
 
-// This is now a Server Component to fetch initial data
 export default async function InternProfilePage({ params }: { params: { id: string } }) {
     const internId = parseInt(params.id, 10);
     if (isNaN(internId)) {
@@ -91,6 +89,3 @@ export default async function InternProfilePage({ params }: { params: { id: stri
         </div>
     );
 }
-
-// Enable revalidation to fetch fresh data
-export const revalidate = 60;

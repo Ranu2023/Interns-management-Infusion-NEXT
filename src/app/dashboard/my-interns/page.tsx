@@ -20,19 +20,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { getDb } from '@/lib/mongodb';
-import { type Intern } from '@/lib/types';
+import { initialData } from '@/lib/seed-data';
 
 // Mock fetching interns assigned to the current mentor.
-// In a real app, you'd filter by mentor ID.
-async function getMyInterns() {
-    const db = await getDb();
-    const interns = await db.collection<Intern>('interns').find({ mentor: "Dr. Guide" }, { projection: { _id: 0 } }).limit(10).toArray();
-    
-    // In a real app with proper project data relation:
-    // For now, we'll add mock progress to display on the UI
-    const projects = await db.collection('projects').find({}, { projection: { _id: 0, title: 1, progress: 1 } }).toArray();
-    const projectProgressMap = new Map(projects.map(p => [p.title, p.progress]));
+// In a real app, you'd filter by mentor ID from auth context.
+async function getMyInterns(mentorName: string) {
+    const interns = initialData.interns.filter(i => i.mentor === mentorName);
+    const projectProgressMap = new Map(initialData.projects.map(p => [p.title, p.progress]));
 
     return interns.map(intern => ({
         ...intern,
@@ -43,7 +37,8 @@ async function getMyInterns() {
 
 
 export default async function MyInternsPage() {
-    const myInterns = await getMyInterns();
+    // In a real app, you'd get the mentor's name from the session/auth context
+    const myInterns = await getMyInterns("Dr. Guide");
 
     return (
         <Card>
@@ -104,6 +99,3 @@ export default async function MyInternsPage() {
         </Card>
     );
 }
-
-// Revalidate the page every 60 seconds to fetch fresh data
-export const revalidate = 60;

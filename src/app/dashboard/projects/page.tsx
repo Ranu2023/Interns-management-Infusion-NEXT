@@ -10,13 +10,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getDb } from "@/lib/mongodb";
-import { type Project } from "@/lib/types";
+import { initialData } from "@/lib/seed-data";
 
 async function getProjects() {
-    const db = await getDb();
-    const projects = await db.collection<Project>('projects').find({}, { projection: { _id: 0 } }).toArray();
-    return projects;
+    return initialData.projects;
 }
 
 export default async function ProjectsPage() {
@@ -64,6 +61,3 @@ export default async function ProjectsPage() {
         </div>
     );
 }
-
-// Revalidate the page every 60 seconds to fetch fresh data
-export const revalidate = 60;

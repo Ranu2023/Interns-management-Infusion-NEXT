@@ -16,16 +16,12 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { getDb } from "@/lib/mongodb";
-import { type Intern } from "@/lib/types";
+import { initialData } from "@/lib/seed-data";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
 
 async function getInterns() {
-  const db = await getDb();
-  // Using .project() to exclude the _id field from the result
-  const interns = await db.collection<Intern>('interns').find({}, { projection: { _id: 0 } }).toArray();
-  return interns;
+  return initialData.interns;
 }
 
 export default async function InternsPage() {
@@ -76,6 +72,3 @@ export default async function InternsPage() {
         </Card>
     );
 }
-
-// Revalidate the page every 60 seconds to fetch fresh data
-export const revalidate = 60;

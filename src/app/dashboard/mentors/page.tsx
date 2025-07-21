@@ -15,13 +15,10 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { getDb } from "@/lib/mongodb";
-import { type Mentor } from "@/lib/types";
+import { initialData } from "@/lib/seed-data";
 
 async function getMentors() {
-    const db = await getDb();
-    const mentors = await db.collection<Mentor>('mentors').find({}, { projection: { _id: 0 } }).toArray();
-    return mentors;
+    return initialData.mentors;
 }
 
 export default async function MentorsPage() {
@@ -66,6 +63,3 @@ export default async function MentorsPage() {
         </Card>
     );
 }
-
-// Revalidate the page every 60 seconds to fetch fresh data
-export const revalidate = 60;

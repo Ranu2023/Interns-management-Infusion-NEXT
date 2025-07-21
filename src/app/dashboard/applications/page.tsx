@@ -17,13 +17,10 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { FileSearch } from "lucide-react";
-import { getDb } from "@/lib/mongodb";
-import { type Application } from "@/lib/types";
+import { initialData } from "@/lib/seed-data";
 
 async function getApplications() {
-  const db = await getDb();
-  const applications = await db.collection<Application>('applications').find({}, { projection: { _id: 0 } }).toArray();
-  return applications;
+  return initialData.applications;
 }
 
 
@@ -76,6 +73,3 @@ export default async function ApplicationsPage() {
         </Card>
     );
 }
-
-// Revalidate the page every 60 seconds to fetch fresh data
-export const revalidate = 60;

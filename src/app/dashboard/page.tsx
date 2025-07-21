@@ -1,17 +1,17 @@
 
+'use client';
+
+import { Suspense } from 'react';
 import { useAuth } from '@/context/AuthContext';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
-import { getDb } from '@/lib/mongodb';
-import { Suspense } from 'react';
+import { initialData } from '@/lib/seed-data';
 
-// Server component to fetch data for HR
-async function HRDashboardData() {
-  const db = await getDb();
-  const internCount = await db.collection('interns').countDocuments();
-  const ppoCount = await db.collection('interns').countDocuments({ ppoStatus: 'Recommended' });
-  const projectCount = await db.collection('projects').countDocuments({ status: 'In Progress' });
+function HRDashboard() {
+  const internCount = initialData.interns.length;
+  const ppoCount = initialData.interns.filter(i => i.ppoStatus === 'Recommended').length;
+  const projectCount = initialData.projects.filter(p => p.status === 'In Progress').length;
 
   return (
     <div className="grid gap-4 md:gap-8">
@@ -80,8 +80,6 @@ function GenericDashboard({ name, role }: { name: string; role: string }) {
     );
 }
 
-// This client component wraps the logic to decide which dashboard to show
-// based on the user's role from the AuthContext.
 function DashboardView() {
   const { user } = useAuth();
 
@@ -91,8 +89,7 @@ function DashboardView() {
 
   switch (user.role) {
     case 'hr':
-      // Suspense boundary for streaming server component data
-      return <Suspense fallback={<div>Loading dashboard...</div>}><HRDashboardData /></Suspense>;
+      return <HRDashboard />;
     case 'mentor':
       return <GenericDashboard name={user.name} role="Mentor" />;
     case 'intern':
@@ -104,7 +101,6 @@ function DashboardView() {
   }
 }
 
-// The main page component remains a client component to access useAuth
 export default function DashboardPage() {
   return <DashboardView />;
 }

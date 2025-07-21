@@ -2,13 +2,11 @@
 'use server';
 
 import { AssignProjectForm } from './AssignProjectForm';
-import { getDb } from '@/lib/mongodb';
-import { type Intern } from '@/lib/types';
+import { initialData } from '@/lib/seed-data';
 
 async function getInterns() {
-    const db = await getDb();
-    const interns = await db.collection<Intern>('interns').find({ status: 'Active' }, { projection: { _id: 0, id: 1, name: 1 } }).toArray();
-    return interns;
+    const activeInterns = initialData.interns.filter(i => i.status === 'Active');
+    return activeInterns.map(intern => ({ id: intern.id, name: intern.name }));
 }
 
 export default async function AssignProjectPage() {
