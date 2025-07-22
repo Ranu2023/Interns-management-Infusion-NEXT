@@ -5,7 +5,9 @@ import dbConnect from './db';
 import Project from './models/Project';
 import Application from './models/Application';
 import Intern from './models/Intern';
+import DailyReport from './models/DailyReport';
 import { type Task } from './types';
+import { type IProject } from './models/Project';
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
   try {
@@ -22,41 +24,69 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
     const completedTasks = project.tasks.filter((t: Task) => t.completed).length;
     project.progress = (completedTasks / project.tasks.length) * 100;
     project.status = project.progress === 100 ? 'Completed' : 'In Progress';
-
+    project.recentActivity = `Task "${task?.title}" marked as ${completed ? 'complete' : 'incomplete'}.`
 
     await project.save();
+
     revalidatePath(`/dashboard/my-projects/${projectId}`);
-    revalidatePath(`/dashboard/my-projects`);
+    revalidatePath('/dashboard/my-projects');
+    revalidatePath('/dashboard/projects');
+    revalidatePath('/dashboard/my-interns');
+
+    return { success: true };
   } catch (error) {
     console.error('Failed to update task:', error);
-    throw new Error('Failed to update task.');
+    // Return a serializable error object
+    return { success: false, message: 'Failed to update task.' };
   }
 }
 
 export async function updateApplicationStatus(applicationId: string, status: 'Accepted' | 'Rejected') {
-    try {
-        await dbConnect();
-        await Application.findByIdAndUpdate(applicationId, { status });
-        revalidatePath(`/dashboard/applications`);
-        revalidatePath(`/dashboard/applications/${applicationId}`);
-    } catch (error) {
-        console.error('Failed to update application status', error);
-        throw new Error('Failed to update application status.');
+    await dbConnect();
+    const application = await Application.findByIdAndUpdate(applicationId, { status }, { new: true });
+    if (!application) {
+        throw new Error('Application not found');
     }
+    
+    // If accepted, create a new Intern record
+    if (status === 'Accepted') {
+        const existingIntern = await Intern.findOne({ email: `${application.name.split(' ').join('.').toLowerCase()}@synergy.com` });
+        if (!existingIntern) {
+            const newIntern = new Intern({
+                name: application.name,
+                email: `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`,
+                project: 'Unassigned',
+                mentor: 'Unassigned', // or assign a default mentor
+                status: 'Active',
+                ppoStatus: 'Pending'
+            });
+            await newIntern.save();
+            revalidatePath('/dashboard/interns');
+        }
+    }
+
+    revalidatePath(`/dashboard/applications`);
+    revalidatePath(`/dashboard/applications/${applicationId}`);
 }
 
 export async function assignProject(formData: FormData) {
+    const internId = formData.get('internId') as string;
+    const projectName = formData.get('projectName') as string;
+    const projectDescription = formData.get('projectDescription') as string;
+    const documentLink = formData.get('documentLink') as string | null;
+
+    if (!internId || !projectName || !projectDescription) {
+        return { success: false, message: 'Missing required fields.' };
+    }
+
     try {
         await dbConnect();
 
-        const internId = formData.get('internId') as string;
-        const projectName = formData.get('projectName') as string;
-        const projectDescription = formData.get('projectDescription') as string;
-
         const intern = await Intern.findById(internId);
-        if (!intern) throw new Error('Intern not found');
+        if (!intern) {
+             return { success: false, message: 'Intern not found.' };
+        }
         
-        // A simple way to generate tasks for the new project
         const tasks = [
             { id: 1, title: "Initial research and planning", completed: false },
             { id: 2, title: "Setup project boilerplate", completed: false },
@@ -72,7 +102,7 @@ export async function assignProject(formData: FormData) {
             status: 'In Progress',
             team: [intern.name],
             mentor: intern.mentor,
-            document: null,
+            document: documentLink,
             recentActivity: 'Project created.',
             tasks: tasks,
             progress: 0,
@@ -80,15 +110,48 @@ export async function assignProject(formData: FormData) {
 
         await newProject.save();
 
-        // Update intern's project
         intern.project = newProject.title;
         await intern.save();
 
         revalidatePath('/dashboard/projects');
         revalidatePath('/dashboard/assign-project');
         revalidatePath(`/dashboard/interns`);
+        revalidatePath(`/dashboard/intern/${internId}`);
+
+        return { success: true, message: 'Project assigned successfully' };
     } catch (error) {
         console.error('Failed to assign project', error);
-        throw new Error('Failed to assign project.');
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
+export async function submitDailyReport(formData: FormData) {
+    const accomplishments = formData.get('accomplishments');
+    const goals = formData.get('goals');
+    const blockers = formData.get('blockers');
+    // In a real app, you'd get the internId from the session/auth
+    const internId = "669a8e5a5b5e3c8b4b7a1b1a"; 
+
+    if (!accomplishments || !goals) {
+        return { success: false, message: "Please fill out yesterday's accomplishments and today's goals."}
+    }
+
+    try {
+        await dbConnect();
+        const report = new DailyReport({
+            internId,
+            date: new Date(),
+            accomplishments,
+            goals,
+            blockers
+        });
+        await report.save();
+        
+        revalidatePath('/dashboard/daily-report');
+        return { success: true, message: 'Report submitted successfully' };
+
+    } catch(error) {
+        console.error('Failed to submit report', error);
+        return { success: false, message: 'Failed to submit report.'}
     }
 }

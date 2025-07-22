@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useEffect, useState } from 'react';
-import { notFound, useParams } from 'next/navigation';
+import { useEffect, useState, useTransition } from 'react';
+import { notFound } from 'next/navigation';
 import {
   Card,
   CardContent,
@@ -18,32 +18,31 @@ import { Check, FileText, University, X, Loader2 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import type { Application } from '@/lib/types';
 import { updateApplicationStatus } from '@/lib/actions';
-
+import { useToast } from '@/hooks/use-toast';
 
 async function getApplication(id: string): Promise<Application | null> {
-    // This function will be executed on the server for the initial fetch
-    // and can be called on the client for re-fetching.
-    // For simplicity, we are keeping this page a client component.
     const res = await fetch(`/api/applications/${id}`);
     if (!res.ok) return null;
-    return res.json();
+    const data = await res.json();
+    // Ensure _id is a string
+    return { ...data, _id: data._id.toString() };
 }
 
 export default function ApplicationReviewPage({ params }: { params: { id: string }}) {
     const [application, setApplication] = useState<Application | null>(null);
     const [loading, setLoading] = useState(true);
-    const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isSubmitting, startTransition] = useTransition();
+    const { toast } = useToast();
     
     useEffect(() => {
         const fetchApp = async () => {
+            if (!params.id.match(/^[0-9a-fA-F]{24}$/)) {
+                setLoading(false);
+                return;
+            }
             try {
-                const res = await fetch(`/api/applications/${params.id}`);
-                if (!res.ok) {
-                    setApplication(null);
-                } else {
-                    const data = await res.json();
-                    setApplication(data);
-                }
+                const data = await getApplication(params.id);
+                setApplication(data);
             } catch (error) {
                 console.error('Failed to fetch application', error);
                 setApplication(null);
@@ -59,17 +58,25 @@ export default function ApplicationReviewPage({ params }: { params: { id: string
 
 
     const handleStatusUpdate = async (status: 'Accepted' | 'Rejected') => {
-        if (!application) return;
-        setIsSubmitting(true);
-        try {
-            await updateApplicationStatus(application._id!, status);
-            setApplication(prev => prev ? { ...prev, status } : null);
-        } catch (error) {
-            console.error('Failed to update status', error);
-            // Optionally: show toast error
-        } finally {
-            setIsSubmitting(false);
-        }
+        if (!application?._id) return;
+        
+        startTransition(async () => {
+            try {
+                await updateApplicationStatus(application._id!, status);
+                setApplication(prev => prev ? { ...prev, status } : null);
+                toast({
+                    title: `Application ${status}`,
+                    description: `${application.name}'s application has been ${status.toLowerCase()}.`,
+                })
+            } catch (error) {
+                console.error('Failed to update status', error);
+                toast({
+                    variant: 'destructive',
+                    title: "Update failed",
+                    description: "Could not update the application status."
+                })
+            }
+        });
     }
 
     if (loading) {
@@ -81,7 +88,7 @@ export default function ApplicationReviewPage({ params }: { params: { id: string
     }
 
     if (!application) {
-        notFound();
+        return notFound();
     }
     
     const isActionDisabled = application.status === 'Accepted' || application.status === 'Rejected' || isSubmitting;
@@ -121,13 +128,17 @@ export default function ApplicationReviewPage({ params }: { params: { id: string
                     <div className="space-y-4">
                         <h3 className="font-semibold">Applicant Documents</h3>
                         <div className="grid gap-3">
-                             <Button variant="outline" className="justify-start">
+                             <Button variant="outline" className="justify-start" asChild>
+                               <a href="https://placehold.co/800x1100.png" target="_blank" rel="noopener noreferrer">
                                 <FileText className="mr-2"/>
                                 View Resume / CV
+                               </a>
                             </Button>
-                             <Button variant="outline" className="justify-start">
+                             <Button variant="outline" className="justify-start" asChild>
+                               <a href="https://placehold.co/800x1100.png" target="_blank" rel="noopener noreferrer">
                                 <FileText className="mr-2"/>
                                 View Cover Letter
+                               </a>
                             </Button>
                         </div>
                     </div>
@@ -135,7 +146,7 @@ export default function ApplicationReviewPage({ params }: { params: { id: string
                     <div className="space-y-2">
                         <h3 className="font-semibold">Application Details</h3>
                         <div className="text-sm text-muted-foreground space-y-1">
-                            <p><strong>Applied On:</strong> {application.date}</p>
+                            <p><strong>Applied On:</strong> {new Date(application.date).toLocaleDateString()}</p>
                             <p><strong>Desired Role:</strong> Software Engineer Intern</p>
                         </div>
                     </div>

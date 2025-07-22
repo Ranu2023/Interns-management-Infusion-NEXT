@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useRef } from 'react';
-import { useFormStatus, useFormState } from 'react-dom';
+import { useRef, useActionState, useEffect } from 'react';
+import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -26,7 +26,6 @@ import { FileUp, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type Intern } from "@/lib/types";
 import { assignProject } from '@/lib/actions';
-import { useEffect } from 'react';
 
 
 function SubmitButton() {
@@ -44,15 +43,23 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   
-  const [state, formAction] = useFormState(async (prevState: any, formData: FormData) => {
+  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
     try {
-        await assignProject(formData);
-        toast({
-            title: "Project Assigned!",
-            description: `${formData.get('projectName')} has been assigned.`,
-        });
-        formRef.current?.reset();
-        return { success: true, message: 'Project assigned' };
+        const result = await assignProject(formData);
+        if (result.success) {
+            toast({
+                title: "Project Assigned!",
+                description: `${formData.get('projectName')} has been assigned.`,
+            });
+            formRef.current?.reset();
+        } else {
+             toast({
+                variant: "destructive",
+                title: "Assignment Failed",
+                description: result.message,
+            });
+        }
+        return result;
     } catch (e: any) {
         toast({
             variant: "destructive",
@@ -76,7 +83,7 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
         <CardContent className="space-y-6">
           <div className="grid gap-2">
             <Label htmlFor="intern">Select Intern</Label>
-            <Select name="internId">
+            <Select name="internId" required>
               <SelectTrigger id="intern">
                 <SelectValue placeholder="Select an intern..." />
               </SelectTrigger>

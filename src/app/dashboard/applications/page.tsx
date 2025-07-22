@@ -20,19 +20,19 @@ import {
 import { ArrowRight } from "lucide-react";
 import dbConnect from '@/lib/db';
 import Application from '@/lib/models/Application';
-import { initialData } from '@/lib/seed-data';
+import type { IApplication } from '@/lib/models/Application';
 
-async function getApplications() {
+async function getApplications(): Promise<(IApplication & {_id: string})[]> {
   try {
     await dbConnect();
-    let applications = await Application.find({}).lean();
-    if (!applications || applications.length === 0) {
-        // Seed data if collection is empty
-        await Application.insertMany(initialData.applications);
-        applications = await Application.find({}).lean();
-    }
+    let applications = await Application.find({}).sort({ date: -1 }).lean();
+    
     // Mongoose returns objects with _id. We convert them to strings for serialization.
-    return applications.map(app => ({...app, _id: app._id.toString()}));
+    return applications.map(app => ({
+        ...app, 
+        _id: app._id.toString(),
+        date: app.date.toISOString() // Ensure date is a string
+    }));
   } catch (e) {
     console.error(e);
     return [];
@@ -65,7 +65,7 @@ export default async function ApplicationsPage() {
                             <TableRow key={app._id}>
                                 <TableCell className="font-medium">{app.name}</TableCell>
                                 <TableCell>{app.university}</TableCell>
-                                <TableCell>{app.date}</TableCell>
+                                <TableCell>{new Date(app.date).toLocaleDateString()}</TableCell>
                                 <TableCell>
                                     <Badge variant={
                                         app.status === 'Accepted' ? 'default' :

@@ -1,4 +1,5 @@
 
+'use server';
 import Link from 'next/link';
 import {
   Table,
@@ -20,16 +21,23 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Progress } from "@/components/ui/progress";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
-import { initialData } from '@/lib/seed-data';
+import dbConnect from '@/lib/db';
+import Intern from '@/lib/models/Intern';
+import Project from '@/lib/models/Project';
 
-// Mock fetching interns assigned to the current mentor.
-// In a real app, you'd filter by mentor ID from auth context.
 async function getMyInterns(mentorName: string) {
-    const interns = initialData.interns.filter(i => i.mentor === mentorName);
-    const projectProgressMap = new Map(initialData.projects.map(p => [p.title, p.progress]));
+    await dbConnect();
+    const interns = await Intern.find({ mentor: mentorName }).lean();
+    
+    const projects = await Project.find({
+      title: { $in: interns.map(i => i.project) }
+    }).lean();
+
+    const projectProgressMap = new Map(projects.map(p => [p.title, p.progress || 0]));
 
     return interns.map(intern => ({
         ...intern,
+        _id: intern._id.toString(),
         progress: projectProgressMap.get(intern.project) || 0,
         avatar: "https://placehold.co/100x100.png",
     }));
@@ -59,7 +67,7 @@ export default async function MyInternsPage() {
                     </TableHeader>
                     <TableBody>
                         {myInterns.map((intern) => (
-                            <TableRow key={intern.id}>
+                            <TableRow key={intern._id}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar>
@@ -86,7 +94,7 @@ export default async function MyInternsPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href={`/dashboard/intern/${intern.id}`}>
+                                        <Link href={`/dashboard/intern/${intern._id}`}>
                                             Manage <ArrowRight className="ml-2 h-4 w-4" />
                                         </Link>
                                     </Button>
