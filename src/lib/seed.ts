@@ -1,5 +1,6 @@
 'use server';
 
+import 'dotenv/config'; // Load environment variables from .env file
 import dbConnect from './db';
 import Application from './models/Application';
 import Intern from './models/Intern';
@@ -44,7 +45,3 @@ async function seedDatabase() {
         console.error('Error seeding database:', error);
     } finally {
         process.exit();
-    }
-}
-
-seedDatabase();
