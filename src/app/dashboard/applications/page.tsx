@@ -1,4 +1,5 @@
 
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -16,7 +17,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { FileSearch } from "lucide-react";
+import { ArrowRight } from "lucide-react";
 import { initialData } from "@/lib/seed-data";
 
 async function getApplications() {
@@ -60,9 +61,10 @@ export default async function ApplicationsPage() {
                                     </Badge>
                                 </TableCell>
                                 <TableCell className="text-right">
-                                    <Button variant="outline" size="sm">
-                                        <FileSearch className="mr-2 h-4 w-4" />
-                                        Review
+                                    <Button asChild variant="outline" size="sm">
+                                        <Link href={`/dashboard/applications/${app.id}`}>
+                                           Review <ArrowRight className="ml-2 h-4 w-4" />
+                                        </Link>
                                     </Button>
                                 </TableCell>
                             </TableRow>
