@@ -1,4 +1,5 @@
 
+
 export interface Task {
     id: number;
     title: string;
@@ -6,6 +7,7 @@ export interface Task {
 }
 
 export interface Intern {
+    _id?: string;
     id: number;
     name: string;
     email: string;
@@ -18,6 +20,7 @@ export interface Intern {
 }
 
 export interface Mentor {
+    _id?: string;
     id: number;
     name: string;
     email: string;
@@ -27,6 +30,7 @@ export interface Mentor {
 }
 
 export interface Project {
+    _id?: string;
     id: number;
     title: string;
     description: string;
@@ -40,6 +44,7 @@ export interface Project {
 }
 
 export interface Application {
+    _id?: string;
     id: number;
     name: string;
     university: string;

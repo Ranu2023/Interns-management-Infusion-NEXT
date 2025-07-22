@@ -1,4 +1,6 @@
 
+'use server';
+
 import {
   Card,
   CardHeader,
@@ -10,10 +12,21 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { initialData } from "@/lib/seed-data";
+import dbConnect from '@/lib/db';
+import Project from '@/lib/models/Project';
+import { initialData } from '@/lib/seed-data';
+
 
 async function getProjects() {
-    return initialData.projects;
+    await dbConnect();
+    let projects = await Project.find({}).lean();
+    if (!projects || projects.length === 0) {
+        // Seed data if collection is empty
+        await Project.insertMany(initialData.projects);
+        projects = await Project.find({}).lean();
+    }
+    // Mongoose returns objects with _id. We convert them to strings for serialization.
+    return projects.map(project => ({...project, _id: project._id.toString()}));
 }
 
 export default async function ProjectsPage() {
@@ -26,7 +39,7 @@ export default async function ProjectsPage() {
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 {projects.map((project) => (
-                    <Card key={project.id} className="flex flex-col">
+                    <Card key={project._id} className="flex flex-col">
                         <CardHeader>
                             <div className="flex justify-between items-start">
                                 <CardTitle className="text-lg">{project.title}</CardTitle>

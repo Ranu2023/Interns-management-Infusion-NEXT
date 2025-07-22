@@ -15,10 +15,20 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { initialData } from "@/lib/seed-data";
+import dbConnect from '@/lib/db';
+import Mentor from '@/lib/models/Mentor';
+import { initialData } from '@/lib/seed-data';
 
 async function getMentors() {
-    return initialData.mentors;
+    await dbConnect();
+    let mentors = await Mentor.find({}).lean();
+    if (!mentors || mentors.length === 0) {
+        // Seed data if collection is empty
+        await Mentor.insertMany(initialData.mentors);
+        mentors = await Mentor.find({}).lean();
+    }
+    // Mongoose returns objects with _id. We convert them to strings for serialization.
+    return mentors.map(mentor => ({...mentor, _id: mentor._id.toString()}));
 }
 
 export default async function MentorsPage() {
@@ -40,7 +50,7 @@ export default async function MentorsPage() {
                     </TableHeader>
                     <TableBody>
                         {mentors.map((mentor) => (
-                            <TableRow key={mentor.id}>
+                            <TableRow key={mentor._id}>
                                 <TableCell>
                                     <div className="flex items-center gap-3">
                                         <Avatar>

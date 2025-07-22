@@ -1,8 +1,7 @@
 
 'use client';
 
-import { useState, useEffect, useMemo } from 'react';
-import { notFound } from 'next/navigation';
+import { useState, useMemo, useTransition } from 'react';
 import type { Project, Task } from '@/lib/types';
 import {
   Card,
@@ -18,57 +17,44 @@ import { Badge } from '@/components/ui/badge';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { updateTaskCompletion } from '@/lib/actions';
 
-export function ProjectDetailsClient({ project: initialProject }: { project: Project }) {
-    const [project, setProject] = useState<Project>(initialProject);
-    const [tasks, setTasks] = useState<Task[]>([]);
-
-    useEffect(() => {
-        // On mount, check if there's saved data in localStorage
-        const savedProjectsData = localStorage.getItem('projectsData');
-        if (savedProjectsData) {
-            const allProjects: Project[] = JSON.parse(savedProjectsData);
-            const savedProject = allProjects.find(p => p.id === project.id);
-            if (savedProject) {
-                setTasks(savedProject.tasks || []);
-                return;
-            }
-        }
-        // Otherwise, use initial tasks
-        setTasks(project.tasks || []);
-    }, [project.id, project.tasks]);
-
-    useEffect(() => {
-        // Persist changes to localStorage whenever tasks change for the current project
-        const savedProjectsData = localStorage.getItem('projectsData');
-        const allProjects: Project[] = savedProjectsData ? JSON.parse(savedProjectsData) : [initialProject];
-
-        const updatedProject = { ...project, tasks };
-        const updatedProjects = allProjects.map(p => p.id === project.id ? updatedProject : p);
-        
-        localStorage.setItem('projectsData', JSON.stringify(updatedProjects));
-
-    }, [tasks, project]);
-
+export function ProjectDetailsClient({ project: initialProject }: { project: Project & {_id: string} }) {
+    const [tasks, setTasks] = useState<Task[]>(initialProject.tasks || []);
+    const [isPending, startTransition] = useTransition();
 
     const handleTaskChange = (taskId: number) => {
-        setTasks(currentTasks =>
-            currentTasks.map(task =>
-                task.id === taskId ? { ...task, completed: !task.completed } : task
-            )
+        // Optimistically update the UI
+        const newTasks = tasks.map(task =>
+            task.id === taskId ? { ...task, completed: !task.completed } : task
         );
+        setTasks(newTasks);
+
+        // Call the server action to update the database
+        startTransition(async () => {
+            const currentTask = tasks.find(t => t.id === taskId);
+            if (currentTask) {
+                try {
+                    await updateTaskCompletion(initialProject._id, taskId, !currentTask.completed);
+                } catch (error) {
+                    console.error("Failed to update task", error);
+                    // Revert UI on error
+                    setTasks(tasks); 
+                }
+            }
+        });
     };
     
     const { progress, tasksCompleted, tasksTotal, status } = useMemo(() => {
         if (!tasks || tasks.length === 0) {
-            return { progress: project?.progress || 0, tasksCompleted: 0, tasksTotal: 0, status: project?.status || 'In Progress' };
+            return { progress: initialProject?.progress || 0, tasksCompleted: 0, tasksTotal: 0, status: initialProject?.status || 'In Progress' };
         }
         const completed = tasks.filter(task => task.completed).length;
         const total = tasks.length;
         const progressPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
         const newStatus = progressPercentage === 100 ? 'Completed' : 'In Progress';
         return { progress: progressPercentage, tasksCompleted: completed, tasksTotal: total, status: newStatus };
-    }, [tasks, project]);
+    }, [tasks, initialProject]);
 
   return (
     <div>
@@ -84,9 +70,9 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
         <CardHeader>
           <div className="flex justify-between items-start">
             <div>
-              <CardTitle className="text-2xl font-headline">{project.title}</CardTitle>
+              <CardTitle className="text-2xl font-headline">{initialProject.title}</CardTitle>
               <CardDescription className="mt-1">
-                {project.description}
+                {initialProject.description}
               </CardDescription>
             </div>
             <Badge variant={status === 'Completed' ? 'secondary' : 'default'}>
@@ -113,6 +99,7 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
                       id={`task-${task.id}`}
                       checked={task.completed}
                       onCheckedChange={() => handleTaskChange(task.id)}
+                      disabled={isPending}
                     />
                     <Label
                       htmlFor={`task-${task.id}`}

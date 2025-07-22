@@ -16,12 +16,23 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { initialData } from "@/lib/seed-data";
 import { Button } from '@/components/ui/button';
 import { ArrowRight } from 'lucide-react';
+import dbConnect from '@/lib/db';
+import Intern from '@/lib/models/Intern';
+import { initialData } from '@/lib/seed-data';
+
 
 async function getInterns() {
-  return initialData.interns;
+  await dbConnect();
+  let interns = await Intern.find({}).lean();
+  if (!interns || interns.length === 0) {
+      // Seed data if collection is empty
+      await Intern.insertMany(initialData.interns);
+      interns = await Intern.find({}).lean();
+  }
+  // Mongoose returns objects with _id. We convert them to strings for serialization.
+  return interns.map(intern => ({...intern, _id: intern._id.toString()}));
 }
 
 export default async function InternsPage() {
@@ -47,7 +58,7 @@ export default async function InternsPage() {
                     </TableHeader>
                     <TableBody>
                         {interns.map((intern) => (
-                            <TableRow key={intern.id}>
+                            <TableRow key={intern._id}>
                                 <TableCell className="font-medium">{intern.name}</TableCell>
                                 <TableCell>{intern.email}</TableCell>
                                 <TableCell>{intern.project}</TableCell>
@@ -59,7 +70,7 @@ export default async function InternsPage() {
                                 </TableCell>
                                 <TableCell className="text-right">
                                     <Button asChild variant="outline" size="sm">
-                                        <Link href={`/dashboard/intern/${intern.id}`}>
+                                        <Link href={`/dashboard/intern/${intern._id}`}>
                                             View <ArrowRight className="ml-2 h-4 w-4" />
                                         </Link>
                                     </Button>

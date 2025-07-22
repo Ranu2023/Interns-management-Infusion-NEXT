@@ -1,24 +1,35 @@
 
+'use server';
+
 import { notFound } from 'next/navigation';
-import { initialData } from '@/lib/seed-data';
-import type { Project } from '@/lib/types';
+import dbConnect from '@/lib/db';
+import Project from '@/lib/models/Project';
 import { ProjectDetailsClient } from './ProjectDetailsClient';
 
-async function getProject(id: number): Promise<Project | null> {
-    // In a real app, this would fetch from a database.
-    // We'll simulate that by finding it in our seed data.
-    // A localStorage check would happen on the client.
-    const project = initialData.projects.find(p => p.id === id) || null;
-    return project;
+// Helper function to safely stringify objects for passing to client components
+function safeJsonStringify(obj: any) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+async function getProject(id: string): Promise<any | null> {
+    try {
+        await dbConnect();
+        const project = await Project.findById(id).lean();
+        return project ? safeJsonStringify(project) : null;
+    } catch (error) {
+        console.error("Failed to fetch project", error);
+        return null;
+    }
 }
 
 export default async function ProjectDetailsPage({ params }: { params: { id: string } }) {
-    const projectId = parseInt(params.id, 10);
-    if (isNaN(projectId)) {
+    
+    // Validate ID format before hitting the DB
+    if (!params.id.match(/^[0-9a-fA-F]{24}$/)) {
         notFound();
     }
 
-    const project = await getProject(projectId);
+    const project = await getProject(params.id);
 
     if (!project) {
         notFound();

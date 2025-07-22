@@ -1,4 +1,5 @@
 
+
 import { initialData } from '@/lib/seed-data';
 import { type Intern, type Project } from '@/lib/types';
 import { notFound } from 'next/navigation';
@@ -15,22 +16,35 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Briefcase, Star, User } from 'lucide-react';
 import { InternProfileClient } from './InternProfileClient';
+import dbConnect from '@/lib/db';
+import InternModel from '@/lib/models/Intern';
+import ProjectModel from '@/lib/models/Project';
 
-async function getInternData(id: number): Promise<{ intern: Intern | null, project: Project | null }> {
-    const intern = initialData.interns.find(i => i.id === id) || null;
+// Helper function to safely stringify objects for passing to client components
+function safeJsonStringify(obj: any) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+
+async function getInternData(id: string): Promise<{ intern: Intern | null, project: Project | null }> {
+    await dbConnect();
+    const intern = await InternModel.findById(id).lean();
     if (!intern) return { intern: null, project: null };
 
-    const project = initialData.projects.find(p => p.title === intern.project) || null;
-    return { intern, project };
+    const project = await ProjectModel.findOne({ title: intern.project }).lean();
+    
+    return { 
+        intern: safeJsonStringify(intern), 
+        project: project ? safeJsonStringify(project) : null 
+    };
 }
 
 export default async function InternProfilePage({ params }: { params: { id: string } }) {
-    const internId = parseInt(params.id, 10);
-    if (isNaN(internId)) {
+    if (!params.id.match(/^[0-9a-fA-F]{24}$/)) {
         notFound();
     }
     
-    const { intern, project } = await getInternData(internId);
+    const { intern, project } = await getInternData(params.id);
 
     if (!intern) {
         notFound();
@@ -89,3 +103,4 @@ export default async function InternProfilePage({ params }: { params: { id: stri
         </div>
     );
 }
+

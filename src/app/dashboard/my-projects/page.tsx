@@ -3,7 +3,6 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
 import {
   Card,
   CardHeader,
@@ -14,24 +13,48 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, ListTodo, GitFork, FileText, Download } from 'lucide-react';
+import { CheckCircle2, ListTodo, GitFork, FileText, Download, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { initialData } from '@/lib/seed-data';
 import type { Project, Task } from '@/lib/types';
 
 
+async function getMyProjects(userEmail: string): Promise<Project[]> {
+    // In a real app, this would be an API call or a server action
+    // that filters projects based on the logged-in intern's email.
+    // We'll simulate this by filtering the seed data.
+    const intern = initialData.interns.find(i => i.email === userEmail);
+    if (!intern) return [];
+    
+    // In a real app, we would fetch the projects directly by title or ID.
+    const projectTitles = [intern.project];
+    const projects = initialData.projects.filter(p => projectTitles.includes(p.title));
+    return projects as Project[];
+}
+
 export default function MyProjectsPage() {
     const [projects, setProjects] = useState<Project[]>([]);
+    const [loading, setLoading] = useState(true);
     const router = useRouter();
 
     useEffect(() => {
-        // Load projects and task statuses from localStorage on mount
-        const savedProjects = localStorage.getItem('projectsData');
-        if (savedProjects) {
-            setProjects(JSON.parse(savedProjects));
-        } else {
-            setProjects(initialData.projects as Project[]);
+        const fetchProjects = async () => {
+            // For now, we simulate a user. In a real app, you'd get this from context.
+            const userEmail = "intern@synergy.com";
+            // This local storage logic will be replaced by DB fetching on the details page.
+            const savedProjects = localStorage.getItem('projectsData');
+            
+            let dataToSet;
+            if (savedProjects) {
+                dataToSet = JSON.parse(savedProjects);
+            } else {
+                dataToSet = await getMyProjects(userEmail);
+                localStorage.setItem('projectsData', JSON.stringify(dataToSet));
+            }
+            setProjects(dataToSet);
+            setLoading(false);
         }
+        fetchProjects();
     }, []);
     
     const processedProjects = useMemo(() => {
@@ -55,6 +78,13 @@ export default function MyProjectsPage() {
         router.push(`/dashboard/my-projects/${projectId}`);
     };
 
+    if (loading) {
+         return (
+             <div className="flex justify-center items-center h-64">
+                <Loader2 className="h-8 w-8 animate-spin" />
+            </div>
+        )
+    }
 
     return (
         <div>
