@@ -1,4 +1,10 @@
 
+export interface Task {
+    id: number;
+    title: string;
+    completed: boolean;
+}
+
 export interface Intern {
     id: number;
     name: string;
@@ -25,9 +31,12 @@ export interface Project {
     title: string;
     description: string;
     status: 'In Progress' | 'Completed' | 'On-Hold' | 'Not Started';
-    progress: number;
     team: string[];
     mentor: string;
+    document: string | null;
+    recentActivity: string;
+    tasks: Task[];
+    progress?: number;
 }
 
 export interface Application {
