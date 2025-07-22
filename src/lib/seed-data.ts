@@ -11,6 +11,8 @@ export const initialData = {
     { id: 8, name: "Hannah Martinez", email: "hannah.m@example.com", project: "Mobile App Redesign", mentor: "John Smith", status: "Completed", assessmentScore: 85, ppoStatus: "Recommended", ppoReasoning: "Consistently delivered high-quality work and showed great potential." },
     { id: 9, name: "Ian Hernandez", email: "ian.h@example.com", project: "UI/UX Improvement", mentor: "Emily White", status: "Active", ppoStatus: "Pending" },
     { id: 10, name: "Jasmine Lopez", email: "jasmine.l@example.com", project: "Cloud Migration Strategy", mentor: "Michael Green", status: "Active", ppoStatus: "Pending" },
+    { id: 11, name: "Ken Adams", email: "ken.a@example.com", project: "E-commerce Platform", mentor: "Sarah Black", status: "Active", ppoStatus: "Pending" },
+    { id: 12, name: "Laura Hill", email: "laura.h@example.com", project: "Internal Tooling", mentor: "David King", status: "Active", ppoStatus: "Pending" },
   ],
   mentors: [
     { id: 1, name: "Dr. Guide", email: "mentor@synergy.com", expertise: "AI/ML", interns: 2, avatar: "https://placehold.co/100x100.png" },
@@ -18,8 +20,8 @@ export const initialData = {
     { id: 3, name: "John Smith", email: "john.s@synergy.com", expertise: "Mobile Development", interns: 2, avatar: "https://placehold.co/100x100.png" },
     { id: 4, name: "Emily White", email: "emily.w@synergy.com", expertise: "UI/UX Design", interns: 2, avatar: "https://placehold.co/100x100.png" },
     { id: 5, name: "Michael Green", email: "michael.g@synergy.com", expertise: "Cloud Architecture", interns: 2, avatar: "https://placehold.co/100x100.png" },
-    { id: 6, name: "Sarah Black", email: "sarah.b@synergy.com", expertise: "Backend Systems", interns: 0, avatar: "https://placehold.co/100x100.png" },
-    { id: 7, name: "David King", email: "david.k@synergy.com", expertise: "DevOps", interns: 0, avatar: "https://placehold.co/100x100.png" },
+    { id: 6, name: "Sarah Black", email: "sarah.b@synergy.com", expertise: "Backend Systems", interns: 1, avatar: "https://placehold.co/100x100.png" },
+    { id: 7, name: "David King", email: "david.k@synergy.com", expertise: "DevOps", interns: 1, avatar: "https://placehold.co/100x100.png" },
     { id: 8, name: "Laura Hill", email: "laura.h@synergy.com", expertise: "Product Management", interns: 0, avatar: "https://placehold.co/100x100.png" },
     { id: 9, name: "Kevin Scott", email: "kevin.s@synergy.com", expertise: "Cybersecurity", interns: 0, avatar: "https://placehold.co/100x100.png" },
     { id: 10, name: "Olivia Adams", email: "olivia.a@synergy.com", expertise: "Frontend Development", interns: 0, avatar: "https://placehold.co/100x100.png" },
@@ -38,15 +40,11 @@ export const initialData = {
         { id: 1, title: "Setup chatbot framework", completed: true },
         { id: 2, title: "Integrate with Zendesk API", completed: true },
         { id: 3, title: "Train initial intent model", completed: true },
-        { id: 4, title: "Design conversation flows", completed: true },
-        { id: 5, title: "Implement user feedback mechanism", completed: true },
+        { id: 4, title: "Design conversation flows", completed: false },
+        { id: 5, title: "Implement user feedback mechanism", completed: false },
         { id: 6, title: "Develop analytics dashboard for chatbot", completed: false },
-        { id: 7, title: "Test conversation flows", completed: true },
+        { id: 7, title: "Test conversation flows", completed: false },
         { id: 8, title: "Deploy chatbot to staging", completed: false },
-        { id: 9, title: "Write documentation", completed: false },
-        { id: 10, title: "Final UAT with support team", completed: false },
-        { id: 11, title: "Prepare production launch plan", completed: false },
-        { id: 12, title: "Analyze post-launch metrics", completed: false }
       ]
     },
     { 
@@ -69,11 +67,6 @@ export const initialData = {
         { id: 8, title: "Add chart for user engagement", completed: false },
         { id: 9, title: "Implement user authentication for dashboard", completed: false },
         { id: 10, title: "Optimize dashboard loading performance", completed: false },
-        { id: 11, title: "Test dashboard with live data", completed: false },
-        { id: 12, title: "Gather feedback from stakeholders", completed: false },
-        { id: 13, title: "Deploy to production", completed: false },
-        { id: 14, title: "Create user guide for the dashboard", completed: false },
-        { id: 15, title: "Set up automated daily reports", completed: false }
       ]
     },
     { 
@@ -85,19 +78,85 @@ export const initialData = {
       mentor: "John Smith",
       document: "https://example.com/mobile-redesign-spec.pdf",
       recentActivity: "Final version approved and merged.",
-      tasks: Array.from({ length: 20 }, (_, i) => ({
+      tasks: Array.from({ length: 15 }, (_, i) => ({
         id: i + 1,
         title: `Completed Task ${i + 1}`,
         completed: true
       }))
     },
-    { id: 4, title: "UI/UX Improvement", description: "Conduct user research and implement UI/UX improvements across the website.", status: "In Progress", progress: 75, team: ["Diana", "Ian"], mentor: "Emily White", tasks: [] },
-    { id: 5, title: "Cloud Migration Strategy", description: "Plan and execute the migration of legacy systems to a cloud-based infrastructure.", status: "On-Hold", progress: 20, team: ["Ethan", "Jasmine"], mentor: "Michael Green", tasks: [] },
-    { id: 6, title: "E-commerce Platform", description: "Build a new e-commerce platform from scratch.", status: "Not Started", progress: 0, team: [], mentor: "Sarah Black", tasks: [] },
-    { id: 7, title: "Internal Tooling", description: "Develop internal tools to improve developer productivity.", status: "In Progress", progress: 80, team: [], mentor: "David King", tasks: [] },
-    { id: 8, title: "API Security Audit", description: "Perform a comprehensive security audit of all public-facing APIs.", status: "In Progress", progress: 30, team: [], mentor: "Kevin Scott", tasks: [] },
-    { id: 9, title: "Marketing Website", description: "Create a new marketing website to showcase products.", status: "Completed", progress: 100, team: [], mentor: "Olivia Adams", tasks: [] },
-    { id: 10, title: "Onboarding Flow", description: "Redesign the user onboarding flow for new customers.", status: "Not Started", progress: 0, team: [], mentor: "Emily White", tasks: [] },
+    { 
+        id: 4, 
+        title: "UI/UX Improvement", 
+        description: "Conduct user research and implement UI/UX improvements across the website.", 
+        status: "In Progress", 
+        team: ["Diana Miller", "Ian Hernandez"], 
+        mentor: "Emily White", 
+        document: null,
+        recentActivity: "User interviews completed.",
+        tasks: [
+            { id: 1, title: "Plan user research sessions", completed: true },
+            { id: 2, title: "Conduct user interviews", completed: true },
+            { id: 3, title: "Analyze interview feedback", completed: true },
+            { id: 4, title: "Create user personas", completed: false },
+            { id: 5, title: "Develop wireframes for new UI", completed: false },
+            { id: 6, title: "Build interactive prototypes", completed: false },
+            { id: 7, title: "Usability testing on prototypes", completed: false },
+        ] 
+    },
+    { 
+        id: 5, 
+        title: "Cloud Migration Strategy", 
+        description: "Plan and execute the migration of legacy systems to a cloud-based infrastructure.", 
+        status: "On-Hold", 
+        team: ["Ethan Davis", "Jasmine Lopez"], 
+        mentor: "Michael Green",
+        document: "https://example.com/cloud-migration-plan.pdf",
+        recentActivity: "Project currently on hold.",
+        tasks: [
+            { id: 1, title: "Audit current legacy systems", completed: true },
+            { id: 2, title: "Choose cloud provider (AWS/GCP/Azure)", completed: true },
+            { id: 3, title: "Develop migration roadmap", completed: false },
+            { id: 4, title: "PoC for a small service migration", completed: false },
+        ]
+    },
+    { 
+        id: 6, 
+        title: "E-commerce Platform", 
+        description: "Build a new e-commerce platform from scratch.", 
+        status: "In Progress", 
+        team: ["Ken Adams"], 
+        mentor: "Sarah Black", 
+        document: null,
+        recentActivity: "Product schema defined.",
+        tasks: [
+            { id: 1, title: "Define database schema for products", completed: true },
+            { id: 2, title: "Setup project structure and dependencies", completed: true },
+            { id: 3, title: "Implement user authentication", completed: false },
+            { id: 4, title: "Build product listing page", completed: false },
+            { id: 5, title: "Build product detail page", completed: false },
+            { id: 6, title: "Implement shopping cart", completed: false },
+        ] 
+    },
+    { 
+        id: 7, 
+        title: "Internal Tooling", 
+        description: "Develop internal tools to improve developer productivity.", 
+        status: "In Progress", 
+        team: ["Laura Hill"], 
+        mentor: "David King", 
+        document: null,
+        recentActivity: "Initial version deployed.",
+        tasks: [
+            { id: 1, title: "Gather requirements from dev teams", completed: true },
+            { id: 2, title: "Design CLI interface", completed: true },
+            { id: 3, title: "Implement build automation script", completed: true },
+            { id: 4, title: "Implement deployment script", completed: false },
+            { id: 5, title: "Add logging and monitoring", completed: false },
+        ]
+    },
+    { id: 8, title: "API Security Audit", description: "Perform a comprehensive security audit of all public-facing APIs.", status: "Not Started", team: [], mentor: "Kevin Scott", document: null, recentActivity: "Pending kickoff.", tasks: [] },
+    { id: 9, title: "Marketing Website", description: "Create a new marketing website to showcase products.", status: "Completed", team: [], mentor: "Olivia Adams", document: null, recentActivity: "Launched last week.", tasks: [] },
+    { id: 10, title: "Onboarding Flow", description: "Redesign the user onboarding flow for new customers.", status: "Not Started", team: [], mentor: "Emily White", document: null, recentActivity: "Awaiting design mocks.", tasks: [] },
   ],
   applications: [
     { id: 1, name: "Liam Smith", university: "Tech University", date: "2024-06-01", status: "Pending" },
@@ -110,5 +169,9 @@ export const initialData = {
     { id: 8, name: "Sophia Anderson", university: "City University", date: "2024-06-06", status: "Accepted" },
     { id: 9, name: "James Thomas", university: "Tech University", date: "2024-06-07", status: "Pending" },
     { id: 10, name: "Isabella Hernandez", university: "State College", date: "2024-06-08", status: "Rejected" },
+    { id: 11, name: "William Moore", university: "Metro University", date: "2024-06-09", status: "Pending" },
+    { id: 12, name: "Mia Clark", university: "National University", date: "2024-06-10", status: "Pending" },
+    { id: 13, name: "Benjamin Lewis", university: "Coastal University", date: "2024-06-11", status: "Reviewed" },
+    { id: 14, name: "Charlotte Hall", university: "Mountain State", date: "2024-06-12", status: "Accepted" },
   ]
 };
