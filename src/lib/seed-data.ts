@@ -1,5 +1,12 @@
+import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
 
-export const initialData = {
+dotenv.config();
+
+const uri = process.env.MONGODB_URI!;
+const dbName = process.env.MONGODB_DB_NAME!;
+
+const initialData = {
   interns: [
     { id: 1, name: "Alice Johnson", email: "alice.j@example.com", project: "AI Chatbot Integration", mentor: "Dr. Guide", status: "Active", ppoStatus: "Pending" },
     { id: 2, name: "Bob Williams", email: "bob.w@example.com", project: "Data Analytics Dashboard", mentor: "Jane Doe", status: "Active", ppoStatus: "Pending" },
@@ -27,136 +34,13 @@ export const initialData = {
     { id: 10, name: "Olivia Adams", email: "olivia.a@synergy.com", expertise: "Frontend Development", interns: 0, avatar: "https://placehold.co/100x100.png" },
   ],
   projects: [
-    { 
-      id: 1, 
-      title: "AI Chatbot Integration", 
-      description: "Integrate a new AI-powered chatbot into the customer support platform.", 
-      status: "In Progress", 
-      team: ["Alice Johnson", "Fiona Garcia"], 
-      mentor: "Dr. Guide",
-      document: "https://example.com/chatbot-brief.pdf",
-      recentActivity: "Pushed new intent recognition model.",
-      tasks: [
-        { id: 1, title: "Setup chatbot framework", completed: true },
-        { id: 2, title: "Integrate with Zendesk API", completed: true },
-        { id: 3, title: "Train initial intent model", completed: true },
-        { id: 4, title: "Design conversation flows", completed: false },
-        { id: 5, title: "Implement user feedback mechanism", completed: false },
-        { id: 6, title: "Develop analytics dashboard for chatbot", completed: false },
-        { id: 7, title: "Test conversation flows", completed: false },
-        { id: 8, title: "Deploy chatbot to staging", completed: false },
-      ]
-    },
-    { 
-      id: 2, 
-      title: "Data Analytics Dashboard", 
-      description: "Develop a dashboard for visualizing key business metrics and KPIs.", 
-      status: "In Progress", 
-      team: ["Bob Williams", "George Rodriguez"], 
-      mentor: "Jane Doe",
-      document: null,
-      recentActivity: "Added new chart for user engagement.",
-      tasks: [
-        { id: 1, title: "Define key metrics (KPIs)", completed: true },
-        { id: 2, title: "Setup data pipeline from production DB", completed: true },
-        { id: 3, title: "Choose a data visualization library", completed: true },
-        { id: 4, title: "Design dashboard layout", completed: true },
-        { id: 5, title: "Implement date range filter", completed: true },
-        { id: 6, title: "Add chart for user growth", completed: false },
-        { id: 7, title: "Add chart for revenue", completed: false },
-        { id: 8, title: "Add chart for user engagement", completed: false },
-        { id: 9, title: "Implement user authentication for dashboard", completed: false },
-        { id: 10, title: "Optimize dashboard loading performance", completed: false },
-      ]
-    },
-    { 
-      id: 3, 
-      title: "Mobile App Redesign", 
-      description: "Complete redesign of the flagship mobile application for iOS and Android.", 
-      status: "Completed", 
-      team: ["Charlie Brown", "Hannah Martinez"], 
-      mentor: "John Smith",
-      document: "https://example.com/mobile-redesign-spec.pdf",
-      recentActivity: "Final version approved and merged.",
-      tasks: Array.from({ length: 15 }, (_, i) => ({
-        id: i + 1,
-        title: `Completed Task ${i + 1}`,
-        completed: true
-      }))
-    },
-    { 
-        id: 4, 
-        title: "UI/UX Improvement", 
-        description: "Conduct user research and implement UI/UX improvements across the website.", 
-        status: "In Progress", 
-        team: ["Diana Miller", "Ian Hernandez"], 
-        mentor: "Emily White", 
-        document: null,
-        recentActivity: "User interviews completed.",
-        tasks: [
-            { id: 1, title: "Plan user research sessions", completed: true },
-            { id: 2, title: "Conduct user interviews", completed: true },
-            { id: 3, title: "Analyze interview feedback", completed: true },
-            { id: 4, title: "Create user personas", completed: false },
-            { id: 5, title: "Develop wireframes for new UI", completed: false },
-            { id: 6, title: "Build interactive prototypes", completed: false },
-            { id: 7, title: "Usability testing on prototypes", completed: false },
-        ] 
-    },
-    { 
-        id: 5, 
-        title: "Cloud Migration Strategy", 
-        description: "Plan and execute the migration of legacy systems to a cloud-based infrastructure.", 
-        status: "On-Hold", 
-        team: ["Ethan Davis", "Jasmine Lopez"], 
-        mentor: "Michael Green",
-        document: "https://example.com/cloud-migration-plan.pdf",
-        recentActivity: "Project currently on hold.",
-        tasks: [
-            { id: 1, title: "Audit current legacy systems", completed: true },
-            { id: 2, title: "Choose cloud provider (AWS/GCP/Azure)", completed: true },
-            { id: 3, title: "Develop migration roadmap", completed: false },
-            { id: 4, title: "PoC for a small service migration", completed: false },
-        ]
-    },
-    { 
-        id: 6, 
-        title: "E-commerce Platform", 
-        description: "Build a new e-commerce platform from scratch.", 
-        status: "In Progress", 
-        team: ["Ken Adams"], 
-        mentor: "Sarah Black", 
-        document: null,
-        recentActivity: "Product schema defined.",
-        tasks: [
-            { id: 1, title: "Define database schema for products", completed: true },
-            { id: 2, title: "Setup project structure and dependencies", completed: true },
-            { id: 3, title: "Implement user authentication", completed: false },
-            { id: 4, title: "Build product listing page", completed: false },
-            { id: 5, title: "Build product detail page", completed: false },
-            { id: 6, title: "Implement shopping cart", completed: false },
-        ] 
-    },
-    { 
-        id: 7, 
-        title: "Internal Tooling", 
-        description: "Develop internal tools to improve developer productivity.", 
-        status: "In Progress", 
-        team: ["Laura Hill"], 
-        mentor: "David King", 
-        document: null,
-        recentActivity: "Initial version deployed.",
-        tasks: [
-            { id: 1, title: "Gather requirements from dev teams", completed: true },
-            { id: 2, title: "Design CLI interface", completed: true },
-            { id: 3, title: "Implement build automation script", completed: true },
-            { id: 4, title: "Implement deployment script", completed: false },
-            { id: 5, title: "Add logging and monitoring", completed: false },
-        ]
-    },
-    { id: 8, title: "API Security Audit", description: "Perform a comprehensive security audit of all public-facing APIs.", status: "Not Started", team: [], mentor: "Kevin Scott", document: null, recentActivity: "Pending kickoff.", tasks: [] },
-    { id: 9, title: "Marketing Website", description: "Create a new marketing website to showcase products.", status: "Completed", team: [], mentor: "Olivia Adams", document: null, recentActivity: "Launched last week.", tasks: [] },
-    { id: 10, title: "Onboarding Flow", description: "Redesign the user onboarding flow for new customers.", status: "Not Started", team: [], mentor: "Emily White", document: null, recentActivity: "Awaiting design mocks.", tasks: [] },
+    { id: 1, name: "AI Chatbot Integration", department: "AI/ML", status: "Ongoing" },
+    { id: 2, name: "Data Analytics Dashboard", department: "Data Science", status: "Ongoing" },
+    { id: 3, name: "Mobile App Redesign", department: "Mobile", status: "Completed" },
+    { id: 4, name: "UI/UX Improvement", department: "Design", status: "Ongoing" },
+    { id: 5, name: "Cloud Migration Strategy", department: "Cloud", status: "On-Hold" },
+    { id: 6, name: "E-commerce Platform", department: "Web", status: "Ongoing" },
+    { id: 7, name: "Internal Tooling", department: "Infrastructure", status: "Ongoing" },
   ],
   applications: [
     { id: 1, name: "Liam Smith", university: "Tech University", date: "2024-06-01", status: "Pending" },
@@ -175,3 +59,37 @@ export const initialData = {
     { id: 14, name: "Charlotte Hall", university: "Mountain State", date: "2024-06-12", status: "Accepted" },
   ]
 };
+
+async function seed() {
+  const client = new MongoClient(uri);
+  try {
+    await client.connect();
+    const db = client.db(dbName);
+    console.log("🚀 Connected to MongoDB");
+
+    await db.collection("interns").deleteMany({});
+    await db.collection("interns").insertMany(initialData.interns);
+    console.log("✅ Interns seeded");
+
+    await db.collection("mentors").deleteMany({});
+    await db.collection("mentors").insertMany(initialData.mentors);
+    console.log("✅ Mentors seeded");
+
+    await db.collection("projects").deleteMany({});
+    await db.collection("projects").insertMany(initialData.projects);
+    console.log("✅ Projects seeded");
+
+    await db.collection("applications").deleteMany({});
+    await db.collection("applications").insertMany(initialData.applications);
+    console.log("✅ Applications seeded");
+
+    console.log("🎉 Seeding complete!");
+  } catch (err) {
+    console.error("❌ Seeding error:", err);
+  } finally {
+    await client.close();
+    console.log("🔌 Disconnected from MongoDB");
+  }
+}
+
+seed();

@@ -31,7 +31,6 @@ async function seedDatabase() {
         console.log('Seeded mentors.');
 
         // The seed data for projects needs to be processed to match the schema.
-        // The schema expects an array of Tasks, not just a number.
         const projectsToSeed = initialData.projects.map(p => ({
             ...p,
             progress: p.tasks.length > 0 ? (p.tasks.filter(t => t.completed).length / p.tasks.length) * 100 : 0,
@@ -45,3 +44,7 @@ async function seedDatabase() {
         console.error('Error seeding database:', error);
     } finally {
         process.exit();
+    }
+}
+
+seedDatabase();
