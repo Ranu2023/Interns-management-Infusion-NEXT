@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Card,
   CardHeader,
@@ -19,17 +19,27 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 
 const initialProjects = [
-  { id: 1, title: "AI Chatbot Integration", status: "In Progress", progress: 60, mentor: "Dr. Guide", tasksCompleted: 8, tasksTotal: 12, recentActivity: "Pushed new intent recognition model.", document: "https://example.com/chatbot-brief.pdf" },
-  { id: 2, title: "Data Analytics Dashboard", status: "In Progress", progress: 45, mentor: "Jane Doe", tasksCompleted: 5, tasksTotal: 15, recentActivity: "Added new chart for user engagement.", document: null },
+  { id: 1, title: "AI Chatbot Integration", status: "In Progress", progress: 0, mentor: "Dr. Guide", tasksCompleted: 8, tasksTotal: 12, recentActivity: "Pushed new intent recognition model.", document: "https://example.com/chatbot-brief.pdf" },
+  { id: 2, title: "Data Analytics Dashboard", status: "In Progress", progress: 0, mentor: "Jane Doe", tasksCompleted: 5, tasksTotal: 15, recentActivity: "Added new chart for user engagement.", document: null },
   { id: 3, title: "Mobile App Redesign", status: "Completed", progress: 100, mentor: "John Smith", tasksCompleted: 20, tasksTotal: 20, recentActivity: "Final version approved and merged.", document: "https://example.com/mobile-redesign-spec.pdf" },
 ];
 
 export default function MyProjectsPage() {
-    const [projects, setProjects] = useState(initialProjects);
+    const [projects, setProjects] = useState(initialProjects.map(p => ({
+        ...p,
+        progress: p.status === 'Completed' ? 100 : Math.round((p.tasksCompleted / p.tasksTotal) * 100)
+    })));
 
-    const handleProgressChange = (projectId: number, newProgress: number) => {
-        setProjects(projects.map(p => p.id === projectId ? { ...p, progress: newProgress } : p));
-    };
+    useEffect(() => {
+        // This effect updates the status if tasks are completed.
+        // In a real app, you might have a function to increment tasksCompleted.
+        setProjects(currentProjects => currentProjects.map(p => {
+            const progress = Math.round((p.tasksCompleted / p.tasksTotal) * 100);
+            const status = progress === 100 ? 'Completed' : 'In Progress';
+            return { ...p, progress, status };
+        }));
+    }, []);
+
 
     return (
         <div>
@@ -65,10 +75,9 @@ export default function MyProjectsPage() {
                                     <Slider
                                         id={`progress-${project.id}`}
                                         value={[project.progress]}
-                                        onValueChange={(value) => handleProgressChange(project.id, value[0])}
                                         max={100}
-                                        step={5}
-                                        disabled={project.status === 'Completed'}
+                                        step={1}
+                                        disabled={true} // The slider is now a read-only indicator
                                     />
                                 </div>
                                 <div className="flex justify-around text-center text-sm">
