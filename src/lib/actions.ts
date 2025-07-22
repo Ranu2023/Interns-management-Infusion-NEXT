@@ -155,3 +155,52 @@ export async function submitDailyReport(formData: FormData) {
         return { success: false, message: 'Failed to submit report.'}
     }
 }
+
+export async function savePPOAssessment(internId: string, formData: FormData) {
+    const assessmentScore = formData.get('assessmentScore');
+    const ppoStatus = formData.get('ppoStatus');
+    const ppoReasoning = formData.get('ppoReasoning');
+
+    try {
+        await dbConnect();
+        const intern = await Intern.findByIdAndUpdate(internId, {
+            assessmentScore: Number(assessmentScore),
+            ppoStatus,
+            ppoReasoning
+        }, { new: true });
+
+        if (!intern) {
+            return { success: false, message: 'Intern not found' };
+        }
+        revalidatePath(`/dashboard/intern/${internId}`);
+        revalidatePath('/dashboard/ppo-status');
+        
+        return { success: true, message: 'Assessment saved successfully!' };
+    } catch (error) {
+        console.error('Failed to save assessment', error);
+        return { success: false, message: 'Failed to save assessment.' };
+    }
+}
+
+export async function updatePPODecision(internId: string, decision: 'Accepted' | 'Rejected') {
+    try {
+        await dbConnect();
+        const intern = await Intern.findByIdAndUpdate(internId, {
+            ppoDecision: decision,
+            status: decision === 'Accepted' ? 'Completed' : 'Completed' // Or some other status
+        }, { new: true });
+
+        if (!intern) {
+            return { success: false, message: 'Intern not found' };
+        }
+
+        revalidatePath('/dashboard/ppo-status');
+        revalidatePath(`/dashboard/intern/${internId}`);
+        revalidatePath('/dashboard/interns');
+
+        return { success: true, message: `PPO decision updated to ${decision}` };
+    } catch (error) {
+        console.error('Failed to update PPO decision', error);
+        return { success: false, message: 'Failed to update PPO decision.' };
+    }
+}

@@ -9,6 +9,7 @@ export interface IIntern extends Document {
     assessmentScore?: number;
     ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
     ppoReasoning?: string;
+    ppoDecision?: 'Accepted' | 'Rejected' | 'Pending';
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
@@ -20,6 +21,7 @@ const InternSchema: Schema<IIntern> = new Schema({
     assessmentScore: { type: Number },
     ppoStatus: { type: String, enum: ['Recommended', 'Not Recommended', 'Pending'] },
     ppoReasoning: { type: String },
+    ppoDecision: { type: String, enum: ['Accepted', 'Rejected', 'Pending'], default: 'Pending' },
 });
 
 const Intern: Model<IIntern> = models.Intern || mongoose.model<IIntern>('Intern', InternSchema);

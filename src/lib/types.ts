@@ -17,6 +17,7 @@ export interface Intern {
     assessmentScore?: number;
     ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
     ppoReasoning?: string;
+    ppoDecision?: 'Accepted' | 'Rejected' | 'Pending';
 }
 
 export interface Mentor {

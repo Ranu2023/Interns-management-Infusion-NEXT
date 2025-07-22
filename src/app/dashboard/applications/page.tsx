@@ -31,7 +31,7 @@ async function getApplications(): Promise<(IApplication & {_id: string})[]> {
     return applications.map(app => ({
         ...app, 
         _id: app._id.toString(),
-        date: app.date.toISOString() // Ensure date is a string
+        date: new Date(app.date).toISOString() // Ensure date is a string
     }));
   } catch (e) {
     console.error(e);

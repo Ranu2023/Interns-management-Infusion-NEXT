@@ -1,8 +1,8 @@
 
 'use client';
 
-import { useState } from 'react';
-import { type Intern, type Project } from '@/lib/types';
+import { useState, useRef, useActionState } from 'react';
+import type { Intern, Project } from '@/lib/types';
 import {
   Card,
   CardContent,
@@ -26,21 +26,47 @@ import { useAuth } from '@/context/AuthContext';
 import { suggestPPO, type SuggestPPOOutput } from '@/ai/flows/suggest-ppo';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Lightbulb, Loader2, Sparkles } from 'lucide-react';
+import { useFormStatus } from 'react-dom';
+import { savePPOAssessment } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
+
+
+function SubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Save Assessment
+        </Button>
+    )
+}
 
 export function InternProfileClient({ intern, project }: { intern: Intern, project: Project | null }) {
     const { user } = useAuth();
+    const formRef = useRef<HTMLFormElement>(null);
+    const { toast } = useToast();
     
-    const [assessmentScore, setAssessmentScore] = useState<number | undefined>(intern.assessmentScore);
-    const [ppoReasoning, setPpoReasoning] = useState(intern.ppoReasoning || '');
-    const [ppoStatus, setPpoStatus] = useState<'Recommended' | 'Not Recommended' | 'Pending' | undefined>(intern.ppoStatus);
-
     const [aiSuggestion, setAiSuggestion] = useState<SuggestPPOOutput | null>(null);
     const [aiLoading, setAiLoading] = useState(false);
+
+    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const result = await savePPOAssessment(intern._id, formData);
+        if (result.success) {
+            toast({ title: "Success", description: result.message });
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.message });
+        }
+        return result;
+    }, { success: false, message: '' });
 
     const handleGenerateSuggestion = async () => {
         if (!intern || !project) return;
         setAiLoading(true);
         setAiSuggestion(null);
+
+        // Get current form values for suggestion
+        const formData = new FormData(formRef.current!);
+        const assessmentScore = Number(formData.get('assessmentScore'));
 
         try {
             const result = await suggestPPO({
@@ -52,94 +78,90 @@ export function InternProfileClient({ intern, project }: { intern: Intern, proje
             setAiSuggestion(result);
         } catch (error) {
             console.error("AI suggestion failed:", error);
-            // In a real app, show a toast notification
+            toast({ variant: "destructive", title: "Error", description: "Failed to generate AI suggestion." });
         } finally {
             setAiLoading(false);
         }
     };
 
-    const handleSave = () => {
-        // In a real app, this would be a server action to update the database
-        console.log("Saving data:", { id: intern?.id, assessmentScore, ppoReasoning, ppoStatus });
-        alert("Data saved to console. In a real app, this would update the database.");
-    }
-
     const canManage = user?.role === 'hr' || user?.role === 'mentor';
 
     return (
         <Card>
-            <CardHeader>
-                <CardTitle>PPO Assessment & Recommendation</CardTitle>
-                <CardDescription>
-                    {canManage ? "Evaluate the intern's performance and make a PPO recommendation." : "View PPO assessment details."}
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-                <div className="grid md:grid-cols-2 gap-6">
+            <form ref={formRef} action={formAction}>
+                <CardHeader>
+                    <CardTitle>PPO Assessment & Recommendation</CardTitle>
+                    <CardDescription>
+                        {canManage ? "Evaluate the intern's performance and make a PPO recommendation." : "View PPO assessment details."}
+                    </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                    <div className="grid md:grid-cols-2 gap-6">
+                        <div className="space-y-2">
+                            <Label htmlFor="assessment-score">Final Assessment Score (out of 100)</Label>
+                            <Input
+                                id="assessment-score"
+                                name="assessmentScore"
+                                type="number"
+                                placeholder="e.g., 88"
+                                defaultValue={intern.assessmentScore || ''}
+                                disabled={!canManage}
+                            />
+                        </div>
+                         <div className="space-y-2">
+                            <Label htmlFor="ppo-status">PPO Status</Label>
+                            <Select
+                                name="ppoStatus"
+                                defaultValue={intern.ppoStatus}
+                                disabled={!canManage}
+                            >
+                                <SelectTrigger id="ppo-status">
+                                    <SelectValue placeholder="Select status..."/>
+                                </SelectTrigger>
+                                <SelectContent>
+                                    <SelectItem value="Pending">Pending</SelectItem>
+                                    <SelectItem value="Recommended">Recommended</SelectItem>
+                                    <SelectItem value="Not Recommended">Not Recommended</SelectItem>
+                                </SelectContent>
+                            </Select>
+                        </div>
+                    </div>
                     <div className="space-y-2">
-                        <Label htmlFor="assessment-score">Final Assessment Score (out of 100)</Label>
-                        <Input
-                            id="assessment-score"
-                            type="number"
-                            placeholder="e.g., 88"
-                            value={assessmentScore || ''}
-                            onChange={(e) => setAssessmentScore(Number(e.target.value))}
+                        <Label htmlFor="ppo-reasoning">Mentor's Reasoning</Label>
+                        <Textarea
+                            id="ppo-reasoning"
+                            name="ppoReasoning"
+                            placeholder="Explain the reasons for the PPO recommendation..."
+                            rows={5}
+                            defaultValue={intern.ppoReasoning || ''}
                             disabled={!canManage}
                         />
                     </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="ppo-status">PPO Status</Label>
-                        <Select
-                            value={ppoStatus}
-                            onValueChange={(val: any) => setPpoStatus(val)}
-                            disabled={!canManage}
-                        >
-                            <SelectTrigger id="ppo-status">
-                                <SelectValue placeholder="Select status..."/>
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="Pending">Pending</SelectItem>
-                                <SelectItem value="Recommended">Recommended</SelectItem>
-                                <SelectItem value="Not Recommended">Not Recommended</SelectItem>
-                            </SelectContent>
-                        </Select>
-                    </div>
-                </div>
-                <div className="space-y-2">
-                    <Label htmlFor="ppo-reasoning">Mentor's Reasoning</Label>
-                    <Textarea
-                        id="ppo-reasoning"
-                        placeholder="Explain the reasons for the PPO recommendation..."
-                        rows={5}
-                        value={ppoReasoning}
-                        onChange={(e) => setPpoReasoning(e.target.value)}
-                        disabled={!canManage}
-                    />
-                </div>
-                 {aiSuggestion && (
-                    <Alert>
-                        <Lightbulb className="h-4 w-4" />
-                        <AlertTitle>AI PPO Suggestion</AlertTitle>
-                        <AlertDescription className="prose dark:prose-invert max-w-none">
-                            <p><strong>Recommendation:</strong> {aiSuggestion.recommendation} (Confidence: {(aiSuggestion.confidenceScore * 100).toFixed(0)}%)</p>
-                            <p>{aiSuggestion.reasoning}</p>
-                        </AlertDescription>
-                    </Alert>
-                 )}
-            </CardContent>
-            {canManage && (
-                <CardFooter className="justify-between">
-                    <Button variant="outline" onClick={handleGenerateSuggestion} disabled={aiLoading}>
-                        {aiLoading ? (
-                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        ) : (
-                            <Sparkles className="mr-2 h-4 w-4" />
-                        )}
-                        {aiLoading ? 'Generating...' : 'Generate AI Suggestion'}
-                    </Button>
-                    <Button onClick={handleSave}>Save Assessment</Button>
-                </CardFooter>
-            )}
+                     {aiSuggestion && (
+                        <Alert>
+                            <Lightbulb className="h-4 w-4" />
+                            <AlertTitle>AI PPO Suggestion</AlertTitle>
+                            <AlertDescription className="prose dark:prose-invert max-w-none">
+                                <p><strong>Recommendation:</strong> {aiSuggestion.recommendation} (Confidence: {(aiSuggestion.confidenceScore * 100).toFixed(0)}%)</p>
+                                <p>{aiSuggestion.reasoning}</p>
+                            </AlertDescription>
+                        </Alert>
+                     )}
+                </CardContent>
+                {canManage && (
+                    <CardFooter className="justify-between">
+                        <Button type="button" variant="outline" onClick={handleGenerateSuggestion} disabled={aiLoading}>
+                            {aiLoading ? (
+                                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            ) : (
+                                <Sparkles className="mr-2 h-4 w-4" />
+                            )}
+                            {aiLoading ? 'Generating...' : 'Generate AI Suggestion'}
+                        </Button>
+                        <SubmitButton />
+                    </CardFooter>
+                )}
+            </form>
         </Card>
     );
 }

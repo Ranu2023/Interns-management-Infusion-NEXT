@@ -1,5 +1,5 @@
 
-'use client';
+'use server';
 
 import {
   Card,
@@ -7,27 +7,62 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
+  CardFooter
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Send, XCircle } from "lucide-react";
+import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import dbConnect from "@/lib/db";
+import Intern from "@/lib/models/Intern";
+import { type IIntern } from "@/lib/models/Intern";
+import { updatePPODecision } from "@/lib/actions";
 
-const timeline = [
-  { id: 1, title: "Internship Started", date: "2024-05-15", status: "Completed", icon: <CheckCircle /> },
-  { id: 2, title: "Mid-term Review", date: "2024-06-20", status: "Completed", icon: <CheckCircle /> },
-  { id: 3, title: "Final Presentation", date: "2024-07-25", status: "Completed", icon: <CheckCircle /> },
-  { id: 4, title: "PPO Consideration", date: "2024-07-28", status: "In Progress", icon: <Clock /> },
-  { id: 5, title: "HR Interview", date: "TBD", status: "Pending", icon: <Clock /> },
-  { id: 6, title: "Final Decision", date: "TBD", status: "Pending", icon: <Clock /> },
-  { id: 7, title: "Offer Letter", date: "TBD", status: "Pending", icon: <Clock /> },
-  { id: 8, title: "Offer Acceptance Deadline", date: "TBD", status: "Pending", icon: <Clock /> },
-  { id: 9, title: "Onboarding", date: "TBD", status: "Pending", icon: <Clock /> },
-  { id: 10, title: "Start Date", date: "TBD", status: "Pending", icon: <Clock /> },
+const timelineSteps = [
+  { id: 1, title: "Internship Started", status: "Completed", icon: <CheckCircle /> },
+  { id: 2, title: "Mid-term Review", status: "Completed", icon: <CheckCircle /> },
+  { id: 3, title: "Final Presentation", status: "Completed", icon: <CheckCircle /> },
+  { id: 4, title: "PPO Consideration", status: "In Progress", icon: <Clock /> },
+  { id: 5, title: "HR Interview", status: "Pending", icon: <Clock /> },
+  { id: 6, title: "Final Decision", status: "Pending", icon: <Clock /> },
 ];
 
-export default function PPOStatusPage() {
-    const currentStatus = "PPO Consideration";
-    const statusDescription = "Your performance is currently being evaluated for a Pre-Placement Offer. The committee is reviewing your project work, mentor feedback, and overall contribution.";
+async function getInternData(email: string): Promise<IIntern | null> {
+    await dbConnect();
+    const intern = await Intern.findOne({ email }).lean();
+    return intern;
+}
+
+export default async function PPOStatusPage() {
+    // In a real app, get from session
+    const internEmail = "intern@synergy.com";
+    const intern = await getInternData(internEmail);
+
+    if (!intern) {
+        return <Card><CardContent><p>No intern data found.</p></CardContent></Card>;
+    }
+    
+    const { ppoStatus, ppoDecision } = intern;
+    let currentStatus = ppoStatus || 'Pending';
+    let statusDescription = "Your performance is currently being evaluated for a Pre-Placement Offer.";
+
+    if (ppoStatus === 'Recommended' && ppoDecision === 'Pending') {
+        currentStatus = 'Offer Extended';
+        statusDescription = "Congratulations! You have been recommended for a Pre-Placement Offer. Please review and respond below.";
+    } else if (ppoStatus === 'Not Recommended') {
+        currentStatus = 'Not Recommended';
+        statusDescription = "After careful consideration, we have decided not to extend a Pre-Placement Offer at this time. We appreciate your hard work and wish you the best in your future endeavors.";
+    } else if (ppoDecision === 'Accepted') {
+        currentStatus = 'Offer Accepted';
+        statusDescription = "You have accepted the Pre-Placement Offer. Welcome aboard! HR will be in touch with the next steps.";
+    } else if (ppoDecision === 'Rejected') {
+        currentStatus = 'Offer Rejected';
+        statusDescription = "You have rejected the Pre-Placement Offer. We thank you for your contributions during the internship.";
+    }
+
+
+    const acceptAction = updatePPODecision.bind(null, intern._id.toString(), 'Accepted');
+    const rejectAction = updatePPODecision.bind(null, intern._id.toString(), 'Rejected');
+
 
     return (
         <Card>
@@ -39,23 +74,42 @@ export default function PPOStatusPage() {
                 <div className="md:col-span-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Current Status: <Badge>{currentStatus}</Badge></CardTitle>
+                            <CardTitle>Current Status: <Badge variant={
+                                ppoStatus === 'Recommended' ? 'default' :
+                                ppoStatus === 'Not Recommended' ? 'destructive' :
+                                'secondary'
+                            }>{currentStatus}</Badge></CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="text-muted-foreground">{statusDescription}</p>
+                            
+                            {ppoStatus === 'Recommended' && ppoDecision === 'Pending' && (
+                                <div className="mt-6 flex gap-4">
+                                     <form action={acceptAction}>
+                                        <Button>
+                                            <ThumbsUp className="mr-2"/> Accept Offer
+                                        </Button>
+                                    </form>
+                                    <form action={rejectAction}>
+                                        <Button variant="destructive">
+                                            <ThumbsDown className="mr-2"/> Reject Offer
+                                        </Button>
+                                    </form>
+                                </div>
+                            )}
+
                             <div className="mt-6">
                                 <h3 className="font-semibold mb-4">PPO Process Timeline</h3>
                                 <div className="relative">
                                     <div className="absolute left-3 top-0 h-full w-0.5 bg-border" />
                                     <ul className="space-y-8">
-                                        {timeline.slice(0, 6).map((item) => (
+                                        {timelineSteps.map((item) => (
                                             <li key={item.id} className="flex items-start gap-4">
                                                 <div className={`flex h-6 w-6 items-center justify-center rounded-full ${item.status === 'Completed' ? 'bg-green-500 text-white' : item.status === 'In Progress' ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20 text-muted-foreground'}`}>
                                                     {item.icon}
                                                 </div>
                                                 <div>
                                                     <p className="font-medium">{item.title}</p>
-                                                    <p className="text-xs text-muted-foreground">{item.date}</p>
                                                 </div>
                                             </li>
                                         ))}
@@ -72,7 +126,7 @@ export default function PPOStatusPage() {
                             <CardTitle className="text-lg">Next Steps</CardTitle>
                         </CardHeader>
                         <CardContent>
-                           <p className="text-sm text-muted-foreground">You will be notified via email if you are selected for an HR interview. No action is required from your side at the moment.</p>
+                           <p className="text-sm text-muted-foreground">You will be notified via email about any status changes. No action is required from your side unless an offer is extended.</p>
                         </CardContent>
                     </Card>
                      <Card>
@@ -88,7 +142,6 @@ export default function PPOStatusPage() {
                         </CardContent>
                     </Card>
                 </div>
-
             </CardContent>
         </Card>
     );
