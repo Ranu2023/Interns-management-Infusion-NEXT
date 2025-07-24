@@ -20,8 +20,6 @@ import { Role } from '@/context/AuthContext';
 export async function getSession() {
   const session = cookies().get('session')?.value;
   if (!session) return null;
-  // This should ideally import decrypt from session.ts but to avoid edge issues, we'll keep it self-contained if needed.
-  // For now, assuming decrypt is available globally or contextually. Let's fix the import if not.
   const { decrypt } = await import('./session');
   return await decrypt(session);
 }
@@ -45,7 +43,6 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Create user for authentication
         const newUser = new User({
             name,
             email,
@@ -55,7 +52,6 @@ export async function registerUser(prevState: any, formData: FormData) {
         });
         await newUser.save();
 
-        // Create corresponding profile in role-specific collection
         if (role === 'intern') {
             const newIntern = new Intern({
                 name,
@@ -78,6 +74,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newMentor.save();
         }
         
+        revalidatePath('/');
         return { success: true, message: 'Registration successful! Please log in.' };
 
     } catch (error) {
@@ -91,6 +88,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
+  let sessionUser;
   try {
     await dbConnect();
     const email = formData.get('email') as string;
@@ -106,7 +104,7 @@ export async function authenticate(prevState: string | undefined, formData: Form
         return 'CredentialsSignin';
     }
     
-    const sessionUser = { 
+    sessionUser = { 
         id: user._id.toString(), 
         name: user.name, 
         email: user.email, 
@@ -120,13 +118,13 @@ export async function authenticate(prevState: string | undefined, formData: Form
     cookies().set('session', session, { expires, httpOnly: true });
 
   } catch (error) {
-    if ((error as Error).message.includes('CredentialsSignin')) {
+    if (error instanceof Error && error.message.includes('CredentialsSignin')) {
         return 'CredentialsSignin';
     }
     console.error(error);
     return 'An unexpected error occurred.';
   }
-  // Redirect after successful login, outside the try/catch block
+  revalidatePath('/dashboard');
   redirect('/dashboard');
 }
 
@@ -141,7 +139,6 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
       task.completed = completed;
     }
 
-    // Recalculate progress
     const completedTasks = project.tasks.filter((t: Task) => t.completed).length;
     project.progress = (completedTasks / project.tasks.length) * 100;
     project.status = project.progress === 100 ? 'Completed' : 'In Progress';
@@ -250,7 +247,6 @@ export async function submitDailyReport(formData: FormData) {
     const accomplishments = formData.get('accomplishments');
     const goals = formData.get('goals');
     const blockers = formData.get('blockers');
-    // In a real app, you'd get the internId from the session/auth
     const session = await getSession();
     if (!session?.user) {
         return { success: false, message: "Authentication required." };
@@ -315,7 +311,7 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         await dbConnect();
         const intern = await Intern.findByIdAndUpdate(internId, {
             ppoDecision: decision,
-            status: decision === 'Accepted' ? 'Completed' : 'Completed' // Or some other status
+            status: decision === 'Accepted' ? 'Completed' : 'Completed'
         }, { new: true });
 
         if (!intern) {
