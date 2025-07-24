@@ -6,8 +6,121 @@ import Project from './models/Project';
 import Application from './models/Application';
 import Intern from './models/Intern';
 import DailyReport from './models/DailyReport';
+import User from './models/User';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
+import bcrypt from 'bcryptjs';
+import { cookies } from 'next/headers';
+import { SignJWT, jwtVerify } from 'jose';
+
+const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key-for-development');
+const key = secretKey;
+
+export async function encrypt(payload: any) {
+  return await new SignJWT(payload)
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1d')
+    .sign(key);
+}
+
+export async function decrypt(input: string): Promise<any> {
+    try {
+        const { payload } = await jwtVerify(input, key, {
+            algorithms: ['HS256'],
+        });
+        return payload;
+    } catch(e) {
+        return null;
+    }
+}
+
+
+export async function registerUser(formData: FormData) {
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+    const role = formData.get('role') as string;
+
+    if (!name || !email || !password || !role) {
+        return { success: false, message: 'All fields are required.' };
+    }
+
+    try {
+        await dbConnect();
+        const existingUser = await User.findOne({ email });
+        if (existingUser) {
+            return { success: false, message: 'User with this email already exists.' };
+        }
+
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const newUser = new User({
+            name,
+            email,
+            password: hashedPassword,
+            role,
+            avatar: `https://placehold.co/100x100.png`
+        });
+
+        await newUser.save();
+        revalidatePath('/register');
+        return { success: true, message: 'Registration successful! Please log in.' };
+
+    } catch (error) {
+        console.error('Registration failed:', error);
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
+export async function authenticate(prevState: string | undefined, formData: FormData) {
+  try {
+    await dbConnect();
+    const email = formData.get('email') as string;
+    const password = formData.get('password') as string;
+
+    const user = await User.findOne({ email });
+    if (!user) return 'CredentialsSignin';
+
+    const passwordsMatch = await bcrypt.compare(password, user.password);
+    if (!passwordsMatch) return 'CredentialsSignin';
+    
+    const sessionUser = { 
+        id: user._id.toString(), 
+        name: user.name, 
+        email: user.email, 
+        role: user.role,
+        avatar: user.avatar,
+    };
+    
+    // Create the session
+    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const session = await encrypt({ user: sessionUser, expires });
+
+    // Save the session in a cookie
+    cookies().set('session', session, { expires, httpOnly: true });
+
+    revalidatePath('/dashboard');
+
+  } catch (error) {
+    if ((error as Error).message.includes('CredentialsSignin')) {
+        return 'CredentialsSignin';
+    }
+    console.error(error);
+    return 'An unexpected error occurred.';
+  }
+}
+
+export async function logout() {
+  // Destroy the session
+  cookies().set('session', '', { expires: new Date(0) });
+}
+
+export async function getSession() {
+  const session = cookies().get('session')?.value;
+  if (!session) return null;
+  return await decrypt(session);
+}
+
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
   try {
@@ -50,11 +163,12 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
     
     // If accepted, create a new Intern record
     if (status === 'Accepted') {
-        const existingIntern = await Intern.findOne({ email: `${application.name.split(' ').join('.').toLowerCase()}@synergy.com` });
+        const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`
+        const existingIntern = await Intern.findOne({ email });
         if (!existingIntern) {
             const newIntern = new Intern({
                 name: application.name,
-                email: `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`,
+                email: email,
                 project: 'Unassigned',
                 mentor: 'Unassigned', // or assign a default mentor
                 status: 'Active',
