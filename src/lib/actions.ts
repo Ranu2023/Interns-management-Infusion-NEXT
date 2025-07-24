@@ -7,12 +7,15 @@ import Application from './models/Application';
 import Intern from './models/Intern';
 import DailyReport from './models/DailyReport';
 import User from './models/User';
+import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { encrypt, decrypt } from './session';
 import { redirect } from 'next/navigation';
+import { Role } from '@/context/AuthContext';
+
 
 export async function getSession() {
   const session = cookies().get('session')?.value;
@@ -20,11 +23,11 @@ export async function getSession() {
   return await decrypt(session);
 }
 
-export async function registerUser(formData: FormData) {
+export async function registerUser(prevState: any, formData: FormData) {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
-    const role = formData.get('role') as string;
+    const role = formData.get('role') as Role;
 
     if (!name || !email || !password || !role) {
         return { success: false, message: 'All fields are required.' };
@@ -38,6 +41,8 @@ export async function registerUser(formData: FormData) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
+        
+        // Create user for authentication
         const newUser = new User({
             name,
             email,
@@ -45,16 +50,43 @@ export async function registerUser(formData: FormData) {
             role,
             avatar: `https://placehold.co/100x100.png`
         });
-
         await newUser.save();
-        revalidatePath('/register');
+
+        // Create corresponding profile in role-specific collection
+        if (role === 'intern') {
+            const newIntern = new Intern({
+                name,
+                email,
+                project: 'Unassigned',
+                mentor: 'Unassigned',
+                status: 'Active',
+                ppoStatus: 'Pending',
+                ppoDecision: 'Pending',
+            });
+            await newIntern.save();
+        } else if (role === 'mentor') {
+            const newMentor = new Mentor({
+                name,
+                email,
+                expertise: 'General',
+                interns: 0,
+                avatar: `https://placehold.co/100x100.png`,
+            });
+            await newMentor.save();
+        }
+        
         return { success: true, message: 'Registration successful! Please log in.' };
 
     } catch (error) {
         console.error('Registration failed:', error);
-        return { success: false, message: 'An internal error occurred.' };
+        // Be more specific about the error if it's a validation error, etc.
+        if (error instanceof Error && error.message.includes('duplicate key')) {
+             return { success: false, message: 'User with this email already exists.' };
+        }
+        return { success: false, message: 'An internal server error occurred.' };
     }
 }
+
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
   try {
@@ -76,22 +108,25 @@ export async function authenticate(prevState: string | undefined, formData: Form
         avatar: user.avatar,
     };
     
-    // Create the session
     const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
     const session = await encrypt({ user: sessionUser, expires });
 
-    // Save the session in a cookie
     cookies().set('session', session, { expires, httpOnly: true });
+
+    // Redirect after successful login
+    redirect('/dashboard');
 
   } catch (error) {
     if ((error as Error).message.includes('CredentialsSignin')) {
         return 'CredentialsSignin';
     }
+     if ((error as any).type === 'redirect') {
+      // This is expected, so we throw the error to let Next.js handle the redirect.
+      throw error;
+    }
     console.error(error);
     return 'An unexpected error occurred.';
   }
-
-  redirect('/dashboard');
 }
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {

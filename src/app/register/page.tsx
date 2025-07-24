@@ -1,6 +1,6 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -61,26 +61,17 @@ export default function RegisterPage() {
     const { toast } = useToast();
     const router = useRouter();
 
-    const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
-        const result = await registerUser(formData);
-        if (result.success) {
+    const [state, formAction] = useActionState(registerUser, { success: false, message: '' });
+
+    useEffect(() => {
+        if (state.success) {
             toast({
                 title: "Registration Successful!",
                 description: "You can now log in with your credentials.",
             });
             router.push('/');
-        } else {
-            // The toast is now redundant because the state will show the error message in an Alert.
-            // Keeping it can be good for visibility though.
-            toast({
-                variant: 'destructive',
-                title: 'Registration Failed',
-                description: result.message,
-            });
         }
-        return result;
-
-    }, { success: false, message: '' });
+    }, [state.success, router, toast]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
