@@ -12,7 +12,7 @@ import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { encrypt, decrypt } from './session';
+import { encrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 
@@ -20,6 +20,9 @@ import { Role } from '@/context/AuthContext';
 export async function getSession() {
   const session = cookies().get('session')?.value;
   if (!session) return null;
+  // This should ideally import decrypt from session.ts but to avoid edge issues, we'll keep it self-contained if needed.
+  // For now, assuming decrypt is available globally or contextually. Let's fix the import if not.
+  const { decrypt } = await import('./session');
   return await decrypt(session);
 }
 
@@ -79,7 +82,6 @@ export async function registerUser(prevState: any, formData: FormData) {
 
     } catch (error) {
         console.error('Registration failed:', error);
-        // Be more specific about the error if it's a validation error, etc.
         if (error instanceof Error && error.message.includes('duplicate key')) {
              return { success: false, message: 'User with this email already exists.' };
         }
@@ -95,10 +97,14 @@ export async function authenticate(prevState: string | undefined, formData: Form
     const password = formData.get('password') as string;
 
     const user = await User.findOne({ email });
-    if (!user) return 'CredentialsSignin';
+    if (!user) {
+        return 'CredentialsSignin';
+    }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
-    if (!passwordsMatch) return 'CredentialsSignin';
+    if (!passwordsMatch) {
+        return 'CredentialsSignin';
+    }
     
     const sessionUser = { 
         id: user._id.toString(), 
@@ -113,20 +119,15 @@ export async function authenticate(prevState: string | undefined, formData: Form
 
     cookies().set('session', session, { expires, httpOnly: true });
 
-    // Redirect after successful login
-    redirect('/dashboard');
-
   } catch (error) {
     if ((error as Error).message.includes('CredentialsSignin')) {
         return 'CredentialsSignin';
     }
-     if ((error as any).type === 'redirect') {
-      // This is expected, so we throw the error to let Next.js handle the redirect.
-      throw error;
-    }
     console.error(error);
     return 'An unexpected error occurred.';
   }
+  // Redirect after successful login, outside the try/catch block
+  redirect('/dashboard');
 }
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
@@ -156,7 +157,6 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
     return { success: true };
   } catch (error) {
     console.error('Failed to update task:', error);
-    // Return a serializable error object
     return { success: false, message: 'Failed to update task.' };
   }
 }
@@ -168,7 +168,6 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
         throw new Error('Application not found');
     }
     
-    // If accepted, create a new Intern record
     if (status === 'Accepted') {
         const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`
         const existingIntern = await Intern.findOne({ email });
@@ -177,9 +176,10 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
                 name: application.name,
                 email: email,
                 project: 'Unassigned',
-                mentor: 'Unassigned', // or assign a default mentor
+                mentor: 'Unassigned',
                 status: 'Active',
-                ppoStatus: 'Pending'
+                ppoStatus: 'Pending',
+                ppoDecision: 'Pending',
             });
             await newIntern.save();
             revalidatePath('/dashboard/interns');
@@ -251,7 +251,14 @@ export async function submitDailyReport(formData: FormData) {
     const goals = formData.get('goals');
     const blockers = formData.get('blockers');
     // In a real app, you'd get the internId from the session/auth
-    const internId = "669a8e5a5b5e3c8b4b7a1b1a"; 
+    const session = await getSession();
+    if (!session?.user) {
+        return { success: false, message: "Authentication required." };
+    }
+    const intern = await Intern.findOne({email: session.user.email});
+     if (!intern) {
+        return { success: false, message: "Intern profile not found." };
+    }
 
     if (!accomplishments || !goals) {
         return { success: false, message: "Please fill out yesterday's accomplishments and today's goals."}
@@ -260,7 +267,7 @@ export async function submitDailyReport(formData: FormData) {
     try {
         await dbConnect();
         const report = new DailyReport({
-            internId,
+            internId: intern._id,
             date: new Date(),
             accomplishments,
             goals,
