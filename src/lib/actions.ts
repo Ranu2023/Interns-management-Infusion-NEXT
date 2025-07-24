@@ -12,17 +12,10 @@ import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { encrypt } from './session';
+import { getSession } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 
-
-export async function getSession() {
-  const session = cookies().get('session')?.value;
-  if (!session) return null;
-  const { decrypt } = await import('./session');
-  return await decrypt(session);
-}
 
 export async function registerUser(prevState: any, formData: FormData) {
     const name = formData.get('name') as string;
@@ -88,9 +81,9 @@ export async function registerUser(prevState: any, formData: FormData) {
 
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
-  let sessionUser;
   try {
     await dbConnect();
+    const { encrypt } = await import('./session');
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
@@ -104,7 +97,7 @@ export async function authenticate(prevState: string | undefined, formData: Form
         return 'CredentialsSignin';
     }
     
-    sessionUser = { 
+    const sessionUser = { 
         id: user._id.toString(), 
         name: user.name, 
         email: user.email, 
@@ -124,7 +117,7 @@ export async function authenticate(prevState: string | undefined, formData: Form
     console.error(error);
     return 'An unexpected error occurred.';
   }
-  revalidatePath('/dashboard');
+  
   redirect('/dashboard');
 }
 
