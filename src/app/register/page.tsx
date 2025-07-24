@@ -70,6 +70,8 @@ export default function RegisterPage() {
             });
             router.push('/');
         } else {
+            // The toast is now redundant because the state will show the error message in an Alert.
+            // Keeping it can be good for visibility though.
             toast({
                 variant: 'destructive',
                 title: 'Registration Failed',
@@ -134,7 +136,6 @@ export default function RegisterPage() {
                             <SelectItem value="hr">HR / Admin</SelectItem>
                             <SelectItem value="mentor">Mentor</SelectItem>
                             <SelectItem value="intern">Intern</SelectItem>
-                            <SelectItem value="employee">Employee</SelectItem>
                         </SelectContent>
                         </Select>
                     </div>
