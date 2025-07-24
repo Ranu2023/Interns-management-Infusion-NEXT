@@ -80,7 +80,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-export async function authenticate(prevState: string | undefined, formData: FormData) {
+export async function authenticate(prevState: any, formData: FormData) {
   try {
     await dbConnect();
     const { encrypt } = await import('./session');
@@ -89,12 +89,12 @@ export async function authenticate(prevState: string | undefined, formData: Form
 
     const user = await User.findOne({ email });
     if (!user) {
-        return 'CredentialsSignin';
+        return { success: false, message: 'Invalid email or password.' };
     }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
     if (!passwordsMatch) {
-        return 'CredentialsSignin';
+        return { success: false, message: 'Invalid email or password.' };
     }
     
     const sessionUser = { 
@@ -110,15 +110,13 @@ export async function authenticate(prevState: string | undefined, formData: Form
 
     cookies().set('session', session, { expires, httpOnly: true });
 
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Login successful' };
+
   } catch (error) {
-    if (error instanceof Error && error.message.includes('CredentialsSignin')) {
-        return 'CredentialsSignin';
-    }
     console.error(error);
-    return 'An unexpected error occurred.';
+    return { success: false, message: 'An unexpected error occurred.' };
   }
-  
-  redirect('/dashboard');
 }
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {

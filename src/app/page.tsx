@@ -1,8 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -50,7 +51,15 @@ function SubmitButton() {
 
 
 export default function LoginPage() {
-  const [state, formAction] = useActionState(authenticate, undefined);
+  const router = useRouter();
+  const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
+
+  useEffect(() => {
+    if (state.success) {
+      router.push('/dashboard');
+    }
+  }, [state.success, router]);
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -88,17 +97,10 @@ export default function LoginPage() {
                     />
                 </div>
                 
-                {state === "CredentialsSignin" && (
+                {!state.success && state.message && (
                     <Alert variant="destructive">
                         <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>Invalid email or password.</AlertDescription>
-                    </Alert>
-                )}
-
-                 {state && state !== "CredentialsSignin" && (
-                    <Alert variant="destructive">
-                        <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>{state}</AlertDescription>
+                        <AlertDescription>{state.message}</AlertDescription>
                     </Alert>
                 )}
                 
