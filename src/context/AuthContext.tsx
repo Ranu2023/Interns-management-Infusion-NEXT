@@ -9,7 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { logout as logoutAction, getSession } from '@/lib/session';
+import { logout } from '@/lib/session';
+import { getSession } from '@/lib/actions';
 import { type IUser } from '@/lib/models/User';
 
 export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
@@ -86,8 +87,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     fetchUser();
   }, []);
 
-  const logout = async () => {
-    await logoutAction();
+  const handleLogout = async () => {
+    await logout();
     setUser(null);
     router.push('/');
   };
@@ -109,7 +110,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, logout, switchRole, isLoading }}
+      value={{ user, isAuthenticated: !!user, logout: handleLogout, switchRole, isLoading }}
     >
       {isLoading ? <div className="h-screen w-full flex items-center justify-center">Loading...</div> : children}
     </AuthContext.Provider>

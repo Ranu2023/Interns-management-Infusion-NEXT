@@ -11,8 +11,14 @@ import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
-import { encrypt } from './session';
+import { encrypt, decrypt } from './session';
 
+
+export async function getSession() {
+  const session = cookies().get('session')?.value;
+  if (!session) return null;
+  return await decrypt(session);
+}
 
 export async function registerUser(formData: FormData) {
     const name = formData.get('name') as string;
