@@ -37,7 +37,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // Save to User collection for authentication
+        // Step 1: Save to User collection for authentication
         const newUser = new User({
             name,
             email,
@@ -47,7 +47,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         });
         await newUser.save();
 
-        // Save to role-specific collection for profile data
+        // Step 2: Save to role-specific collection for profile data
         if (role === 'intern') {
             const newIntern = new Intern({
                 name,
@@ -122,6 +122,7 @@ export async function authenticate(prevState: any, formData: FormData) {
   
   redirect('/dashboard');
 }
+
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
   try {
@@ -323,5 +324,3 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
-
-    
