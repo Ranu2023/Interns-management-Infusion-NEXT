@@ -110,13 +110,12 @@ export async function authenticate(prevState: any, formData: FormData) {
 
     cookies().set('session', session, { expires, httpOnly: true });
 
-    revalidatePath('/dashboard');
-    return { success: true, message: 'Login successful' };
-
   } catch (error) {
     console.error(error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
+  
+  redirect('/dashboard');
 }
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
@@ -318,4 +317,11 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         console.error('Failed to update PPO decision', error);
         return { success: false, message: 'Failed to update PPO decision.' };
     }
+}
+
+export async function getSession() {
+  const sessionCookie = cookies().get('session')?.value;
+  if (!sessionCookie) return null;
+  const session = await decrypt(sessionCookie);
+  return session;
 }

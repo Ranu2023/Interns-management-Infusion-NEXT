@@ -1,9 +1,8 @@
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -51,15 +50,7 @@ function SubmitButton() {
 
 
 export default function LoginPage() {
-  const router = useRouter();
-  const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
-
-  useEffect(() => {
-    if (state.success) {
-      router.push('/dashboard');
-    }
-  }, [state.success, router]);
-
+  const [state, formAction] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -97,7 +88,7 @@ export default function LoginPage() {
                     />
                 </div>
                 
-                {!state.success && state.message && (
+                {state?.message && (
                     <Alert variant="destructive">
                         <AlertTitle>Login Failed</AlertTitle>
                         <AlertDescription>{state.message}</AlertDescription>
