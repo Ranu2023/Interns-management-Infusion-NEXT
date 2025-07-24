@@ -1,3 +1,4 @@
+
 'use server';
 
 import { revalidatePath } from 'next/cache';
@@ -36,6 +37,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
+        // Save to User collection for authentication
         const newUser = new User({
             name,
             email,
@@ -45,6 +47,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         });
         await newUser.save();
 
+        // Save to role-specific collection for profile data
         if (role === 'intern') {
             const newIntern = new Intern({
                 name,
@@ -110,10 +113,10 @@ export async function authenticate(prevState: any, formData: FormData) {
     cookies().set('session', session, { expires, httpOnly: true });
 
   } catch (error) {
-    console.error(error);
-    if (error instanceof Error && (error as any).code === 'NEXT_REDIRECT') {
-        throw error;
+    if (error instanceof Error && (error as any).type === 'CredentialsSignin') {
+        return { success: false, message: 'Invalid credentials.' };
     }
+    console.error(error);
     return { success: false, message: 'An unexpected error occurred.' };
   }
   
@@ -320,3 +323,5 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
+
+    
