@@ -1,8 +1,9 @@
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -17,7 +18,7 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { authenticate } from '@/lib/actions';
-
+import { useToast } from '@/hooks/use-toast';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -88,7 +89,7 @@ export default function LoginPage() {
                     />
                 </div>
                 
-                {state?.message && (
+                {state && !state.success && state.message && (
                     <Alert variant="destructive">
                         <AlertTitle>Login Failed</AlertTitle>
                         <AlertDescription>{state.message}</AlertDescription>

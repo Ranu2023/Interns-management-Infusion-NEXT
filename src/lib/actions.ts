@@ -11,9 +11,10 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { getSession } from './session';
+import { getSession, encrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
+import { cookies } from 'next/headers';
 
 
 export async function registerUser(prevState: any, formData: FormData) {
@@ -82,7 +83,6 @@ export async function registerUser(prevState: any, formData: FormData) {
 export async function authenticate(prevState: any, formData: FormData) {
   try {
     await dbConnect();
-    const { encrypt, cookies } = await import('./session');
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
@@ -111,6 +111,9 @@ export async function authenticate(prevState: any, formData: FormData) {
 
   } catch (error) {
     console.error(error);
+    if (error instanceof Error && (error as any).code === 'NEXT_REDIRECT') {
+        throw error;
+    }
     return { success: false, message: 'An unexpected error occurred.' };
   }
   
