@@ -11,7 +11,6 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { cookies } from 'next/headers';
 import { getSession } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
@@ -83,7 +82,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 export async function authenticate(prevState: any, formData: FormData) {
   try {
     await dbConnect();
-    const { encrypt } = await import('./session');
+    const { encrypt, cookies } = await import('./session');
     const email = formData.get('email') as string;
     const password = formData.get('password') as string;
 
@@ -317,11 +316,4 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         console.error('Failed to update PPO decision', error);
         return { success: false, message: 'Failed to update PPO decision.' };
     }
-}
-
-export async function getSession() {
-  const sessionCookie = cookies().get('session')?.value;
-  if (!sessionCookie) return null;
-  const session = await decrypt(sessionCookie);
-  return session;
 }
