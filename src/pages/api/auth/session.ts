@@ -1,4 +1,4 @@
-import { getSession } from '@/lib/actions';
+import { getSession } from '@/lib/session';
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 export default async function handler(

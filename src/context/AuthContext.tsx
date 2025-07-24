@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { logout as logoutAction } from '@/lib/actions';
+import { logout as logoutAction, getSession } from '@/lib/session';
 import { type IUser } from '@/lib/models/User';
 
 export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
@@ -73,12 +73,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const fetchUser = async () => {
       try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          const data = await res.json();
-          if (data.user) {
-            setUser(data.user);
-          }
+        const session = await getSession();
+        if (session?.user) {
+          setUser(session.user);
         }
       } catch (error) {
         console.error('Failed to fetch session', error);
@@ -114,7 +111,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isAuthenticated: !!user, logout, switchRole, isLoading }}
     >
-      {isLoading ? null : children}
+      {isLoading ? <div className="h-screen w-full flex items-center justify-center">Loading...</div> : children}
     </AuthContext.Provider>
   );
 }

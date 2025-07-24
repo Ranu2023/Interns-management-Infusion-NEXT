@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/lib/actions';
+import { decrypt } from '@/lib/session';
 
 const protectedRoutes = ['/dashboard'];
 const publicRoutes = ['/', '/register'];
