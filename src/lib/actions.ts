@@ -12,7 +12,7 @@ import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { cookies } from 'next/headers';
 import { encrypt, decrypt } from './session';
-
+import { redirect } from 'next/navigation';
 
 export async function getSession() {
   const session = cookies().get('session')?.value;
@@ -83,8 +83,6 @@ export async function authenticate(prevState: string | undefined, formData: Form
     // Save the session in a cookie
     cookies().set('session', session, { expires, httpOnly: true });
 
-    revalidatePath('/dashboard');
-
   } catch (error) {
     if ((error as Error).message.includes('CredentialsSignin')) {
         return 'CredentialsSignin';
@@ -92,6 +90,8 @@ export async function authenticate(prevState: string | undefined, formData: Form
     console.error(error);
     return 'An unexpected error occurred.';
   }
+
+  redirect('/dashboard');
 }
 
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
