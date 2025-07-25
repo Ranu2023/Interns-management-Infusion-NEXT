@@ -1,15 +1,10 @@
 
 'use client';
 
-import { useActionState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2 } from 'lucide-react';
-import { authenticate } from '@/lib/actions';
-import { useFormStatus } from 'react-dom';
 import {
   Select,
   SelectContent,
@@ -17,6 +12,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { useFormStatus } from 'react-dom';
+import { authenticate } from '@/lib/actions';
+import { Loader2 } from 'lucide-react';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -25,7 +23,7 @@ function Icon(props: React.ComponentProps<'svg'>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -48,7 +46,6 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const [errorMessage, dispatch] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
@@ -62,7 +59,7 @@ export default function LoginPage() {
                 Welcome back! Please log in to your account.
             </p>
         </div>
-        <form action={dispatch} className="space-y-6">
+        <form action={authenticate} className="space-y-6">
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -102,12 +99,7 @@ export default function LoginPage() {
                 </div>
             </div>
             
-            {errorMessage && (
-                <Alert variant="destructive">
-                    <AlertTitle>Login Failed</AlertTitle>
-                    <AlertDescription>{errorMessage}</AlertDescription>
-                </Alert>
-            )}
+            {/* Error message handling can be added here later if needed, by passing search params */}
             
             <SubmitButton />
         </form>

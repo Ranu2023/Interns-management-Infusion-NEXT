@@ -80,7 +80,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
 
 // ✅ User Authentication
-export async function authenticate(prevState: any, formData: FormData) {
+export async function authenticate(formData: FormData) {
     try {
         await dbConnect();
         const email = formData.get('email') as string;
@@ -90,16 +90,18 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return 'Invalid email or password.';
+            // In a real app, you wouldn't specify which part is wrong.
+            // Redirecting back with a generic error is safer.
+            return redirect('/?error=InvalidCredentials');
         }
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
         if (!passwordsMatch) {
-            return 'Invalid email or password.';
+            return redirect('/?error=InvalidCredentials');
         }
 
         if (user.role !== role) {
-            return `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`;
+             return redirect(`/?error=RoleMismatch&expected=${user.role}`);
         }
 
         const sessionUser = {
@@ -121,11 +123,8 @@ export async function authenticate(prevState: any, formData: FormData) {
         });
 
     } catch (error) {
-        if ((error as Error).message.includes('credentialssignin')) {
-            return 'Invalid email or password.';
-        }
         console.error(error);
-        return 'An unexpected error occurred.';
+        return redirect('/?error=ServerError');
     }
     
     redirect('/dashboard');
