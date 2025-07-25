@@ -7,6 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
 import { initialData } from '@/lib/seed-data';
+import { InternDashboard } from '@/components/intern-dashboard';
 
 function HRDashboard() {
   const internCount = initialData.interns.length;
@@ -84,7 +85,7 @@ function DashboardView() {
   const { user } = useAuth();
 
   if (!user) {
-    return <div>Loading...</div>; // Or a loading skeleton
+    return null; // The loading state is handled in AuthProvider
   }
 
   switch (user.role) {
@@ -93,7 +94,7 @@ function DashboardView() {
     case 'mentor':
       return <GenericDashboard name={user.name} role="Mentor" />;
     case 'intern':
-      return <GenericDashboard name={user.name} role="Intern" />;
+      return <InternDashboard user={user} />;
     case 'employee':
         return <GenericDashboard name={user.name} role="Employee" />;
     default:

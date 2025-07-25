@@ -83,7 +83,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-export async function authenticate(prevState: any, formData: FormData) {
+export async function authenticate(prevState: { message: string } | undefined, formData: FormData) {
   try {
     await dbConnect();
     const email = formData.get('email') as string;
@@ -91,12 +91,12 @@ export async function authenticate(prevState: any, formData: FormData) {
 
     const user = await User.findOne({ email });
     if (!user) {
-        return { success: false, message: 'Invalid email or password.' };
+        return { message: 'Invalid email or password.' };
     }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
     if (!passwordsMatch) {
-        return { success: false, message: 'Invalid email or password.' };
+        return { message: 'Invalid email or password.' };
     }
     
     const sessionUser = { 
@@ -114,10 +114,10 @@ export async function authenticate(prevState: any, formData: FormData) {
 
   } catch (error) {
     if (error instanceof Error && (error as any).type === 'CredentialsSignin') {
-        return { success: false, message: 'Invalid credentials.' };
+        return { message: 'Invalid credentials.' };
     }
     console.error(error);
-    return { success: false, message: 'An unexpected error occurred.' };
+    return { message: 'An unexpected error occurred.' };
   }
   
   redirect('/dashboard');
@@ -146,6 +146,7 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
     revalidatePath('/dashboard/my-projects');
     revalidatePath('/dashboard/projects');
     revalidatePath('/dashboard/my-interns');
+    revalidatePath('/dashboard');
 
     return { success: true };
   } catch (error) {
