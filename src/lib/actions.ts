@@ -112,12 +112,15 @@ export async function authenticate(prevState: any, formData: FormData) {
 
     cookies().set('session', session, { expires, httpOnly: true });
 
-    revalidatePath('/dashboard');
-    return { success: true, message: 'Login successful' };
+    revalidatePath('/dashboard', 'layout');
+    redirect('/dashboard');
 
   } catch (error) {
-    if (error instanceof Error && (error as any).type === 'CredentialsSignin') {
+    if ((error as any).type === 'CredentialsSignin') {
         return { success: false, message: 'Invalid credentials.' };
+    }
+     if ((error as Error).message.includes('NEXT_REDIRECT')) {
+      throw error;
     }
     console.error(error);
     return { success: false, message: 'An unexpected error occurred.' };

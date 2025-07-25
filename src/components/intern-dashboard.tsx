@@ -29,11 +29,12 @@ async function getDashboardData(user: User): Promise<{
   await dbConnect();
   const intern = await Intern.findOne({ email: user.email }).lean();
   if (!intern) {
+    // This case should ideally not happen if a user is logged in as an intern
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
   // An intern might not have a project assigned yet.
-  if (intern.project === 'Unassigned') {
+  if (!intern.project || intern.project === 'Unassigned') {
     return { intern: JSON.parse(JSON.stringify(intern)), project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
@@ -118,11 +119,11 @@ export async function InternDashboard({ user }: { user: User }) {
       ) : (
         <Card>
           <CardContent className="pt-6">
-            <div className="text-center">
-              <p className="text-lg font-semibold">No Project Assigned</p>
-              <p className="text-muted-foreground mt-2">
-                You have not been assigned to a project yet. Please check back
-                later or contact your mentor.
+            <div className="text-center p-6">
+              <p className="text-lg font-semibold">No Project Assigned Yet</p>
+              <p className="text-muted-foreground mt-2 max-w-md mx-auto">
+                Welcome to Synergy! It looks like you haven't been assigned to a project.
+                Please check back later, or contact your HR representative if you have any questions.
               </p>
             </div>
           </CardContent>
