@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect } from 'react';
@@ -67,9 +68,12 @@ export default function RegisterPage() {
         if (state.success) {
             toast({
                 title: "Registration Successful!",
-                description: "You can now log in with your credentials.",
+                description: "You will be redirected to the login page.",
             });
-            router.push('/');
+            const timer = setTimeout(() => {
+                router.push('/');
+            }, 2000);
+            return () => clearTimeout(timer);
         }
     }, [state.success, router, toast]);
 
@@ -88,57 +92,66 @@ export default function RegisterPage() {
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="name">Full Name</Label>
-                        <Input
-                        id="name"
-                        name="name"
-                        type="text"
-                        placeholder="John Doe"
-                        required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                        id="email"
-                        name="email"
-                        type="email"
-                        placeholder="john.doe@example.com"
-                        required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                        id="password"
-                        name="password"
-                        type="password"
-                        required
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="role">Role</Label>
-                        <Select name="role" required defaultValue="intern">
-                        <SelectTrigger id="role">
-                            <SelectValue placeholder="Select a role" />
-                        </SelectTrigger>
-                        <SelectContent>
-                            <SelectItem value="hr">HR / Admin</SelectItem>
-                            <SelectItem value="mentor">Mentor</SelectItem>
-                            <SelectItem value="intern">Intern</SelectItem>
-                        </SelectContent>
-                        </Select>
-                    </div>
-
-                    {!state.success && state.message && (
-                        <Alert variant="destructive">
-                            <AlertTitle>Registration Failed</AlertTitle>
+                    {state.success ? (
+                         <Alert variant="default">
+                            <AlertTitle>Success!</AlertTitle>
                             <AlertDescription>{state.message}</AlertDescription>
                         </Alert>
-                    )}
+                    ) : (
+                    <>
+                        <div className="space-y-2">
+                            <Label htmlFor="name">Full Name</Label>
+                            <Input
+                            id="name"
+                            name="name"
+                            type="text"
+                            placeholder="John Doe"
+                            required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="email">Email</Label>
+                            <Input
+                            id="email"
+                            name="email"
+                            type="email"
+                            placeholder="john.doe@example.com"
+                            required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="password">Password</Label>
+                            <Input
+                            id="password"
+                            name="password"
+                            type="password"
+                            required
+                            />
+                        </div>
+                        <div className="space-y-2">
+                            <Label htmlFor="role">Role</Label>
+                            <Select name="role" required defaultValue="intern">
+                            <SelectTrigger id="role">
+                                <SelectValue placeholder="Select a role" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="hr">HR / Admin</SelectItem>
+                                <SelectItem value="mentor">Mentor</SelectItem>
+                                <SelectItem value="intern">Intern</SelectItem>
+                            </SelectContent>
+                            </Select>
+                        </div>
 
-                    <SubmitButton />
+                        {!state.success && state.message && (
+                            <Alert variant="destructive">
+                                <AlertTitle>Registration Failed</AlertTitle>
+                                <AlertDescription>{state.message}</AlertDescription>
+                            </Alert>
+                        )}
+
+                        <SubmitButton />
+                    </>
+                    )}
 
                 </CardContent>
                 <CardFooter className="flex-col text-sm">
@@ -155,3 +168,4 @@ export default function RegisterPage() {
     </main>
   );
 }
+

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState } from 'react';
@@ -48,12 +49,12 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const [errorMessage, dispatch] = useActionState(authenticate, undefined);
+  const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <form action={dispatch}>
+        <form action={formAction}>
             <Card>
             <CardHeader className="space-y-1 text-center">
                 <div className="mx-auto h-12 w-12 text-primary">
@@ -71,7 +72,7 @@ export default function LoginPage() {
                     id="email"
                     name="email"
                     type="email"
-                    placeholder="hr@example.com"
+                    placeholder="hr@synergy.com"
                     required
                     />
                 </div>
@@ -93,7 +94,10 @@ export default function LoginPage() {
                     </Alert>
                 )}
                 
-                <SubmitButton />
+                <Button type="submit" className="w-full" disabled={isPending}>
+                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+                    Log In
+                </Button>
             </CardContent>
             <CardFooter className="flex-col text-sm">
                 <p className="text-muted-foreground">

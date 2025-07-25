@@ -12,7 +12,7 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { encrypt } from './session';
+import { decrypt, encrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -37,6 +37,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
+        // 1. Create the main user for authentication
         const newUser = new User({
             name,
             email,
@@ -46,6 +47,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         });
         await newUser.save();
 
+        // 2. Create the role-specific profile
         if (role === 'intern') {
             const newIntern = new Intern({
                 name,
@@ -113,6 +115,9 @@ export async function authenticate(prevState: string | undefined, formData: Form
         });
 
     } catch (error) {
+        if ((error as Error).message.includes('credentialssignin')) {
+            return 'Invalid email or password.';
+        }
         console.error(error);
         return 'An unexpected error occurred.';
     }

@@ -30,6 +30,7 @@ async function getDashboardData(user: User): Promise<{
   const intern = await Intern.findOne({ email: user.email }).lean();
   if (!intern) {
     // This case should ideally not happen if a user is logged in as an intern
+    // but we handle it defensively.
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
@@ -64,6 +65,16 @@ async function getDashboardData(user: User): Promise<{
 export async function InternDashboard({ user }: { user: User }) {
   const { intern, project, tasksCompleted, tasksTotal } =
     await getDashboardData(user);
+
+    if (!intern) {
+        return (
+             <Card>
+                <CardContent className="pt-6">
+                    <p className="text-center text-muted-foreground">Could not load intern data. Please contact support.</p>
+                </CardContent>
+            </Card>
+        )
+    }
 
   return (
     <div className="space-y-6">
@@ -123,7 +134,7 @@ export async function InternDashboard({ user }: { user: User }) {
               <p className="text-lg font-semibold">No Project Assigned Yet</p>
               <p className="text-muted-foreground mt-2 max-w-md mx-auto">
                 Welcome to Synergy! It looks like you haven't been assigned to a project.
-                Please check back later, or contact your HR representative if you have any questions.
+                Your mentor will assign one to you soon. Please check back later.
               </p>
             </div>
           </CardContent>
