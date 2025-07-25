@@ -4,7 +4,6 @@
 import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
-import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -19,7 +18,6 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { authenticate } from '@/lib/actions';
-import { useToast } from '@/hooks/use-toast';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -53,13 +51,13 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
-  const router = useRouter();
 
   useEffect(() => {
     if (state.success) {
-      router.push('/dashboard');
+      // Force a hard reload to ensure all client-side contexts are reset
+      window.location.href = '/dashboard';
     }
-  }, [state.success, router]);
+  }, [state.success]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -120,3 +118,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    

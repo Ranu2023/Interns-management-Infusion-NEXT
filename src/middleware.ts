@@ -1,3 +1,4 @@
+
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession } from '@/lib/session';
 
@@ -15,8 +16,10 @@ export default async function middleware(req: NextRequest) {
     return NextResponse.redirect(new URL('/', req.nextUrl));
   }
 
-  if (isPublicRoute && session?.user) {
-    return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
+  // Allow access to public routes even if logged in, except for the root path
+  // which should redirect to the dashboard if a session exists.
+  if (path === '/' && session?.user) {
+     return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
   }
   
   return NextResponse.next();
@@ -25,3 +28,5 @@ export default async function middleware(req: NextRequest) {
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|.*\\.png$).*)'],
 };
+
+    

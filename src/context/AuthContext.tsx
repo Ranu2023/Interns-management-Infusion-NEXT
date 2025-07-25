@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -11,6 +12,7 @@ import {
 import { useToast } from '@/hooks/use-toast';
 import { getSession, logout } from '@/lib/session';
 import { type IUser } from '@/lib/models/User';
+import { Loader2 } from 'lucide-react';
 
 export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
 
@@ -72,13 +74,17 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const fetchUser = async () => {
+      setIsLoading(true);
       try {
         const session = await getSession();
         if (session?.user) {
           setUser(session.user);
+        } else {
+          setUser(null);
         }
       } catch (error) {
         console.error('Failed to fetch session', error);
+        setUser(null);
       } finally {
         setIsLoading(false);
       }
@@ -89,7 +95,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const handleLogout = async () => {
     await logout();
     setUser(null);
-    router.push('/');
+    window.location.href = '/';
   };
 
   const switchRole = (role: Role) => {
@@ -111,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     <AuthContext.Provider
       value={{ user, isAuthenticated: !!user, logout: handleLogout, switchRole, isLoading }}
     >
-      {isLoading ? <div className="h-screen w-full flex items-center justify-center">Loading...</div> : children}
+      {isLoading ? <div className="h-screen w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div> : children}
     </AuthContext.Provider>
   );
 }
@@ -123,3 +129,5 @@ export function useAuth() {
   }
   return context;
 }
+
+    
