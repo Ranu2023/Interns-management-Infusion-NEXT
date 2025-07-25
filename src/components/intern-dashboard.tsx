@@ -18,6 +18,7 @@ import dbConnect from '@/lib/db';
 import Intern from '@/lib/models/Intern';
 import Project from '@/lib/models/Project';
 import type { IProject } from '@/lib/models/Project';
+import { getSession } from '@/lib/session';
 
 async function getDashboardData(user: User): Promise<{
   intern: any;
@@ -29,6 +30,11 @@ async function getDashboardData(user: User): Promise<{
   const intern = await Intern.findOne({ email: user.email }).lean();
   if (!intern) {
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
+  }
+
+  // An intern might not have a project assigned yet.
+  if (intern.project === 'Unassigned') {
+    return { intern: JSON.parse(JSON.stringify(intern)), project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
   const projectData = await Project.findOne({ title: intern.project }).lean();

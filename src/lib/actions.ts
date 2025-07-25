@@ -12,7 +12,7 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { getSession, encrypt } from './session';
+import { encrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -83,7 +83,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-export async function authenticate(prevState: { message: string } | undefined, formData: FormData) {
+export async function authenticate(prevState: any, formData: FormData) {
   try {
     await dbConnect();
     const email = formData.get('email') as string;
@@ -91,12 +91,12 @@ export async function authenticate(prevState: { message: string } | undefined, f
 
     const user = await User.findOne({ email });
     if (!user) {
-        return { message: 'Invalid email or password.' };
+        return { success: false, message: 'Invalid email or password.' };
     }
 
     const passwordsMatch = await bcrypt.compare(password, user.password);
     if (!passwordsMatch) {
-        return { message: 'Invalid email or password.' };
+        return { success: false, message: 'Invalid email or password.' };
     }
     
     const sessionUser = { 
@@ -112,15 +112,16 @@ export async function authenticate(prevState: { message: string } | undefined, f
 
     cookies().set('session', session, { expires, httpOnly: true });
 
+    revalidatePath('/dashboard');
+    return { success: true, message: 'Login successful' };
+
   } catch (error) {
     if (error instanceof Error && (error as any).type === 'CredentialsSignin') {
-        return { message: 'Invalid credentials.' };
+        return { success: false, message: 'Invalid credentials.' };
     }
     console.error(error);
-    return { message: 'An unexpected error occurred.' };
+    return { success: false, message: 'An unexpected error occurred.' };
   }
-  
-  redirect('/dashboard');
 }
 
 
