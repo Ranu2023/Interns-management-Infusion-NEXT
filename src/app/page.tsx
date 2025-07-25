@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useFormState, useFormStatus } from 'react-dom';
+import { useActionState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -16,6 +16,7 @@ import { authenticate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
+import React from 'react';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -47,7 +48,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const [state, formAction] = useFormState(authenticate, undefined);
+    const [state, formAction] = React.useActionState(authenticate, undefined);
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-gray-950 p-4 text-white">
