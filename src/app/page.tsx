@@ -58,7 +58,7 @@ export default function LoginPage() {
                 title: "Login Successful!",
                 description: "Redirecting to your dashboard...",
             });
-            // Force a full page reload to ensure all context and session data is fresh
+            // Using window.location.href to force a full page reload which helps in re-initializing the auth context correctly.
             window.location.href = '/dashboard';
         }
     }, [state, toast]);
@@ -134,5 +134,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    
