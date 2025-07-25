@@ -17,7 +17,7 @@ import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
 
-
+// ✅ User Registration
 export async function registerUser(prevState: any, formData: FormData) {
     const name = formData.get('name') as string;
     const email = formData.get('email') as string;
@@ -36,8 +36,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
-        
-        // Step 1: Save to User collection for authentication
+
         const newUser = new User({
             name,
             email,
@@ -47,7 +46,6 @@ export async function registerUser(prevState: any, formData: FormData) {
         });
         await newUser.save();
 
-        // Step 2: Save to role-specific collection for profile data
         if (role === 'intern') {
             const newIntern = new Intern({
                 name,
@@ -69,100 +67,97 @@ export async function registerUser(prevState: any, formData: FormData) {
             });
             await newMentor.save();
         }
-        
+
         revalidatePath('/');
         return { success: true, message: 'Registration successful! Please log in.' };
 
     } catch (error) {
         console.error('Registration failed:', error);
-        if (error instanceof Error && error.message.includes('duplicate key')) {
-             return { success: false, message: 'User with this email already exists.' };
-        }
         return { success: false, message: 'An internal server error occurred.' };
     }
 }
 
+// ✅ User Authentication
+export async function authenticate(prevState: string | undefined, formData: FormData) {
+    try {
+        await dbConnect();
+        const email = formData.get('email') as string;
+        const password = formData.get('password') as string;
 
-export async function authenticate(prevState: any, formData: FormData) {
-  try {
-    await dbConnect();
-    const email = formData.get('email') as string;
-    const password = formData.get('password') as string;
+        const user = await User.findOne({ email });
+        if (!user) {
+            return 'Invalid email or password.';
+        }
 
-    const user = await User.findOne({ email });
-    if (!user) {
-        return { success: false, message: 'Invalid email or password.' };
+        const passwordsMatch = await bcrypt.compare(password, user.password);
+        if (!passwordsMatch) {
+            return 'Invalid email or password.';
+        }
+
+        const sessionUser = {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            role: user.role,
+            avatar: user.avatar,
+        };
+
+        const expires = new Date(Date.now() + 60 * 60 * 24 * 1000); // 1 day
+        const session = await encrypt({ user: sessionUser, expires });
+
+        cookies().set('session', session, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            path: '/',
+            expires,
+        });
+
+    } catch (error) {
+        console.error(error);
+        return 'An unexpected error occurred.';
     }
 
-    const passwordsMatch = await bcrypt.compare(password, user.password);
-    if (!passwordsMatch) {
-        return { success: false, message: 'Invalid email or password.' };
-    }
-    
-    const sessionUser = { 
-        id: user._id.toString(), 
-        name: user.name, 
-        email: user.email, 
-        role: user.role,
-        avatar: user.avatar,
-    };
-    
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000);
-    const session = await encrypt({ user: sessionUser, expires });
-
-    cookies().set('session', session, { expires, httpOnly: true });
-
-    return { success: true, message: 'Login successful' };
-  } catch (error) {
-    if ((error as any).type === 'CredentialsSignin') {
-        return { success: false, message: 'Invalid credentials.' };
-    }
-    console.error(error);
-    return { success: false, message: 'An unexpected error occurred.' };
-  }
+    redirect('/dashboard');
 }
 
-
+// ✅ Task Update
 export async function updateTaskCompletion(projectId: string, taskId: number, completed: boolean) {
-  try {
-    await dbConnect();
-    const project = await Project.findById(projectId);
-    if (!project) throw new Error('Project not found');
+    try {
+        await dbConnect();
+        const project = await Project.findById(projectId);
+        if (!project) throw new Error('Project not found');
 
-    const task = project.tasks.find((t: Task) => t.id === taskId);
-    if (task) {
-      task.completed = completed;
+        const task = project.tasks.find((t: Task) => t.id === taskId);
+        if (task) task.completed = completed;
+
+        const completedTasks = project.tasks.filter((t: Task) => t.completed).length;
+        project.progress = (completedTasks / project.tasks.length) * 100;
+        project.status = project.progress === 100 ? 'Completed' : 'In Progress';
+        project.recentActivity = `Task "${task?.title}" marked as ${completed ? 'complete' : 'incomplete'}.`
+
+        await project.save();
+
+        revalidatePath(`/dashboard/my-projects/${projectId}`);
+        revalidatePath('/dashboard/my-projects');
+        revalidatePath('/dashboard/projects');
+        revalidatePath('/dashboard/my-interns');
+        revalidatePath('/dashboard');
+
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to update task:', error);
+        return { success: false, message: 'Failed to update task.' };
     }
-
-    const completedTasks = project.tasks.filter((t: Task) => t.completed).length;
-    project.progress = (completedTasks / project.tasks.length) * 100;
-    project.status = project.progress === 100 ? 'Completed' : 'In Progress';
-    project.recentActivity = `Task "${task?.title}" marked as ${completed ? 'complete' : 'incomplete'}.`
-
-    await project.save();
-
-    revalidatePath(`/dashboard/my-projects/${projectId}`);
-    revalidatePath('/dashboard/my-projects');
-    revalidatePath('/dashboard/projects');
-    revalidatePath('/dashboard/my-interns');
-    revalidatePath('/dashboard');
-
-    return { success: true };
-  } catch (error) {
-    console.error('Failed to update task:', error);
-    return { success: false, message: 'Failed to update task.' };
-  }
 }
 
+// ✅ Application Status Update
 export async function updateApplicationStatus(applicationId: string, status: 'Accepted' | 'Rejected') {
     await dbConnect();
     const application = await Application.findByIdAndUpdate(applicationId, { status }, { new: true });
-    if (!application) {
-        throw new Error('Application not found');
-    }
-    
+    if (!application) throw new Error('Application not found');
+
     if (status === 'Accepted') {
-        const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`
+        const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`;
         const existingIntern = await Intern.findOne({ email });
         if (!existingIntern) {
             const newIntern = new Intern({
@@ -175,14 +170,15 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
                 ppoDecision: 'Pending',
             });
             await newIntern.save();
-            revalidatePath('/dashboard/interns');
         }
+        revalidatePath('/dashboard/interns');
     }
 
     revalidatePath(`/dashboard/applications`);
     revalidatePath(`/dashboard/applications/${applicationId}`);
 }
 
+// ✅ Assign Project
 export async function assignProject(formData: FormData) {
     const internId = formData.get('internId') as string;
     const projectName = formData.get('projectName') as string;
@@ -195,12 +191,9 @@ export async function assignProject(formData: FormData) {
 
     try {
         await dbConnect();
-
         const intern = await Intern.findById(internId);
-        if (!intern) {
-             return { success: false, message: 'Intern not found.' };
-        }
-        
+        if (!intern) return { success: false, message: 'Intern not found.' };
+
         const tasks = [
             { id: 1, title: "Initial research and planning", completed: false },
             { id: 2, title: "Setup project boilerplate", completed: false },
@@ -209,7 +202,7 @@ export async function assignProject(formData: FormData) {
             { id: 5, title: "Write unit tests", completed: false },
             { id: 6, title: "Deploy to staging environment", completed: false },
         ];
-        
+
         const newProject = new Project({
             title: projectName,
             description: projectDescription,
@@ -218,12 +211,11 @@ export async function assignProject(formData: FormData) {
             mentor: intern.mentor,
             document: documentLink,
             recentActivity: 'Project created.',
-            tasks: tasks,
+            tasks,
             progress: 0,
         });
 
         await newProject.save();
-
         intern.project = newProject.title;
         await intern.save();
 
@@ -239,21 +231,24 @@ export async function assignProject(formData: FormData) {
     }
 }
 
+// ✅ Submit Daily Report
 export async function submitDailyReport(formData: FormData) {
     const accomplishments = formData.get('accomplishments');
     const goals = formData.get('goals');
     const blockers = formData.get('blockers');
-    const session = await getSession();
-    if (!session?.user) {
-        return { success: false, message: "Authentication required." };
-    }
-    const intern = await Intern.findOne({email: session.user.email});
-     if (!intern) {
-        return { success: false, message: "Intern profile not found." };
-    }
+
+    // Re-implementing getSession here as it was removed previously
+    const sessionCookie = cookies().get('session')?.value;
+    if (!sessionCookie) return { success: false, message: "Authentication required." };
+    const session = await decrypt(sessionCookie);
+
+    if (!session?.user) return { success: false, message: "Authentication required." };
+
+    const intern = await Intern.findOne({ email: session.user.email });
+    if (!intern) return { success: false, message: "Intern profile not found." };
 
     if (!accomplishments || !goals) {
-        return { success: false, message: "Please fill out yesterday's accomplishments and today's goals."}
+        return { success: false, message: "Please fill out yesterday's accomplishments and today's goals." };
     }
 
     try {
@@ -266,16 +261,17 @@ export async function submitDailyReport(formData: FormData) {
             blockers
         });
         await report.save();
-        
+
         revalidatePath('/dashboard/daily-report');
         return { success: true, message: 'Report submitted successfully' };
 
-    } catch(error) {
+    } catch (error) {
         console.error('Failed to submit report', error);
-        return { success: false, message: 'Failed to submit report.'}
+        return { success: false, message: 'Failed to submit report.' };
     }
 }
 
+// ✅ Save PPO Assessment
 export async function savePPOAssessment(internId: string, formData: FormData) {
     const assessmentScore = formData.get('assessmentScore');
     const ppoStatus = formData.get('ppoStatus');
@@ -289,12 +285,11 @@ export async function savePPOAssessment(internId: string, formData: FormData) {
             ppoReasoning
         }, { new: true });
 
-        if (!intern) {
-            return { success: false, message: 'Intern not found' };
-        }
+        if (!intern) return { success: false, message: 'Intern not found' };
+
         revalidatePath(`/dashboard/intern/${internId}`);
         revalidatePath('/dashboard/ppo-status');
-        
+
         return { success: true, message: 'Assessment saved successfully!' };
     } catch (error) {
         console.error('Failed to save assessment', error);
@@ -302,17 +297,16 @@ export async function savePPOAssessment(internId: string, formData: FormData) {
     }
 }
 
+// ✅ Update PPO Decision
 export async function updatePPODecision(internId: string, decision: 'Accepted' | 'Rejected') {
     try {
         await dbConnect();
         const intern = await Intern.findByIdAndUpdate(internId, {
             ppoDecision: decision,
-            status: decision === 'Accepted' ? 'Completed' : 'Completed'
+            status: 'Completed'
         }, { new: true });
 
-        if (!intern) {
-            return { success: false, message: 'Intern not found' };
-        }
+        if (!intern) return { success: false, message: 'Intern not found' };
 
         revalidatePath('/dashboard/ppo-status');
         revalidatePath(`/dashboard/intern/${internId}`);
@@ -324,5 +318,3 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
-
-    

@@ -1,9 +1,8 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
 import Link from 'next/link';
-import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
   Card,
@@ -48,21 +47,13 @@ function SubmitButton() {
     )
 }
 
-
 export default function LoginPage() {
-  const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
-
-  useEffect(() => {
-    if (state.success) {
-      // Force a hard reload to ensure all client-side contexts are reset
-      window.location.href = '/dashboard';
-    }
-  }, [state.success]);
+  const [errorMessage, dispatch] = useFormState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
       <div className="w-full max-w-sm">
-        <form action={formAction}>
+        <form action={dispatch}>
             <Card>
             <CardHeader className="space-y-1 text-center">
                 <div className="mx-auto h-12 w-12 text-primary">
@@ -95,10 +86,10 @@ export default function LoginPage() {
                     />
                 </div>
                 
-                {state && !state.success && state.message && (
+                {errorMessage && (
                     <Alert variant="destructive">
                         <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>{state.message}</AlertDescription>
+                        <AlertDescription>{errorMessage}</AlertDescription>
                     </Alert>
                 )}
                 
@@ -118,5 +109,3 @@ export default function LoginPage() {
     </main>
   );
 }
-
-    
