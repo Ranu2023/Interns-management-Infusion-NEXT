@@ -12,7 +12,7 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { encrypt } from './session';
+import { encrypt, decrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -120,8 +120,6 @@ export async function authenticate(prevState: any, formData: FormData) {
             expires,
         });
 
-        return { success: true, message: 'Login successful' };
-
     } catch (error) {
         if ((error as Error).message.includes('credentialssignin')) {
             return { success: false, message: 'Invalid email or password.' };
@@ -129,6 +127,8 @@ export async function authenticate(prevState: any, formData: FormData) {
         console.error(error);
         return { success: false, message: 'An unexpected error occurred.' };
     }
+    
+    redirect('/dashboard');
 }
 
 // ✅ Task Update

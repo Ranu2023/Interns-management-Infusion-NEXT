@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -57,14 +57,6 @@ function SubmitButton() {
 
 export default function LoginPage() {
   const [state, formAction] = useActionState(authenticate, undefined);
-
-  useEffect(() => {
-    if (state?.success) {
-      // Force a full page reload to ensure all contexts and states are correctly initialized.
-      window.location.href = '/dashboard';
-    }
-  }, [state]);
-
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
