@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect, useState } from 'react';
+import { useActionState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -50,7 +50,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const [state, formAction, isPending] = useActionState(authenticate, { success: false, message: '' });
+    const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
     const router = useRouter();
     const { toast } = useToast();
 
@@ -60,8 +60,8 @@ export default function LoginPage() {
                 title: "Login Successful",
                 description: "Redirecting to your dashboard...",
             });
-            // Use router.push for client-side navigation after state update
-            router.push('/dashboard');
+            // A full page reload is more reliable for session changes.
+            window.location.href = '/dashboard';
         }
     }, [state.success, router, toast]);
 
