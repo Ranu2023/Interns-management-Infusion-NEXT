@@ -4,14 +4,6 @@
 import { useActionState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -56,23 +48,22 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const [state, formAction] = useActionState(authenticate, undefined);
+  const [errorMessage, dispatch] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
-      <div className="w-full max-w-sm">
-        <form action={formAction}>
-            <Card>
-            <CardHeader className="space-y-1 text-center">
-                <div className="mx-auto h-12 w-12 text-primary">
+      <div className="w-full max-w-sm space-y-8">
+        <div className="text-center space-y-2">
+            <div className="mx-auto h-12 w-12 text-primary">
                 <Icon className="h-full w-full" />
-                </div>
-                <CardTitle className="text-2xl font-headline">Synergy Interns</CardTitle>
-                <CardDescription>
+            </div>
+            <h1 className="text-3xl font-bold font-headline">Synergy Interns</h1>
+            <p className="text-muted-foreground">
                 Welcome back! Please log in to your account.
-                </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4">
+            </p>
+        </div>
+        <form action={dispatch} className="space-y-6">
+            <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
                     <Input
@@ -107,27 +98,23 @@ export default function LoginPage() {
                     </SelectContent>
                     </Select>
                 </div>
-                
-                {state && !state.success && state.message && (
-                    <Alert variant="destructive">
-                        <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>{state.message}</AlertDescription>
-                    </Alert>
-                )}
-                
-                <SubmitButton />
-
-            </CardContent>
-            <CardFooter className="flex-col text-sm">
-                <p className="text-muted-foreground">
-                    Don't have an account?{' '}
-                    <Link href="/register" className="font-medium text-primary hover:underline">
-                        Register
-                    </Link>
-                </p>
-            </CardFooter>
-            </Card>
+            </div>
+            
+            {errorMessage && (
+                <Alert variant="destructive">
+                    <AlertTitle>Login Failed</AlertTitle>
+                    <AlertDescription>{errorMessage}</AlertDescription>
+                </Alert>
+            )}
+            
+            <SubmitButton />
         </form>
+         <p className="text-center text-sm text-muted-foreground">
+            Don't have an account?{' '}
+            <Link href="/register" className="font-medium text-primary hover:underline">
+                Register
+            </Link>
+        </p>
       </div>
     </main>
   );
