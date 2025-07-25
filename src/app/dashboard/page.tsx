@@ -107,8 +107,6 @@ export default async function DashboardPage() {
         case 'employee':
             return <GenericDashboard name={user.name} role="Employee" />;
         default:
-          return <div>Invalid role.</div>;
+          redirect('/');
     }
 }
-
-    

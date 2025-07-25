@@ -79,14 +79,13 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-// ✅ User Authentication (Server-Side Redirect)
+// ✅ User Authentication
 export async function authenticate(prevState: any, formData: FormData) {
     try {
         await dbConnect();
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
         const role = formData.get('role') as Role;
-
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -110,7 +109,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             avatar: user.avatar,
         };
 
-        const session = await encrypt(sessionUser);
+        const session = await encrypt({ user: sessionUser });
 
         cookies().set('session', session, {
             httpOnly: true,
@@ -118,6 +117,8 @@ export async function authenticate(prevState: any, formData: FormData) {
             path: '/',
             maxAge: 60 * 60, // 1 hour
         });
+        
+        return { success: true, message: 'Login successful' };
 
     } catch (error) {
         console.error(error);
@@ -126,7 +127,6 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
         return { success: false, message: 'An internal server error occurred.' };
     }
-    redirect('/dashboard');
 }
 
 // ✅ Task Update
@@ -325,5 +325,3 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
-
-    

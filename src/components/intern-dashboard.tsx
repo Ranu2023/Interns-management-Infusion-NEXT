@@ -156,5 +156,3 @@ export async function InternDashboard({ user }: { user: User }) {
     </div>
   );
 }
-
-    
