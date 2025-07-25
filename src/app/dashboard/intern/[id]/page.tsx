@@ -31,7 +31,10 @@ async function getInternData(id: string): Promise<{ intern: Intern | null, proje
     const intern = await InternModel.findById(id).lean();
     if (!intern) return { intern: null, project: null };
 
-    const project = await ProjectModel.findOne({ title: intern.project }).lean();
+    let project = null;
+    if (intern.project && intern.project !== 'Unassigned') {
+        project = await ProjectModel.findOne({ title: intern.project }).lean();
+    }
     
     return { 
         intern: safeJsonStringify(intern), 
@@ -104,3 +107,4 @@ export default async function InternProfilePage({ params }: { params: { id: stri
     );
 }
 
+    

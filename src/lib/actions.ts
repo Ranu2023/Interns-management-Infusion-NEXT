@@ -80,7 +80,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 
 
 // ✅ User Authentication
-export async function authenticate(formData: FormData) {
+export async function authenticate(prevState: any, formData: FormData) {
     try {
         await dbConnect();
         const email = formData.get('email') as string;
@@ -90,18 +90,16 @@ export async function authenticate(formData: FormData) {
 
         const user = await User.findOne({ email });
         if (!user) {
-            // In a real app, you wouldn't specify which part is wrong.
-            // Redirecting back with a generic error is safer.
-            return redirect('/?error=InvalidCredentials');
+            return { success: false, message: 'Invalid credentials.' };
         }
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
         if (!passwordsMatch) {
-            return redirect('/?error=InvalidCredentials');
+            return { success: false, message: 'Invalid credentials.' };
         }
 
         if (user.role !== role) {
-             return redirect(`/?error=RoleMismatch&expected=${user.role}`);
+             return { success: false, message: `Incorrect role selected. This user is a ${user.role}.` };
         }
 
         const sessionUser = {
@@ -119,15 +117,15 @@ export async function authenticate(formData: FormData) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
-            expires,
+            expires: expires,
         });
+
+        return { success: true, message: 'Login successful!' };
 
     } catch (error) {
         console.error(error);
-        return redirect('/?error=ServerError');
+        return { success: false, message: 'An internal server error occurred.' };
     }
-    
-    redirect('/dashboard');
 }
 
 // ✅ Task Update
@@ -328,3 +326,5 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
+
+    

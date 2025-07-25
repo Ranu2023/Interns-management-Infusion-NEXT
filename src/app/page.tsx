@@ -1,7 +1,9 @@
 
 'use client';
 
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
+import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,9 +14,10 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { useFormStatus } from 'react-dom';
 import { authenticate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { useToast } from '@/hooks/use-toast';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -23,7 +26,7 @@ function Icon(props: React.ComponentProps<'svg'>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
+      viewBox="0 0 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -46,6 +49,19 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
+    const { toast } = useToast();
+    const [state, formAction] = useActionState(authenticate, { success: false, message: ''});
+
+    useEffect(() => {
+        if (state?.success) {
+            toast({
+                title: "Login Successful!",
+                description: "Redirecting to your dashboard...",
+            });
+            // Force a full page reload to ensure all context and session data is fresh
+            window.location.href = '/dashboard';
+        }
+    }, [state, toast]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
@@ -59,7 +75,7 @@ export default function LoginPage() {
                 Welcome back! Please log in to your account.
             </p>
         </div>
-        <form action={authenticate} className="space-y-6">
+        <form action={formAction} className="space-y-6">
             <div className="space-y-4">
                 <div className="space-y-2">
                     <Label htmlFor="email">Email</Label>
@@ -99,7 +115,12 @@ export default function LoginPage() {
                 </div>
             </div>
             
-            {/* Error message handling can be added here later if needed, by passing search params */}
+            {state && !state.success && state.message && (
+                <Alert variant="destructive">
+                    <AlertTitle>Login Failed</AlertTitle>
+                    <AlertDescription>{state.message}</AlertDescription>
+                </Alert>
+            )}
             
             <SubmitButton />
         </form>
@@ -113,3 +134,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    
