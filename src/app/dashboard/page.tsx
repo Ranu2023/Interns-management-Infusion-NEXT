@@ -5,7 +5,7 @@ import { Suspense } from 'react';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
+import { Users, Briefcase, FolderKanban, DollarSign, Loader2 } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
 import { initialData } from '@/lib/seed-data';
 import { InternDashboard } from '@/components/intern-dashboard';
@@ -110,5 +110,3 @@ export default async function DashboardPage() {
           redirect('/');
     }
 }
-
-    

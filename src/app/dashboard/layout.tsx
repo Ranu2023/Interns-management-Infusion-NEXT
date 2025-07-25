@@ -3,7 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, redirect } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -11,10 +11,7 @@ import { UserNav } from '@/components/user-nav';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { ChevronsLeft, MenuIcon, ChevronsRight, type LucideProps, Loader2 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
-import { AuthProvider, useAuth } from '@/context/AuthContext';
-import { getSession } from '@/lib/session';
-import { redirect } from 'next/navigation';
-import { type User } from '@/context/AuthContext';
+import { useAuth } from '@/context/AuthContext';
 
 
 function Icon(props: LucideProps) {
@@ -36,7 +33,7 @@ function Icon(props: LucideProps) {
   );
 }
 
-function DashboardLayoutContent({
+export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
@@ -53,12 +50,25 @@ function DashboardLayoutContent({
     }
   }, [isDesktop]);
 
-  if (isLoading || !isAuthenticated || !user) {
+  React.useEffect(() => {
+    if (!isLoading && !isAuthenticated) {
+        redirect('/');
+    }
+  }, [isLoading, isAuthenticated]);
+
+
+  if (isLoading) {
     return (
         <div className="h-screen w-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
+  }
+
+  if (!isAuthenticated || !user) {
+    // This part should ideally not be reached due to the useEffect redirect,
+    // but it's a good failsafe.
+    return null;
   }
 
   const toggleCollapse = () => {
@@ -120,23 +130,3 @@ function DashboardLayoutContent({
     </div>
   );
 }
-
-
-export default async function DashboardLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const session = await getSession();
-  if (!session?.user) {
-    redirect('/');
-  }
-
-  return (
-    <AuthProvider initialUser={session.user}>
-      <DashboardLayoutContent>{children}</DashboardLayoutContent>
-    </AuthProvider>
-  );
-}
-
-    

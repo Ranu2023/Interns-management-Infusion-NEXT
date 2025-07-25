@@ -4,7 +4,7 @@
 import { SignJWT, jwtVerify } from 'jose';
 import { cookies } from 'next/headers';
 
-const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key');
+const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key-that-is-long-enough');
 const key = secretKey;
 
 export async function encrypt(payload: any) {
@@ -24,10 +24,6 @@ export async function decrypt(token: string): Promise<any> {
   } catch (e) {
     return null;
   }
-}
-
-export async function logout() {
-  cookies().set('session', '', { expires: new Date(0) });
 }
 
 export async function getSession() {

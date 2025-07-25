@@ -10,7 +10,6 @@ import {
   type ReactNode,
 } from 'react';
 import { logout } from '@/lib/actions';
-import { type IUser } from '@/lib/models/User';
 import { Loader2 } from 'lucide-react';
 
 export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
@@ -40,49 +39,50 @@ export function AuthProvider({
   initialUser: User | null
 }) {
   const [user, setUser] = useState<User | null>(initialUser);
-  const [isLoading, setIsLoading] = useState(initialUser ? false : true);
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
 
   useEffect(() => {
-    // If the user is provided initially, we don't need to fetch.
+    // If the user is provided by the server (via RootLayout), use it directly.
     if (initialUser) {
       setUser(initialUser);
       setIsLoading(false);
-    } else {
-      // This path is for client-side transitions where the layout isn't reloaded
-      // and we need to verify the session on the client.
-      const checkSession = async () => {
-        try {
-          const res = await fetch('/api/auth/session');
-          if (res.ok) {
-            const data = await res.json();
-            setUser(data.user);
-          } else {
-            setUser(null);
-            router.push('/');
-          }
-        } catch {
-          setUser(null);
-          router.push('/');
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      checkSession();
+      return;
     }
-  }, [initialUser, router]);
+    
+    // If no initial user, this means it's a client-side navigation.
+    // We must verify the session with the server.
+    const checkSession = async () => {
+      try {
+        const res = await fetch('/api/auth/session');
+        if (res.ok) {
+          const data = await res.json();
+          setUser(data.user);
+        } else {
+          setUser(null);
+        }
+      } catch {
+        setUser(null);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    checkSession();
+    
+  }, [initialUser]);
 
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
+    router.push('/');
   };
   
   return (
     <AuthContext.Provider
       value={{ user, isAuthenticated: !!user, logout: handleLogout, isLoading }}
     >
-      {isLoading ? <div className="h-screen w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div> : children}
+      {children}
     </AuthContext.Provider>
   );
 }
@@ -94,5 +94,3 @@ export function useAuth() {
   }
   return context;
 }
-
-    

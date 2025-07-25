@@ -1,9 +1,7 @@
 
 'use client';
 
-import { useActionState } from 'react-dom';
-import { useRouter } from 'next/navigation';
-import { useFormStatus } from 'react-dom';
+import { useFormState, useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -49,7 +47,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const [state, formAction] = useActionState(authenticate, undefined);
+    const [state, formAction] = useFormState(authenticate, undefined);
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-gray-950 p-4 text-white">
@@ -123,5 +121,3 @@ export default function LoginPage() {
         </main>
     );
 }
-
-    

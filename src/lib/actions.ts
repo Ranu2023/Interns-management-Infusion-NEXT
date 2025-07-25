@@ -125,7 +125,6 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
         return { success: false, message: 'An internal server error occurred.' };
     }
-
     redirect('/dashboard');
 }
 
@@ -330,5 +329,3 @@ export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });
   redirect('/');
 }
-
-    
