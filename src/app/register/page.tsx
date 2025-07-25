@@ -3,6 +3,7 @@
 
 import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import {
@@ -23,11 +24,10 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { useToast } from '@/hooks/use-toast';
-import { type Role } from '@/context/AuthContext';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { registerUser } from '@/lib/actions';
-import { useRouter } from 'next/navigation';
+
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -36,7 +36,7 @@ function Icon(props: React.ComponentProps<'svg'>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
+      viewBox="0 0 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -168,4 +168,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-

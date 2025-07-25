@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -9,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
 import { UserNav } from '@/components/user-nav';
 import { DashboardNav } from '@/components/dashboard-nav';
-import { ChevronsLeft, MenuIcon, ChevronsRight, type LucideProps } from 'lucide-react';
+import { ChevronsLeft, MenuIcon, ChevronsRight, type LucideProps, Loader2 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
 
 function Icon(props: LucideProps) {
@@ -36,16 +37,16 @@ export default function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { user, isAuthenticated } = useAuth();
+  const { user, isAuthenticated, isLoading } = useAuth();
   const router = useRouter();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
   React.useEffect(() => {
-    if (!isAuthenticated) {
+    if (!isLoading && !isAuthenticated) {
       router.push('/');
     }
-  }, [isAuthenticated, router]);
+  }, [isLoading, isAuthenticated, router]);
   
   React.useEffect(() => {
     if (isDesktop) {
@@ -55,8 +56,12 @@ export default function DashboardLayout({
     }
   }, [isDesktop]);
 
-  if (!isAuthenticated || !user) {
-    return null; // or a loading skeleton
+  if (isLoading || !isAuthenticated || !user) {
+    return (
+        <div className="h-screen w-full flex items-center justify-center">
+            <Loader2 className="h-8 w-8 animate-spin" />
+        </div>
+    );
   }
 
   const toggleCollapse = () => {

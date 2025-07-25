@@ -12,7 +12,7 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { decrypt, encrypt } from './session';
+import { encrypt } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -80,7 +80,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 // ✅ User Authentication
-export async function authenticate(prevState: string | undefined, formData: FormData) {
+export async function authenticate(prevState: any, formData: FormData) {
     try {
         await dbConnect();
         const email = formData.get('email') as string;
@@ -90,16 +90,16 @@ export async function authenticate(prevState: string | undefined, formData: Form
 
         const user = await User.findOne({ email });
         if (!user) {
-            return 'Invalid email or password.';
+            return { success: false, message: 'Invalid email or password.' };
         }
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
         if (!passwordsMatch) {
-            return 'Invalid email or password.';
+            return { success: false, message: 'Invalid email or password.' };
         }
 
         if (user.role !== role) {
-            return `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`;
+            return { success: false, message: `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`};
         }
 
         const sessionUser = {
@@ -120,15 +120,15 @@ export async function authenticate(prevState: string | undefined, formData: Form
             expires,
         });
 
+        return { success: true, message: 'Login successful' };
+
     } catch (error) {
         if ((error as Error).message.includes('credentialssignin')) {
-            return 'Invalid email or password.';
+            return { success: false, message: 'Invalid email or password.' };
         }
         console.error(error);
-        return 'An unexpected error occurred.';
+        return { success: false, message: 'An unexpected error occurred.' };
     }
-
-    redirect('/dashboard');
 }
 
 // ✅ Task Update

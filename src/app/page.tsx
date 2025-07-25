@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState } from 'react';
+import { useActionState, useEffect } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -33,7 +33,7 @@ function Icon(props: React.ComponentProps<'svg'>) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24 24"
+      viewBox="0 0 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
@@ -56,7 +56,15 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-  const [errorMessage, formAction, isPending] = useActionState(authenticate, undefined);
+  const [state, formAction] = useActionState(authenticate, undefined);
+
+  useEffect(() => {
+    if (state?.success) {
+      // Force a full page reload to ensure all contexts and states are correctly initialized.
+      window.location.href = '/dashboard';
+    }
+  }, [state]);
+
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
@@ -108,10 +116,10 @@ export default function LoginPage() {
                     </Select>
                 </div>
                 
-                {errorMessage && (
+                {state && !state.success && state.message && (
                     <Alert variant="destructive">
                         <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>{errorMessage}</AlertDescription>
+                        <AlertDescription>{state.message}</AlertDescription>
                     </Alert>
                 )}
                 
