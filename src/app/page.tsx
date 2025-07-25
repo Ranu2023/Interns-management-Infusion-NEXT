@@ -51,7 +51,7 @@ export default function LoginPage() {
   const [errorMessage, dispatch] = useActionState(authenticate, undefined);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-2">
             <div className="mx-auto h-12 w-12 text-primary">
@@ -72,6 +72,7 @@ export default function LoginPage() {
                     type="email"
                     placeholder="hr@synergy.com"
                     required
+                    className="bg-gray-800 border-gray-700"
                     />
                 </div>
                 <div className="space-y-2">
@@ -82,12 +83,13 @@ export default function LoginPage() {
                     type="password"
                     required
                     defaultValue="password"
+                    className="bg-gray-800 border-gray-700"
                     />
                 </div>
                  <div className="space-y-2">
                     <Label htmlFor="role">Role</Label>
                     <Select name="role" required defaultValue="intern">
-                    <SelectTrigger id="role">
+                    <SelectTrigger id="role" className="bg-gray-800 border-gray-700">
                         <SelectValue placeholder="Select a role" />
                     </SelectTrigger>
                     <SelectContent>

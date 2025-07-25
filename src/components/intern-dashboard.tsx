@@ -18,7 +18,6 @@ import dbConnect from '@/lib/db';
 import Intern from '@/lib/models/Intern';
 import Project from '@/lib/models/Project';
 import type { IProject } from '@/lib/models/Project';
-import { getSession } from '@/lib/session';
 
 async function getDashboardData(user: User): Promise<{
   intern: any;
@@ -28,13 +27,12 @@ async function getDashboardData(user: User): Promise<{
 }> {
   await dbConnect();
   const intern = await Intern.findOne({ email: user.email }).lean();
+  
   if (!intern) {
-    // This case should ideally not happen if a user is logged in as an intern
-    // but we handle it defensively.
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
-  // An intern might not have a project assigned yet.
+  // If intern's project is unassigned, don't try to fetch a project.
   if (!intern.project || intern.project === 'Unassigned') {
     return { intern: JSON.parse(JSON.stringify(intern)), project: null, tasksCompleted: 0, tasksTotal: 0 };
   }

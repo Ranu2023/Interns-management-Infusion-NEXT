@@ -69,8 +69,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             });
             await newMentor.save();
         }
-
-        revalidatePath('/register');
+        
         return { success: true, message: 'Registration successful! Please log in.' };
 
     } catch (error) {
@@ -78,6 +77,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         return { success: false, message: 'An internal server error occurred.' };
     }
 }
+
 
 // ✅ User Authentication
 export async function authenticate(prevState: any, formData: FormData) {
@@ -90,16 +90,16 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         const user = await User.findOne({ email });
         if (!user) {
-            return { success: false, message: 'Invalid email or password.' };
+            return 'Invalid email or password.';
         }
 
         const passwordsMatch = await bcrypt.compare(password, user.password);
         if (!passwordsMatch) {
-            return { success: false, message: 'Invalid email or password.' };
+            return 'Invalid email or password.';
         }
 
         if (user.role !== role) {
-            return { success: false, message: `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`};
+            return `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`;
         }
 
         const sessionUser = {
@@ -122,10 +122,10 @@ export async function authenticate(prevState: any, formData: FormData) {
 
     } catch (error) {
         if ((error as Error).message.includes('credentialssignin')) {
-            return { success: false, message: 'Invalid email or password.' };
+            return 'Invalid email or password.';
         }
         console.error(error);
-        return { success: false, message: 'An unexpected error occurred.' };
+        return 'An unexpected error occurred.';
     }
     
     redirect('/dashboard');
