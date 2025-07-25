@@ -110,17 +110,14 @@ export async function authenticate(prevState: any, formData: FormData) {
             avatar: user.avatar,
         };
 
-        const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
-        const session = await encrypt({ user: sessionUser, expires });
+        const session = await encrypt(sessionUser);
 
         cookies().set('session', session, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
-            expires: expires,
+            maxAge: 60 * 60, // 1 hour
         });
-
-        return { success: true, message: 'Login successful. Redirecting...' };
 
     } catch (error) {
         console.error(error);
@@ -129,6 +126,7 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
         return { success: false, message: 'An internal server error occurred.' };
     }
+    redirect('/dashboard');
 }
 
 // ✅ Task Update
@@ -248,7 +246,6 @@ export async function submitDailyReport(formData: FormData) {
     const goals = formData.get('goals');
     const blockers = formData.get('blockers');
 
-    // Re-implementing getSession here as it was removed previously
     const { getSession } = await import('@/lib/session');
     const session = await getSession();
 
@@ -328,3 +325,5 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
+
+    

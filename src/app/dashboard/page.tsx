@@ -1,13 +1,16 @@
 
-'use client';
+'use server';
 
 import { Suspense } from 'react';
-import { useAuth } from '@/context/AuthContext';
+import { getSession } from '@/lib/session';
+import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Users, Briefcase, FolderKanban, DollarSign } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
 import { initialData } from '@/lib/seed-data';
 import { InternDashboard } from '@/components/intern-dashboard';
+import { User } from '@/context/AuthContext';
+
 
 function HRDashboard() {
   const internCount = initialData.interns.length;
@@ -81,31 +84,31 @@ function GenericDashboard({ name, role }: { name: string; role: string }) {
     );
 }
 
-function DashboardView() {
-  const { user } = useAuth();
+export default async function DashboardPage() {
+    const session = await getSession();
 
-  if (!user) {
-    return null; // The loading state is handled in AuthProvider
-  }
+    if (!session?.user) {
+        redirect('/');
+    }
+    
+    const user = session.user as User;
 
-  switch (user.role) {
-    case 'hr':
-      return <HRDashboard />;
-    case 'mentor':
-      return <GenericDashboard name={user.name} role="Mentor" />;
-    case 'intern':
-      return (
-        <Suspense fallback={<div>Loading intern data...</div>}>
-            <InternDashboard user={user} />
-        </Suspense>
-      )
-    case 'employee':
-        return <GenericDashboard name={user.name} role="Employee" />;
-    default:
-      return <div>Invalid role.</div>;
-  }
+    switch (user.role) {
+        case 'hr':
+          return <HRDashboard />;
+        case 'mentor':
+          return <GenericDashboard name={user.name} role="Mentor" />;
+        case 'intern':
+          return (
+            <Suspense fallback={<div>Loading intern data...</div>}>
+                <InternDashboard user={user} />
+            </Suspense>
+          )
+        case 'employee':
+            return <GenericDashboard name={user.name} role="Employee" />;
+        default:
+          return <div>Invalid role.</div>;
+    }
 }
 
-export default function DashboardPage() {
-  return <DashboardView />;
-}
+    

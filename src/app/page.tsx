@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -48,26 +48,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const [state, formAction] = useActionState(authenticate, { success: false, message: ''});
-
-    useEffect(() => {
-        if (state.success) {
-            // Use a full page reload to ensure the new session is picked up reliably.
-            window.location.href = '/dashboard';
-        }
-    }, [state.success]);
-
-    // While redirecting, show a simple message
-    if (state.success) {
-        return (
-            <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
-                <div className="flex items-center space-x-2">
-                    <Loader2 className="h-5 w-5 animate-spin" />
-                    <p>Login successful, redirecting to dashboard...</p>
-                </div>
-            </main>
-        )
-    }
+    const [state, formAction] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
@@ -121,7 +102,7 @@ export default function LoginPage() {
                 </div>
             </div>
             
-            {!state.success && state.message && (
+            {state?.message && (
                 <Alert variant="destructive">
                     <AlertTitle>Login Failed</AlertTitle>
                     <AlertDescription>{state.message}</AlertDescription>
@@ -140,3 +121,5 @@ export default function LoginPage() {
     </main>
   );
 }
+
+    

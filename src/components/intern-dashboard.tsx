@@ -26,6 +26,11 @@ async function getDashboardData(user: User): Promise<{
   tasksTotal: number;
 }> {
   await dbConnect();
+  
+  if (!user || !user.email) {
+    return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
+  }
+
   const intern = await Intern.findOne({ email: user.email }).lean();
   
   if (!intern) {
@@ -61,6 +66,16 @@ async function getDashboardData(user: User): Promise<{
 }
 
 export async function InternDashboard({ user }: { user: User }) {
+  if (!user || !user.name) {
+    return (
+      <Card>
+        <CardContent className="pt-6">
+          <p className="text-center text-destructive-foreground">Invalid user session.</p>
+        </CardContent>
+      </Card>
+    );
+  }
+
   const { intern, project, tasksCompleted, tasksTotal } =
     await getDashboardData(user);
 
@@ -141,3 +156,5 @@ export async function InternDashboard({ user }: { user: User }) {
     </div>
   );
 }
+
+    
