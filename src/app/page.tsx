@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react';
 import Link from 'next/link';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -17,7 +17,6 @@ import {
 import { authenticate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { useToast } from '@/hooks/use-toast';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -49,19 +48,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const { toast } = useToast();
-    const [state, formAction] = useActionState(authenticate, { success: false, message: ''});
-
-    useEffect(() => {
-        if (state?.success) {
-            toast({
-                title: "Login Successful!",
-                description: "Redirecting to your dashboard...",
-            });
-            // Using window.location.href to force a full page reload which helps in re-initializing the auth context correctly.
-            window.location.href = '/dashboard';
-        }
-    }, [state, toast]);
+    const [state, formAction] = useActionState(authenticate, undefined);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4 text-white">
@@ -115,7 +102,7 @@ export default function LoginPage() {
                 </div>
             </div>
             
-            {state && !state.success && state.message && (
+            {state?.message && (
                 <Alert variant="destructive">
                     <AlertTitle>Login Failed</AlertTitle>
                     <AlertDescription>{state.message}</AlertDescription>

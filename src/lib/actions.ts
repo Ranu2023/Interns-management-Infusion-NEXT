@@ -79,7 +79,7 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-// ✅ User Authentication
+// ✅ User Authentication (Server-Side Redirect)
 export async function authenticate(prevState: any, formData: FormData) {
     try {
         await dbConnect();
@@ -120,12 +120,14 @@ export async function authenticate(prevState: any, formData: FormData) {
             expires: expires,
         });
 
-        return { success: true, message: 'Login successful!' };
-
     } catch (error) {
         console.error(error);
+        if (error instanceof Error && error.message.includes('credential.')) {
+            return { success: false, message: error.message };
+        }
         return { success: false, message: 'An internal server error occurred.' };
     }
+    redirect('/dashboard');
 }
 
 // ✅ Task Update
@@ -246,9 +248,8 @@ export async function submitDailyReport(formData: FormData) {
     const blockers = formData.get('blockers');
 
     // Re-implementing getSession here as it was removed previously
-    const sessionCookie = cookies().get('session')?.value;
-    if (!sessionCookie) return { success: false, message: "Authentication required." };
-    const session = await decrypt(sessionCookie);
+    const { getSession } = await import('@/lib/session');
+    const session = await getSession();
 
     if (!session?.user) return { success: false, message: "Authentication required." };
 
