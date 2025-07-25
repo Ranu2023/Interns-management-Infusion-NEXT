@@ -1,3 +1,4 @@
+
 'use server';
 
 import { SignJWT, jwtVerify } from 'jose';
@@ -10,7 +11,7 @@ export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1d')
+    .setExpirationTime('1h')
     .sign(key);
 }
 

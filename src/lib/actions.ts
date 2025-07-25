@@ -110,7 +110,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             avatar: user.avatar,
         };
 
-        const expires = new Date(Date.now() + 60 * 60 * 24 * 1000); // 1 day
+        const expires = new Date(Date.now() + 60 * 60 * 1000); // 1 hour
         const session = await encrypt({ user: sessionUser, expires });
 
         cookies().set('session', session, {
