@@ -94,7 +94,11 @@ function DashboardView() {
     case 'mentor':
       return <GenericDashboard name={user.name} role="Mentor" />;
     case 'intern':
-      return <InternDashboard user={user} />;
+      return (
+        <Suspense fallback={<div>Loading intern data...</div>}>
+            <InternDashboard user={user} />
+        </Suspense>
+      )
     case 'employee':
         return <GenericDashboard name={user.name} role="Employee" />;
     default:

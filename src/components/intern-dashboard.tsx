@@ -21,7 +21,7 @@ import type { IProject } from '@/lib/models/Project';
 
 async function getDashboardData(user: User): Promise<{
   intern: any;
-  project: IProject | null;
+  project: (IProject & { _id: string }) | null;
   tasksCompleted: number;
   tasksTotal: number;
 }> {
@@ -31,16 +31,21 @@ async function getDashboardData(user: User): Promise<{
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
-  const project = await Project.findOne({ title: intern.project }).lean();
+  const projectData = await Project.findOne({ title: intern.project }).lean();
 
   let tasksCompleted = 0;
   let tasksTotal = 0;
+  let project: (IProject & { _id: string }) | null = null;
 
-  if (project && project.tasks) {
-    tasksCompleted = project.tasks.filter((t) => t.completed).length;
-    tasksTotal = project.tasks.length;
+  if (projectData) {
+    tasksCompleted = projectData.tasks.filter((t) => t.completed).length;
+    tasksTotal = projectData.tasks.length;
+    project = {
+        ...projectData,
+        _id: projectData._id.toString()
+    }
   }
-
+  
   return {
     intern: JSON.parse(JSON.stringify(intern)),
     project: project ? JSON.parse(JSON.stringify(project)) : null,
