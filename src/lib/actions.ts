@@ -70,7 +70,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newMentor.save();
         }
 
-        revalidatePath('/');
+        revalidatePath('/register');
         return { success: true, message: 'Registration successful! Please log in.' };
 
     } catch (error) {
@@ -85,6 +85,8 @@ export async function authenticate(prevState: string | undefined, formData: Form
         await dbConnect();
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
+        const role = formData.get('role') as Role;
+
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -94,6 +96,10 @@ export async function authenticate(prevState: string | undefined, formData: Form
         const passwordsMatch = await bcrypt.compare(password, user.password);
         if (!passwordsMatch) {
             return 'Invalid email or password.';
+        }
+
+        if (user.role !== role) {
+            return `Role mismatch. This user is registered as a ${user.role}, not a ${role}.`;
         }
 
         const sessionUser = {

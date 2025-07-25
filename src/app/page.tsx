@@ -2,7 +2,6 @@
 'use client';
 
 import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import {
@@ -18,6 +17,14 @@ import { Label } from '@/components/ui/label';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Loader2 } from 'lucide-react';
 import { authenticate } from '@/lib/actions';
+import { useFormStatus } from 'react-dom';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -86,6 +93,20 @@ export default function LoginPage() {
                     defaultValue="password"
                     />
                 </div>
+                 <div className="space-y-2">
+                    <Label htmlFor="role">Role</Label>
+                    <Select name="role" required defaultValue="intern">
+                    <SelectTrigger id="role">
+                        <SelectValue placeholder="Select a role" />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="hr">HR / Admin</SelectItem>
+                        <SelectItem value="mentor">Mentor</SelectItem>
+                        <SelectItem value="intern">Intern</SelectItem>
+                        <SelectItem value="employee">Employee</SelectItem>
+                    </SelectContent>
+                    </Select>
+                </div>
                 
                 {errorMessage && (
                     <Alert variant="destructive">
@@ -94,10 +115,8 @@ export default function LoginPage() {
                     </Alert>
                 )}
                 
-                <Button type="submit" className="w-full" disabled={isPending}>
-                    {isPending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                    Log In
-                </Button>
+                <SubmitButton />
+
             </CardContent>
             <CardFooter className="flex-col text-sm">
                 <p className="text-muted-foreground">
