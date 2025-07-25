@@ -70,7 +70,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newMentor.save();
         }
         
-        return { success: true, message: 'Registration successful! Please log in.' };
+        return { success: true, message: 'Registration successful! You will be redirected to the login page.' };
 
     } catch (error) {
         console.error('Registration failed:', error);
@@ -120,6 +120,8 @@ export async function authenticate(prevState: any, formData: FormData) {
             expires: expires,
         });
 
+        return { success: true, message: 'Login successful. Redirecting...' };
+
     } catch (error) {
         console.error(error);
         if (error instanceof Error && error.message.includes('credential.')) {
@@ -127,7 +129,6 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
         return { success: false, message: 'An internal server error occurred.' };
     }
-    redirect('/dashboard');
 }
 
 // ✅ Task Update

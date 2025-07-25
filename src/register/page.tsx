@@ -80,22 +80,22 @@ export default function RegisterPage() {
     }, [state.success, router, toast]);
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">
+    <main className="flex min-h-screen flex-col items-center justify-center bg-gray-900 p-4">
       <div className="w-full max-w-sm">
         <form ref={formRef} action={formAction}>
-            <Card>
+            <Card className="bg-gray-950 text-white border-gray-800">
                 <CardHeader className="space-y-1 text-center">
                     <div className="mx-auto h-12 w-12 text-primary">
                     <Icon className="h-full w-full" />
                     </div>
                     <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
-                    <CardDescription>
+                    <CardDescription className="text-gray-400">
                     Join Synergy Interns to start your journey.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
                     {state.success ? (
-                         <Alert variant="default">
+                         <Alert variant="default" className="bg-green-900/50 border-green-500 text-green-200">
                             <AlertTitle>Success!</AlertTitle>
                             <AlertDescription>{state.message}</AlertDescription>
                         </Alert>
@@ -109,6 +109,7 @@ export default function RegisterPage() {
                             type="text"
                             placeholder="John Doe"
                             required
+                             className="bg-gray-800 border-gray-700"
                             />
                         </div>
                         <div className="space-y-2">
@@ -119,6 +120,7 @@ export default function RegisterPage() {
                             type="email"
                             placeholder="john.doe@example.com"
                             required
+                             className="bg-gray-800 border-gray-700"
                             />
                         </div>
                         <div className="space-y-2">
@@ -128,12 +130,13 @@ export default function RegisterPage() {
                             name="password"
                             type="password"
                             required
+                             className="bg-gray-800 border-gray-700"
                             />
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="role">Role</Label>
                             <Select name="role" required defaultValue="intern">
-                            <SelectTrigger id="role">
+                            <SelectTrigger id="role" className="bg-gray-800 border-gray-700">
                                 <SelectValue placeholder="Select a role" />
                             </SelectTrigger>
                             <SelectContent>
@@ -170,4 +173,3 @@ export default function RegisterPage() {
     </main>
   );
 }
-
