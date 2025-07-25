@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from '@/lib/session';
+import { getSession } from '@/lib/session';
 
 const protectedRoutes = ['/dashboard'];
 const publicRoutes = ['/', '/register'];
@@ -9,26 +9,13 @@ export default async function middleware(req: NextRequest) {
   const isProtectedRoute = protectedRoutes.some((prefix) => path.startsWith(prefix));
   const isPublicRoute = publicRoutes.includes(path);
 
-  const sessionCookie = req.cookies.get('session')?.value;
-  let session;
-  try {
-    session = sessionCookie ? await decrypt(sessionCookie) : null;
-  } catch (error) {
-    // Invalid token, treat as no session
-    session = null;
-    const response = NextResponse.next();
-    response.cookies.delete('session');
-    return response;
-  }
+  const session = await getSession();
 
   if (isProtectedRoute && !session?.user) {
     return NextResponse.redirect(new URL('/', req.nextUrl));
   }
 
-  if (
-    isPublicRoute &&
-    session?.user
-  ) {
+  if (isPublicRoute && session?.user) {
     return NextResponse.redirect(new URL('/dashboard', req.nextUrl));
   }
   

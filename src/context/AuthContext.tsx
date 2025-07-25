@@ -9,7 +9,7 @@ import {
   type ReactNode,
 } from 'react';
 import { useToast } from '@/hooks/use-toast';
-import { logout, getSession } from '@/lib/session';
+import { getSession, logout } from '@/lib/session';
 import { type IUser } from '@/lib/models/User';
 
 export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
