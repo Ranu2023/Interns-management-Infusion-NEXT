@@ -1,3 +1,4 @@
+
 'use client';
 
 import {
@@ -17,16 +18,15 @@ import {
   DropdownMenuSubContent,
   DropdownMenuSubTrigger,
   DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useAuth, type Role } from '@/context/AuthContext';
-import { Monitor, Moon, Sun, LogOut, User, UserCog } from 'lucide-react';
+import { useAuth } from '@/context/AuthContext';
+import { Monitor, Moon, Sun, LogOut, User } from 'lucide-react';
 import { useTheme } from 'next-themes';
+import { logout } from '@/lib/actions';
 
 export function UserNav() {
-  const { user, logout, switchRole } = useAuth();
+  const { user } = useAuth();
   const { setTheme } = useTheme();
 
   if (!user) {
@@ -59,26 +59,6 @@ export function UserNav() {
             <span>Profile</span>
           </DropdownMenuItem>
 
-          <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <UserCog className="mr-2 h-4 w-4" />
-              <span>Switch Role (Dev)</span>
-            </DropdownMenuSubTrigger>
-            <DropdownMenuPortal>
-              <DropdownMenuSubContent>
-                <DropdownMenuRadioGroup
-                  value={user.role}
-                  onValueChange={(value) => switchRole(value as Role)}
-                >
-                  <DropdownMenuRadioItem value="hr">HR</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="mentor">Mentor</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="intern">Intern</DropdownMenuRadioItem>
-                  <DropdownMenuRadioItem value="employee">Employee</DropdownMenuRadioItem>
-                </DropdownMenuRadioGroup>
-              </DropdownMenuSubContent>
-            </DropdownMenuPortal>
-          </DropdownMenuSub>
-
            <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Monitor className="mr-2 h-4 w-4" />
@@ -104,7 +84,7 @@ export function UserNav() {
 
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout}>
+        <DropdownMenuItem onClick={() => logout()}>
           <LogOut className="mr-2 h-4 w-4" />
           <span>Log out</span>
         </DropdownMenuItem>
@@ -112,3 +92,5 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
+
+    

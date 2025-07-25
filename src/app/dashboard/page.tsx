@@ -100,7 +100,7 @@ export default async function DashboardPage() {
           return <GenericDashboard name={user.name} role="Mentor" />;
         case 'intern':
           return (
-            <Suspense fallback={<div>Loading intern data...</div>}>
+            <Suspense fallback={<div className="flex justify-center items-center h-64"><Loader2 className="h-8 w-8 animate-spin" /></div>}>
                 <InternDashboard user={user} />
             </Suspense>
           )
@@ -110,3 +110,5 @@ export default async function DashboardPage() {
           redirect('/');
     }
 }
+
+    

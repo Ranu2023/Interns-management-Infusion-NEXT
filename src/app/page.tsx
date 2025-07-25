@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useActionState, useEffect } from 'react';
+import { useActionState } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
@@ -18,7 +18,6 @@ import { authenticate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
-import { useToast } from '@/hooks/use-toast';
 
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
@@ -50,20 +49,7 @@ function SubmitButton() {
 }
 
 export default function LoginPage() {
-    const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
-    const router = useRouter();
-    const { toast } = useToast();
-
-    useEffect(() => {
-        if (state.success) {
-            toast({
-                title: "Login Successful",
-                description: "Redirecting to your dashboard...",
-            });
-            // A full page reload is more reliable for session changes.
-            window.location.href = '/dashboard';
-        }
-    }, [state.success, router, toast]);
+    const [state, formAction] = useActionState(authenticate, undefined);
 
     return (
         <main className="flex min-h-screen flex-col items-center justify-center bg-gray-950 p-4 text-white">
@@ -88,6 +74,7 @@ export default function LoginPage() {
                                 placeholder="hr@synergy.com"
                                 required
                                 className="bg-gray-800 border-gray-700"
+                                defaultValue="intern@synergy.com"
                             />
                         </div>
                         <div className="space-y-2">
@@ -117,7 +104,7 @@ export default function LoginPage() {
                         </div>
                     </div>
                     
-                    {!state.success && state.message && (
+                    {state?.message && (
                         <Alert variant="destructive">
                             <AlertTitle>Login Failed</AlertTitle>
                             <AlertDescription>{state.message}</AlertDescription>
@@ -136,3 +123,5 @@ export default function LoginPage() {
         </main>
     );
 }
+
+    

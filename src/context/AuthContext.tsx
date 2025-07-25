@@ -9,8 +9,7 @@ import {
   useEffect,
   type ReactNode,
 } from 'react';
-import { useToast } from '@/hooks/use-toast';
-import { getSession, logout } from '@/lib/session';
+import { logout } from '@/lib/actions';
 import { type IUser } from '@/lib/models/User';
 import { Loader2 } from 'lucide-react';
 
@@ -28,94 +27,60 @@ type AuthContextType = {
   user: User | null;
   isAuthenticated: boolean;
   logout: () => void;
-  switchRole: (role: Role) => void; // This will now be for dev purposes only
   isLoading: boolean;
 };
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-const mockUsers: Record<Role, User> = {
-  hr: {
-    id: 'hr-id',
-    name: 'Admin Power',
-    email: 'hr@synergy.com',
-    role: 'hr',
-    avatar: 'https://placehold.co/100x100.png',
-  },
-  mentor: {
-    id: 'mentor-id',
-    name: 'Dr. Guide',
-    email: 'mentor@synergy.com',
-    role: 'mentor',
-    avatar: 'https://placehold.co/100x100.png',
-  },
-  intern: {
-    id: 'intern-id',
-    name: 'Learny McLearnface',
-    email: 'intern@synergy.com',
-    role: 'intern',
-    avatar: 'https://placehold.co/100x100.png',
-  },
-  employee: {
-    id: 'employee-id',
-    name: 'Worker Bee',
-    email: 'employee@synergy.com',
-    role: 'employee',
-    avatar: 'https://placehold.co/100x100.png',
-  },
-};
-
-
-export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+export function AuthProvider({ 
+  children,
+  initialUser 
+}: { 
+  children: ReactNode,
+  initialUser: User | null
+}) {
+  const [user, setUser] = useState<User | null>(initialUser);
+  const [isLoading, setIsLoading] = useState(initialUser ? false : true);
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
-    const fetchUser = async () => {
-      setIsLoading(true);
-      try {
-        const session = await getSession();
-        if (session?.user) {
-          setUser(session.user);
-        } else {
+    // If the user is provided initially, we don't need to fetch.
+    if (initialUser) {
+      setUser(initialUser);
+      setIsLoading(false);
+    } else {
+      // This path is for client-side transitions where the layout isn't reloaded
+      // and we need to verify the session on the client.
+      const checkSession = async () => {
+        try {
+          const res = await fetch('/api/auth/session');
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+            router.push('/');
+          }
+        } catch {
           setUser(null);
+          router.push('/');
+        } finally {
+          setIsLoading(false);
         }
-      } catch (error) {
-        console.error('Failed to fetch session', error);
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    fetchUser();
-  }, []);
+      };
+      checkSession();
+    }
+  }, [initialUser, router]);
+
 
   const handleLogout = async () => {
     await logout();
     setUser(null);
-    window.location.href = '/';
   };
-
-  const switchRole = (role: Role) => {
-    // This is a mock function for development convenience to see different dashboards
-    // It doesn't reflect a real-world scenario
-    if (user) {
-      const newUser = mockUsers[role];
-       setUser(newUser);
-       toast({
-        title: 'Role Switched (Dev)',
-        description: `You are now viewing the dashboard as ${newUser.name} (${newUser.role}). This is a DEV feature.`,
-      });
-      // In a real app, you might re-fetch permissions or redirect
-       router.push('/dashboard');
-    }
-  };
-
+  
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, logout: handleLogout, switchRole, isLoading }}
+      value={{ user, isAuthenticated: !!user, logout: handleLogout, isLoading }}
     >
       {isLoading ? <div className="h-screen w-full flex items-center justify-center"><Loader2 className="h-8 w-8 animate-spin" /></div> : children}
     </AuthContext.Provider>

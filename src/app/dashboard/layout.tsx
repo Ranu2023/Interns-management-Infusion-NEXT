@@ -3,8 +3,7 @@
 
 import * as React from 'react';
 import Link from 'next/link';
-import { useRouter } from 'next/navigation';
-import { useAuth } from '@/context/AuthContext';
+import { usePathname } from 'next/navigation';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
@@ -12,6 +11,11 @@ import { UserNav } from '@/components/user-nav';
 import { DashboardNav } from '@/components/dashboard-nav';
 import { ChevronsLeft, MenuIcon, ChevronsRight, type LucideProps, Loader2 } from 'lucide-react';
 import { useMediaQuery } from '@/hooks/use-media-query';
+import { AuthProvider, useAuth } from '@/context/AuthContext';
+import { getSession } from '@/lib/session';
+import { redirect } from 'next/navigation';
+import { type User } from '@/context/AuthContext';
+
 
 function Icon(props: LucideProps) {
   return (
@@ -32,22 +36,15 @@ function Icon(props: LucideProps) {
   );
 }
 
-export default function DashboardLayout({
+function DashboardLayoutContent({
   children,
 }: {
   children: React.ReactNode;
 }) {
   const { user, isAuthenticated, isLoading } = useAuth();
-  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = React.useState(false);
   const isDesktop = useMediaQuery("(min-width: 768px)");
 
-  React.useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      router.push('/');
-    }
-  }, [isLoading, isAuthenticated, router]);
-  
   React.useEffect(() => {
     if (isDesktop) {
       setIsCollapsed(false);
@@ -123,3 +120,23 @@ export default function DashboardLayout({
     </div>
   );
 }
+
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const session = await getSession();
+  if (!session?.user) {
+    redirect('/');
+  }
+
+  return (
+    <AuthProvider initialUser={session.user}>
+      <DashboardLayoutContent>{children}</DashboardLayoutContent>
+    </AuthProvider>
+  );
+}
+
+    

@@ -118,15 +118,15 @@ export async function authenticate(prevState: any, formData: FormData) {
             maxAge: 60 * 60, // 1 hour
         });
         
-        return { success: true, message: 'Login successful' };
-
     } catch (error) {
         console.error(error);
-        if (error instanceof Error && error.message.includes('credential.')) {
+        if (error instanceof Error && error.name === 'CredentialsSignin') {
             return { success: false, message: error.message };
         }
         return { success: false, message: 'An internal server error occurred.' };
     }
+
+    redirect('/dashboard');
 }
 
 // ✅ Task Update
@@ -325,3 +325,10 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
+
+export async function logout() {
+  cookies().set('session', '', { expires: new Date(0) });
+  redirect('/');
+}
+
+    
