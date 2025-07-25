@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useActionState, useEffect } from 'react';
@@ -51,7 +52,14 @@ function SubmitButton() {
 
 
 export default function LoginPage() {
-  const [state, formAction] = useActionState(authenticate, undefined);
+  const [state, formAction] = useActionState(authenticate, { success: false, message: '' });
+  const router = useRouter();
+
+  useEffect(() => {
+    if (state.success) {
+      router.push('/dashboard');
+    }
+  }, [state.success, router]);
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-center bg-background p-4">

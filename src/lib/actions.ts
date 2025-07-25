@@ -12,7 +12,7 @@ import Mentor from './models/Mentor';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { encrypt } from './session';
+import { encrypt, getSession } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -112,15 +112,10 @@ export async function authenticate(prevState: any, formData: FormData) {
 
     cookies().set('session', session, { expires, httpOnly: true });
 
-    revalidatePath('/dashboard', 'layout');
-    redirect('/dashboard');
-
+    return { success: true, message: 'Login successful' };
   } catch (error) {
     if ((error as any).type === 'CredentialsSignin') {
         return { success: false, message: 'Invalid credentials.' };
-    }
-     if ((error as Error).message.includes('NEXT_REDIRECT')) {
-      throw error;
     }
     console.error(error);
     return { success: false, message: 'An unexpected error occurred.' };
