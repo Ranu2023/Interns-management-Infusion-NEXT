@@ -17,7 +17,7 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Download, FolderOpen, FileText, Certificate } from "lucide-react";
+import { Download, FolderOpen, FileText, Award } from "lucide-react";
 import dbConnect from "@/lib/db";
 import Document from "@/lib/models/Document";
 import { getSession } from "@/lib/session";
@@ -47,8 +47,8 @@ export default async function DocumentsPage() {
     const getIcon = (type: string) => {
         switch(type) {
             case 'Offer Letter': return <FileText className="h-4 w-4" />;
-            case 'LOR': return <Certificate className="h-4 w-4" />;
-            case 'Completion Certificate': return <Certificate className="h-4 w-4" />;
+            case 'LOR': return <Award className="h-4 w-4" />;
+            case 'Completion Certificate': return <Award className="h-4 w-4" />;
             default: return <FileText className="h-4 w-4" />;
         }
     }
