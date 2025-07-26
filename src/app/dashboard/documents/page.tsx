@@ -1,5 +1,5 @@
 
-'use client';
+'use server';
 
 import {
   Table,
@@ -17,17 +17,47 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Download, FolderOpen, File } from "lucide-react";
+import { Download, FolderOpen, FileText, Certificate } from "lucide-react";
+import dbConnect from "@/lib/db";
+import Document from "@/lib/models/Document";
+import { getSession } from "@/lib/session";
+import { User } from "@/context/AuthContext";
+import { redirect } from "next/navigation";
 
-// The hardcoded data has been removed.
-const documents: any[] = [];
+async function getMyDocuments() {
+    const session = await getSession();
+    const user = session?.user as User;
+    if (!user) redirect('/');
 
-export default function DocumentsPage() {
+    await dbConnect();
+    const documents = await Document.find({ userId: user.id }).lean();
+    
+    return documents.map(doc => ({
+        ...doc,
+        _id: doc._id.toString(),
+        userId: doc.userId.toString(),
+        date: new Date(doc.date).toISOString()
+    }));
+}
+
+
+export default async function DocumentsPage() {
+    const documents = await getMyDocuments();
+
+    const getIcon = (type: string) => {
+        switch(type) {
+            case 'Offer Letter': return <FileText className="h-4 w-4" />;
+            case 'LOR': return <Certificate className="h-4 w-4" />;
+            case 'Completion Certificate': return <Certificate className="h-4 w-4" />;
+            default: return <FileText className="h-4 w-4" />;
+        }
+    }
+
     return (
         <Card>
             <CardHeader>
                 <CardTitle>My Documents</CardTitle>
-                <CardDescription>Access and download your important documents.</CardDescription>
+                <CardDescription>Access and download your important documents issued by HR.</CardDescription>
             </CardHeader>
             <CardContent>
                  {documents.length > 0 ? (
@@ -42,15 +72,15 @@ export default function DocumentsPage() {
                         </TableHeader>
                         <TableBody>
                             {documents.map((doc) => (
-                                <TableRow key={doc.id}>
+                                <TableRow key={doc._id}>
                                     <TableCell>
                                         <div className="flex items-center gap-2 font-medium">
-                                            {/* Icon logic removed for brevity */}
+                                            {getIcon(doc.type)}
                                             <span>{doc.name}</span>
                                         </div>
                                     </TableCell>
                                     <TableCell>{doc.type}</TableCell>
-                                    <TableCell>{doc.date}</TableCell>
+                                    <TableCell>{new Date(doc.date).toLocaleDateString()}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="outline" size="sm" asChild>
                                             <a href={doc.href} target="_blank" rel="noopener noreferrer">
@@ -68,7 +98,7 @@ export default function DocumentsPage() {
                         <FolderOpen className="mx-auto h-12 w-12" />
                         <h3 className="mt-4 text-lg font-semibold">No Documents Found</h3>
                         <p className="mt-2 text-sm">
-                            Important documents like your offer letter and certificates will appear here.
+                            Important documents like your offer letter and certificates will appear here once issued by HR.
                         </p>
                     </div>
                  )}

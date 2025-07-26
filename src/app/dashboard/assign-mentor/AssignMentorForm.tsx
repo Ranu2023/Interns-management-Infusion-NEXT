@@ -98,21 +98,22 @@ export function AssignMentorForm({ interns, mentors }: { interns: (Intern & {_id
                 </p>
              )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="mentor">Select Mentor</Label>
-            <Select name="mentorId" required>
-              <SelectTrigger id="mentor">
-                <SelectValue placeholder="Select a mentor..." />
-              </SelectTrigger>
-              <SelectContent>
-                {mentors.map((mentor) => (
-                  <SelectItem key={mentor._id} value={mentor._id}>
-                    {mentor.name} ({mentor.expertise})
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                      <div className="grid gap-2">
+              <Label htmlFor="mentor">Select Mentor</Label>
+              <Select name="mentorId" required>
+                <SelectTrigger id="mentor">
+                  <SelectValue placeholder="Select a mentor..." />
+                </SelectTrigger>
+                <SelectContent className="max-h-60 overflow-y-auto">
+                  {mentors.map((mentor) => (
+                    <SelectItem key={mentor._id} value={mentor._id}>
+                      {mentor.name} ({mentor.expertise})
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
           
         </CardContent>
         <CardFooter>

@@ -7,9 +7,8 @@ import {
   CardTitle,
   CardDescription,
   CardContent,
-  CardFooter
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, XCircle, Briefcase } from "lucide-react";
+import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, Briefcase, Award, GraduationCap, Mic, UserCheck } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import dbConnect from "@/lib/db";
@@ -18,14 +17,13 @@ import { type IIntern } from "@/lib/models/Intern";
 import { updatePPODecision } from "@/lib/actions";
 import { getSession } from '@/lib/session';
 
-const timelineSteps = [
-  { id: 1, title: "Internship Started", status: "Completed", icon: <CheckCircle /> },
-  { id: 2, title: "Mid-term Review", status: "Completed", icon: <CheckCircle /> },
-  { id: 3, title: "Final Presentation", status: "Completed", icon: <CheckCircle /> },
-  { id: 4, title: "PPO Consideration", status: "In Progress", icon: <Clock /> },
-  { id: 5, title: "HR Interview", status: "Pending", icon: <Clock /> },
-  { id: 6, title: "Final Decision", status: "Pending", icon: <Clock /> },
-];
+type TimelineStep = {
+    id: number;
+    title: string;
+    status: 'Completed' | 'In Progress' | 'Pending';
+    icon: React.ReactElement;
+    date: Date | null;
+};
 
 async function getInternData(email: string): Promise<IIntern | null> {
     await dbConnect();
@@ -84,6 +82,28 @@ export default async function PPOStatusPage() {
     const acceptAction = updatePPODecision.bind(null, intern._id.toString(), 'Accepted');
     const rejectAction = updatePPODecision.bind(null, intern._id.toString(), 'Rejected');
 
+    // Dynamically generate the timeline
+    const timelineSteps: TimelineStep[] = [
+        { id: 1, title: 'Internship Started', date: intern.internshipStartDate || null, icon: <Award />, status: 'Pending' },
+        { id: 2, title: 'Final Assessment Submitted', date: intern.finalAssessmentDate || null, icon: <GraduationCap />, status: 'Pending' },
+        { id: 3, title: 'Mentor PPO Recommendation', date: intern.ppoRecommendationDate || null, icon: <UserCheck />, status: 'Pending' },
+        { id: 4, title: 'HR Interview Scheduled', date: intern.hrInterviewDate || null, icon: <Mic />, status: 'Pending' },
+        { id: 5, title: 'Final Decision Made', date: intern.finalDecisionDate || null, icon: <Briefcase />, status: 'Pending' },
+    ];
+    
+    let inProgressFound = false;
+    for (const step of timelineSteps.reverse()) {
+        if (step.date) {
+            step.status = 'Completed';
+        } else if (!inProgressFound) {
+            step.status = 'In Progress';
+            inProgressFound = true;
+        } else {
+            step.status = 'Pending';
+        }
+    }
+    timelineSteps.reverse();
+
 
     return (
         <Card>
@@ -126,11 +146,16 @@ export default async function PPOStatusPage() {
                                     <ul className="space-y-8">
                                         {timelineSteps.map((item) => (
                                             <li key={item.id} className="flex items-start gap-4">
-                                                <div className={`flex h-6 w-6 items-center justify-center rounded-full ${item.status === 'Completed' ? 'bg-green-500 text-white' : item.status === 'In Progress' ? 'bg-primary text-primary-foreground' : 'bg-muted-foreground/20 text-muted-foreground'}`}>
+                                                <div className={`flex h-6 w-6 items-center justify-center rounded-full ${item.status === 'Completed' ? 'bg-green-500 text-white' : item.status === 'In Progress' ? 'bg-primary text-primary-foreground animate-pulse' : 'bg-muted-foreground/20 text-muted-foreground'}`}>
                                                     {item.icon}
                                                 </div>
                                                 <div>
                                                     <p className="font-medium">{item.title}</p>
+                                                    {item.date && (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {new Date(item.date).toLocaleDateString()}
+                                                        </p>
+                                                    )}
                                                 </div>
                                             </li>
                                         ))}

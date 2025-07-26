@@ -18,6 +18,12 @@ export interface Intern {
     ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
     ppoReasoning?: string;
     ppoDecision?: 'Accepted' | 'Rejected' | 'Pending';
+    // Timeline tracking fields
+    internshipStartDate?: Date;
+    finalAssessmentDate?: Date;
+    ppoRecommendationDate?: Date;
+    hrInterviewDate?: Date;
+    finalDecisionDate?: Date;
 }
 
 export interface Mentor {
@@ -51,4 +57,13 @@ export interface Application {
     university: string;
     date: string;
     status: 'Pending' | 'Reviewed' | 'Accepted' | 'Rejected';
+}
+
+export interface Document {
+    _id: string;
+    userId: string;
+    name: string;
+    type: 'Offer Letter' | 'LOR' | 'Completion Certificate';
+    date: string;
+    href: string;
 }
