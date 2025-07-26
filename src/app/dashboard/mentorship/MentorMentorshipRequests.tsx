@@ -37,6 +37,7 @@ async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedReque
     await dbConnect();
     const requests = await MentorshipRequest.find({ mentor: mentorId })
         .populate<{intern: User}>('intern', 'name email avatar')
+        .populate<{mentor: User}>('mentor', 'name email avatar')
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
@@ -98,12 +99,12 @@ export async function MentorMentorshipRequests() {
                                         {req.status === 'Pending' ? (
                                             <div className="flex gap-2 justify-end">
                                                 <form action={updateMentorshipRequest.bind(null, req._id, 'Accepted')}>
-                                                    <Button variant="ghost" size="icon" type="submit">
+                                                    <Button variant="ghost" size="icon" type="submit" title="Accept">
                                                         <ThumbsUp className="h-4 w-4 text-green-500"/>
                                                     </Button>
                                                 </form>
                                                 <form action={updateMentorshipRequest.bind(null, req._id, 'Rejected')}>
-                                                     <Button variant="ghost" size="icon" type="submit">
+                                                     <Button variant="ghost" size="icon" type="submit" title="Reject">
                                                         <ThumbsDown className="h-4 w-4 text-red-500"/>
                                                     </Button>
                                                 </form>
