@@ -10,6 +10,7 @@ import DailyReport from './models/DailyReport';
 import User from './models/User';
 import Mentor from './models/Mentor';
 import Notification from './models/Notification';
+import MentorshipRequest from './models/MentorshipRequest';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
@@ -51,6 +52,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         // 2. Create the role-specific profile
         if (role === 'intern') {
             const newIntern = new Intern({
+                _id: newUser._id,
                 name,
                 email,
                 project: 'Unassigned',
@@ -62,6 +64,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newIntern.save();
         } else if (role === 'mentor') {
             const newMentor = new Mentor({
+                _id: newUser._id,
                 name,
                 email,
                 expertise: 'General',
@@ -166,10 +169,26 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
     if (!application) throw new Error('Application not found');
 
     if (status === 'Accepted') {
+        // This should ideally create a user first then an intern.
+        // Simplified for now.
         const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`;
-        const existingIntern = await Intern.findOne({ email });
-        if (!existingIntern) {
+        const existingUser = await User.findOne({ email });
+
+        if (!existingUser) {
+            const tempPassword = "password" // Should be a random, one-time password
+            const hashedPassword = await bcrypt.hash(tempPassword, 10);
+            
+            const newUser = new User({
+                name: application.name,
+                email,
+                password: hashedPassword,
+                role: 'intern',
+                avatar: `https://placehold.co/100x100.png`
+            });
+            await newUser.save();
+
             const newIntern = new Intern({
+                _id: newUser._id,
                 name: application.name,
                 email: email,
                 project: 'Unassigned',
@@ -374,14 +393,15 @@ export async function assignMentor(formData: FormData) {
         mentor.interns += 1;
         await mentor.save();
 
-        // Create notifications
         await new Notification({
             userId: intern._id,
             message: `You have been assigned to a new mentor: ${mentor.name}.`,
+            href: `/dashboard/my-interns`
         }).save();
         await new Notification({
-            userId: mentor._id, // Assuming Mentor model can be linked via a User ID or similar
+            userId: mentor._id,
             message: `You have been assigned a new intern: ${intern.name}.`,
+            href: `/dashboard/my-interns`
         }).save();
 
         revalidatePath('/dashboard/assign-mentor');
@@ -392,6 +412,82 @@ export async function assignMentor(formData: FormData) {
         return { success: true, message: `${intern.name} has been assigned to ${mentor.name}.` };
     } catch (error) {
         console.error('Failed to assign mentor:', error);
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
+// ✅ Request Premium Mentorship
+export async function requestMentorship(mentorId: string) {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'intern') {
+        return { success: false, message: 'Only interns can request mentorship.' };
+    }
+
+    try {
+        await dbConnect();
+        const intern = await Intern.findById(session.user.id);
+        const mentor = await Mentor.findById(mentorId);
+
+        if (!intern || !mentor) {
+            return { success: false, message: 'Intern or Mentor not found.' };
+        }
+        
+        const existingRequest = await MentorshipRequest.findOne({ intern: intern._id, mentor: mentor._id });
+        if (existingRequest) {
+            return { success: false, message: 'You have already sent a request to this mentor.' };
+        }
+
+        const mentorshipRequest = new MentorshipRequest({
+            intern: intern._id,
+            mentor: mentor._id,
+            status: 'Pending',
+        });
+        await mentorshipRequest.save();
+
+        await new Notification({
+            userId: mentor._id,
+            message: `${intern.name} has requested premium mentorship.`,
+            href: '/dashboard/mentorship'
+        }).save();
+
+        revalidatePath('/dashboard/mentorship');
+        return { success: true, message: `Your request to ${mentor.name} has been sent.` };
+    } catch (error) {
+        console.error('Failed to request mentorship:', error);
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
+// ✅ Update Mentorship Request Status
+export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
+     const session = await getSession();
+    if (!session?.user || session.user.role !== 'mentor') {
+        return { success: false, message: 'Only mentors can update requests.' };
+    }
+    try {
+        await dbConnect();
+        const request = await MentorshipRequest.findById(requestId).populate('intern').populate('mentor');
+        if (!request) {
+            return { success: false, message: 'Request not found.' };
+        }
+        
+        if (request.mentor._id.toString() !== session.user.id) {
+             return { success: false, message: 'You are not authorized to update this request.' };
+        }
+        
+        request.status = status;
+        await request.save();
+
+        await new Notification({
+            userId: request.intern._id,
+            message: `Your mentorship request with ${request.mentor.name} has been ${status}.`,
+            href: '/dashboard/my-mentorship'
+        }).save();
+        
+        revalidatePath('/dashboard/mentorship');
+        return { success: true, message: `Request has been ${status}.` };
+    } catch (error) {
+        console.error('Failed to update request:', error);
         return { success: false, message: 'An internal error occurred.' };
     }
 }

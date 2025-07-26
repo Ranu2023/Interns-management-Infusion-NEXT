@@ -65,5 +65,14 @@ export interface Document {
     name: string;
     type: 'Offer Letter' | 'LOR' | 'Completion Certificate';
     date: string;
-    href: string;
+href: string;
+}
+
+export interface MentorshipRequest {
+    _id: string;
+    intern: Intern;
+    mentor: Mentor;
+    status: 'Pending' | 'Accepted' | 'Rejected';
+    reason?: string;
+    createdAt: string;
 }

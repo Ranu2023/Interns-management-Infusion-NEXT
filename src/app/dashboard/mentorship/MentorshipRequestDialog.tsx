@@ -14,24 +14,40 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { useToast } from '@/hooks/use-toast';
+import { requestMentorship } from '@/lib/actions';
+import { useTransition } from 'react';
+import { Loader2 } from 'lucide-react';
 
 
-export function MentorshipRequestDialog({ mentorName }: { mentorName: string }) {
+export function MentorshipRequestDialog({ mentorId, mentorName }: { mentorId: string, mentorName: string }) {
     const { toast } = useToast();
+    const [isPending, startTransition] = useTransition();
 
     const handleRequest = () => {
-        // In a real app, this would trigger a server action to record the request
-        // and send a notification to the mentor.
-        toast({
-            title: "Mentorship Request Sent!",
-            description: `Your request to ${mentorName} has been sent. They will review it shortly.`,
+        startTransition(async () => {
+            const result = await requestMentorship(mentorId);
+            if (result.success) {
+                toast({
+                    title: "Mentorship Request Sent!",
+                    description: result.message,
+                });
+            } else {
+                 toast({
+                    variant: "destructive",
+                    title: "Request Failed",
+                    description: result.message,
+                });
+            }
         });
     }
 
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
-                <Button className="w-full">Request Mentorship</Button>
+                <Button className="w-full" disabled={isPending}>
+                     {isPending && <Loader2 className="mr-2 animate-spin" />}
+                     Request Mentorship
+                </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>

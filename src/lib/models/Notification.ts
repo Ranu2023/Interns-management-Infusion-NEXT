@@ -6,6 +6,7 @@ export interface INotification extends Document {
   message: string;
   read: boolean;
   createdAt: Date;
+  href?: string;
 }
 
 const NotificationSchema: Schema<INotification> = new Schema({
@@ -13,6 +14,7 @@ const NotificationSchema: Schema<INotification> = new Schema({
   message: { type: String, required: true },
   read: { type: Boolean, default: false },
   createdAt: { type: Date, default: Date.now },
+  href: { type: String },
 });
 
 const Notification: Model<INotification> = models.Notification || mongoose.model<INotification>('Notification', NotificationSchema);
