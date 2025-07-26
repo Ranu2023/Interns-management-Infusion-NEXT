@@ -1,7 +1,9 @@
 
+
 import mongoose, { Schema, Document, models, Model } from 'mongoose';
 
 export interface IIntern extends Document {
+    _id: mongoose.Types.ObjectId;
     name: string;
     email: string;
     project: string;
@@ -20,6 +22,7 @@ export interface IIntern extends Document {
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
+    _id: { type: Schema.Types.ObjectId, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
     project: { type: String, required: true },
@@ -36,6 +39,12 @@ const InternSchema: Schema<IIntern> = new Schema({
     hrInterviewDate: { type: Date },
     finalDecisionDate: { type: Date },
 });
+
+// To prevent overwriting the model if it already exists, especially during hot-reloading
+InternSchema.set('toObject', { transform: (doc, ret) => {
+  ret._id = ret._id.toString();
+  return ret;
+}});
 
 const Intern: Model<IIntern> = models.Intern || mongoose.model<IIntern>('Intern', InternSchema);
 

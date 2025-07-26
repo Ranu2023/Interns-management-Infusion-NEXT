@@ -1,6 +1,8 @@
+
 import mongoose, { Schema, Document, models, Model } from 'mongoose';
 
 export interface IMentor extends Document {
+  _id: mongoose.Types.ObjectId;
   name: string;
   email: string;
   expertise: string;

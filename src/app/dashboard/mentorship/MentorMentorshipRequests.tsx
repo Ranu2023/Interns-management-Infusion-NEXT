@@ -23,23 +23,31 @@ import { ThumbsUp, ThumbsDown, Mail } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
+import { getSession } from "@/lib/session";
+import { User } from "@/context/AuthContext";
+import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 
+type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
+    _id: string;
+    intern: User;
+    mentor: User;
+}
 
-async function getMyMentorshipRequests(mentorId: string) {
+async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ mentor: mentorId })
-        .populate('intern', 'name email avatar')
+        .populate<{intern: User}>('intern', 'name email avatar')
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
 }
 
 
-export async function MentorMentorshipRequests({ mentorId }: { mentorId: string}) {
-    const requests = await getMyMentorshipRequests(mentorId);
+export async function MentorMentorshipRequests() {
+    const session = await getSession();
+    if (session?.user?.role !== 'mentor') return null;
 
-    const handleAccept = updateMentorshipRequest.bind(null);
-    const handleReject = updateMentorshipRequest.bind(null);
+    const requests = await getMyMentorshipRequests(session.user.id);
 
     return (
         <Card>
@@ -63,7 +71,7 @@ export async function MentorMentorshipRequests({ mentorId }: { mentorId: string}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {requests.map((req: any) => (
+                            {requests.map((req) => (
                                 <TableRow key={req._id}>
                                     <TableCell>
                                         <div className="flex items-center gap-3">
@@ -89,13 +97,13 @@ export async function MentorMentorshipRequests({ mentorId }: { mentorId: string}
                                     <TableCell className="text-right">
                                         {req.status === 'Pending' ? (
                                             <div className="flex gap-2 justify-end">
-                                                <form action={handleAccept.bind(null, req._id, 'Accepted')}>
-                                                    <Button variant="ghost" size="icon">
+                                                <form action={updateMentorshipRequest.bind(null, req._id, 'Accepted')}>
+                                                    <Button variant="ghost" size="icon" type="submit">
                                                         <ThumbsUp className="h-4 w-4 text-green-500"/>
                                                     </Button>
                                                 </form>
-                                                <form action={handleReject.bind(null, req._id, 'Rejected')}>
-                                                     <Button variant="ghost" size="icon">
+                                                <form action={updateMentorshipRequest.bind(null, req._id, 'Rejected')}>
+                                                     <Button variant="ghost" size="icon" type="submit">
                                                         <ThumbsDown className="h-4 w-4 text-red-500"/>
                                                     </Button>
                                                 </form>

@@ -16,7 +16,7 @@ import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { encrypt, getSession } from './session';
 import { redirect } from 'next/navigation';
-import { Role } from '@/context/AuthContext';
+import { Role, User as SessionUser } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
 
 // ✅ User Registration
@@ -52,6 +52,7 @@ export async function registerUser(prevState: any, formData: FormData) {
         // 2. Create the role-specific profile
         if (role === 'intern') {
             const newIntern = new Intern({
+                _id: newUser._id, // Use same ID for linking
                 name,
                 email,
                 project: 'Unassigned',
@@ -63,6 +64,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newIntern.save();
         } else if (role === 'mentor') {
             const newMentor = new Mentor({
+                 _id: newUser._id, // Use same ID for linking
                 name,
                 email,
                 expertise: 'General',
@@ -103,7 +105,7 @@ export async function authenticate(prevState: any, formData: FormData) {
              return { success: false, message: `Incorrect role selected. This user is a ${user.role}.` };
         }
 
-        const sessionUser = {
+        const sessionUser: SessionUser = {
             id: user._id.toString(),
             name: user.name,
             email: user.email,
@@ -184,6 +186,7 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
             await newUser.save();
 
             const newIntern = new Intern({
+                 _id: newUser._id,
                 name: application.name,
                 email: email,
                 project: 'Unassigned',
@@ -388,8 +391,9 @@ export async function assignMentor(formData: FormData) {
         mentor.interns += 1;
         await mentor.save();
         
-        const userForIntern = await User.findOne({email: intern.email});
-        const userForMentor = await User.findOne({email: mentor.email});
+        // Use the IDs from the found documents, which are guaranteed to be correct.
+        const userForIntern = await User.findById(intern._id);
+        const userForMentor = await User.findById(mentor._id);
 
         if (userForIntern) {
             await new Notification({
@@ -427,37 +431,31 @@ export async function requestMentorship(mentorId: string) {
 
     try {
         await dbConnect();
-        const intern = await Intern.findOne({ email: session.user.email });
-        const mentor = await Mentor.findById(mentorId);
-
-        if (!intern || !mentor) {
-            return { success: false, message: 'Intern or Mentor not found.' };
-        }
         
-        const existingRequest = await MentorshipRequest.findOne({ intern: intern._id, mentor: mentor._id });
+        const existingRequest = await MentorshipRequest.findOne({ intern: session.user.id, mentor: mentorId });
         if (existingRequest) {
             return { success: false, message: 'You have already sent a request to this mentor.' };
         }
 
         const mentorshipRequest = new MentorshipRequest({
-            intern: intern._id,
-            mentor: mentor._id,
+            intern: session.user.id,
+            mentor: mentorId,
             status: 'Pending',
         });
         await mentorshipRequest.save();
 
-        const userForMentor = await User.findOne({ email: mentor.email });
-        if (userForMentor) {
+        const mentorUser = await User.findById(mentorId);
+        if (mentorUser) {
             await new Notification({
-                userId: userForMentor._id,
-                message: `${intern.name} has requested premium mentorship.`,
+                userId: mentorUser._id,
+                message: `${session.user.name} has requested premium mentorship.`,
                 href: '/dashboard/mentorship'
             }).save();
         }
 
 
         revalidatePath('/dashboard/mentorship');
-        return { success: true, message: `Your request to ${mentor.name} has been sent.` };
+        return { success: true, message: `Your request to the mentor has been sent.` };
     } catch (error) {
         console.error('Failed to request mentorship:', error);
         return { success: false, message: 'An internal error occurred.' };
@@ -477,14 +475,15 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
             return { success: false, message: 'Request not found.' };
         }
         
-        if (request.mentor.email !== session.user.email) {
+        // Ensure the logged-in mentor is the one the request was sent to
+        if (request.mentor._id.toString() !== session.user.id) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
         
         request.status = status;
         await request.save();
 
-        const userForIntern = await User.findOne({ email: request.intern.email });
+        const userForIntern = await User.findById(request.intern._id);
 
         if (userForIntern) {
             await new Notification({
