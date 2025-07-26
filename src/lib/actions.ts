@@ -52,7 +52,6 @@ export async function registerUser(prevState: any, formData: FormData) {
         // 2. Create the role-specific profile
         if (role === 'intern') {
             const newIntern = new Intern({
-                _id: newUser._id,
                 name,
                 email,
                 project: 'Unassigned',
@@ -64,7 +63,6 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newIntern.save();
         } else if (role === 'mentor') {
             const newMentor = new Mentor({
-                _id: newUser._id,
                 name,
                 email,
                 expertise: 'General',
@@ -169,13 +167,11 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
     if (!application) throw new Error('Application not found');
 
     if (status === 'Accepted') {
-        // This should ideally create a user first then an intern.
-        // Simplified for now.
         const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`;
         const existingUser = await User.findOne({ email });
 
         if (!existingUser) {
-            const tempPassword = "password" // Should be a random, one-time password
+            const tempPassword = "password" 
             const hashedPassword = await bcrypt.hash(tempPassword, 10);
             
             const newUser = new User({
@@ -188,7 +184,6 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
             await newUser.save();
 
             const newIntern = new Intern({
-                _id: newUser._id,
                 name: application.name,
                 email: email,
                 project: 'Unassigned',
@@ -392,17 +387,24 @@ export async function assignMentor(formData: FormData) {
 
         mentor.interns += 1;
         await mentor.save();
+        
+        const userForIntern = await User.findOne({email: intern.email});
+        const userForMentor = await User.findOne({email: mentor.email});
 
-        await new Notification({
-            userId: intern._id,
-            message: `You have been assigned to a new mentor: ${mentor.name}.`,
-            href: `/dashboard/my-interns`
-        }).save();
-        await new Notification({
-            userId: mentor._id,
-            message: `You have been assigned a new intern: ${intern.name}.`,
-            href: `/dashboard/my-interns`
-        }).save();
+        if (userForIntern) {
+            await new Notification({
+                userId: userForIntern._id,
+                message: `You have been assigned to a new mentor: ${mentor.name}.`,
+                href: `/dashboard/my-interns`
+            }).save();
+        }
+        if (userForMentor) {
+            await new Notification({
+                userId: userForMentor._id,
+                message: `You have been assigned a new intern: ${intern.name}.`,
+                href: `/dashboard/my-interns`
+            }).save();
+        }
 
         revalidatePath('/dashboard/assign-mentor');
         revalidatePath('/dashboard/interns');
@@ -425,7 +427,7 @@ export async function requestMentorship(mentorId: string) {
 
     try {
         await dbConnect();
-        const intern = await Intern.findById(session.user.id);
+        const intern = await Intern.findOne({ email: session.user.email });
         const mentor = await Mentor.findById(mentorId);
 
         if (!intern || !mentor) {
@@ -444,11 +446,15 @@ export async function requestMentorship(mentorId: string) {
         });
         await mentorshipRequest.save();
 
-        await new Notification({
-            userId: mentor._id,
-            message: `${intern.name} has requested premium mentorship.`,
-            href: '/dashboard/mentorship'
-        }).save();
+        const userForMentor = await User.findOne({ email: mentor.email });
+        if (userForMentor) {
+            await new Notification({
+                userId: userForMentor._id,
+                message: `${intern.name} has requested premium mentorship.`,
+                href: '/dashboard/mentorship'
+            }).save();
+        }
+
 
         revalidatePath('/dashboard/mentorship');
         return { success: true, message: `Your request to ${mentor.name} has been sent.` };
@@ -471,20 +477,25 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
             return { success: false, message: 'Request not found.' };
         }
         
-        if (request.mentor._id.toString() !== session.user.id) {
+        if (request.mentor.email !== session.user.email) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
         
         request.status = status;
         await request.save();
 
-        await new Notification({
-            userId: request.intern._id,
-            message: `Your mentorship request with ${request.mentor.name} has been ${status}.`,
-            href: '/dashboard/my-mentorship'
-        }).save();
+        const userForIntern = await User.findOne({ email: request.intern.email });
+
+        if (userForIntern) {
+            await new Notification({
+                userId: userForIntern._id,
+                message: `Your mentorship request with ${request.mentor.name} has been ${status}.`,
+                href: '/dashboard/my-mentorship'
+            }).save();
+        }
         
         revalidatePath('/dashboard/mentorship');
+        revalidatePath('/dashboard/my-mentorship');
         return { success: true, message: `Request has been ${status}.` };
     } catch (error) {
         console.error('Failed to update request:', error);

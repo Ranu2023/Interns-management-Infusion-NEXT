@@ -12,7 +12,7 @@ const MentorSchema: Schema<IMentor> = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   expertise: { type: String, required: true },
-  interns: { type: Number, required: true },
+  interns: { type: Number, required: true, default: 0 },
   avatar: { type: String, required: true },
 });
 
