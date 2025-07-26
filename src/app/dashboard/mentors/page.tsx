@@ -1,4 +1,6 @@
 
+'use server';
+
 import {
   Table,
   TableBody,
@@ -17,17 +19,12 @@ import {
 } from "@/components/ui/card";
 import dbConnect from '@/lib/db';
 import Mentor from '@/lib/models/Mentor';
-import { initialData } from '@/lib/seed-data';
 
 async function getMentors() {
     await dbConnect();
+    // This page is for HR/Admins, so we fetch all mentors.
+    // The on-the-fly seeding logic is removed.
     let mentors = await Mentor.find({}).lean();
-    if (!mentors || mentors.length === 0) {
-        // Seed data if collection is empty
-        await Mentor.insertMany(initialData.mentors);
-        mentors = await Mentor.find({}).lean();
-    }
-    // Mongoose returns objects with _id. We convert them to strings for serialization.
     return mentors.map(mentor => ({...mentor, _id: mentor._id.toString()}));
 }
 
@@ -40,35 +37,41 @@ export default async function MentorsPage() {
                 <CardDescription>View and manage all mentors.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Mentor</TableHead>
-                            <TableHead>Expertise</TableHead>
-                            <TableHead className="text-center">Interns Assigned</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {mentors.map((mentor) => (
-                            <TableRow key={mentor._id}>
-                                <TableCell>
-                                    <div className="flex items-center gap-3">
-                                        <Avatar>
-                                            <AvatarImage src={mentor.avatar} alt={mentor.name} data-ai-hint="avatar person" />
-                                            <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
-                                        </Avatar>
-                                        <div>
-                                            <p className="font-medium">{mentor.name}</p>
-                                            <p className="text-sm text-muted-foreground">{mentor.email}</p>
-                                        </div>
-                                    </div>
-                                </TableCell>
-                                <TableCell>{mentor.expertise}</TableCell>
-                                <TableCell className="text-center">{mentor.interns}</TableCell>
+                {mentors.length === 0 ? (
+                     <div className="text-center text-muted-foreground py-12">
+                        No mentor records found.
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Mentor</TableHead>
+                                <TableHead>Expertise</TableHead>
+                                <TableHead className="text-center">Interns Assigned</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {mentors.map((mentor) => (
+                                <TableRow key={mentor._id}>
+                                    <TableCell>
+                                        <div className="flex items-center gap-3">
+                                            <Avatar>
+                                                <AvatarImage src={mentor.avatar} alt={mentor.name} data-ai-hint="avatar person" />
+                                                <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            <div>
+                                                <p className="font-medium">{mentor.name}</p>
+                                                <p className="text-sm text-muted-foreground">{mentor.email}</p>
+                                            </div>
+                                        </div>
+                                    </TableCell>
+                                    <TableCell>{mentor.expertise}</TableCell>
+                                    <TableCell className="text-center">{mentor.interns}</TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
             </CardContent>
         </Card>
     );

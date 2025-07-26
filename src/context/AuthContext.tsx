@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -10,9 +9,8 @@ import {
   type ReactNode,
 } from 'react';
 import { logout } from '@/lib/actions';
-import { Loader2 } from 'lucide-react';
-
-export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
+import type { Role } from '@/types';
+ // Make sure this is correctly imported if separated
 
 export type User = {
   id: string;
@@ -31,65 +29,68 @@ type AuthContextType = {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export function AuthProvider({ 
+export function AuthProvider({
   children,
-  initialUser 
-}: { 
-  children: ReactNode,
-  initialUser: User | null
+  initialUser,
+}: {
+  children: ReactNode;
+  initialUser: User | null;
 }) {
   const [user, setUser] = useState<User | null>(initialUser);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState<boolean>(!initialUser);
   const router = useRouter();
 
   useEffect(() => {
-    // If the user is provided by the server (via RootLayout), use it directly.
-    if (initialUser) {
-      setUser(initialUser);
-      setIsLoading(false);
-      return;
-    }
-    
-    // If no initial user, this means it's a client-side navigation.
-    // We must verify the session with the server.
-    const checkSession = async () => {
-      try {
-        const res = await fetch('/api/auth/session');
-        if (res.ok) {
-          const data = await res.json();
-          setUser(data.user);
-        } else {
+    if (!initialUser) {
+      const checkSession = async () => {
+        try {
+          const res = await fetch('/api/auth/session');
+          if (res.ok) {
+            const data = await res.json();
+            setUser(data.user);
+          } else {
+            setUser(null);
+          }
+        } catch (err) {
+          console.error('Session check failed:', err);
           setUser(null);
+        } finally {
+          setIsLoading(false);
         }
-      } catch {
-        setUser(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-    checkSession();
-    
+      };
+      checkSession();
+    } else {
+      setIsLoading(false);
+    }
   }, [initialUser]);
 
-
   const handleLogout = async () => {
-    await logout();
-    setUser(null);
-    router.push('/');
+    try {
+      await logout();
+      setUser(null);
+      router.push('/');
+    } catch (error) {
+      console.error('Logout failed:', error);
+    }
   };
-  
+
   return (
     <AuthContext.Provider
-      value={{ user, isAuthenticated: !!user, logout: handleLogout, isLoading }}
+      value={{
+        user,
+        isAuthenticated: !!user,
+        logout: handleLogout,
+        isLoading,
+      }}
     >
       {children}
     </AuthContext.Provider>
   );
 }
 
-export function useAuth() {
+export function useAuth(): AuthContextType {
   const context = useContext(AuthContext);
-  if (context === undefined) {
+  if (!context) {
     throw new Error('useAuth must be used within an AuthProvider');
   }
   return context;

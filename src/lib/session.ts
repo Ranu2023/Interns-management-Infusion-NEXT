@@ -1,8 +1,7 @@
-
 'use server';
 
 import { SignJWT, jwtVerify } from 'jose';
-import { cookies } from 'next/headers';
+import { cookies as getCookies } from 'next/headers';
 
 const secretKey = new TextEncoder().encode(process.env.JWT_SECRET || 'default-secret-key-that-is-long-enough');
 const key = secretKey;
@@ -27,7 +26,8 @@ export async function decrypt(token: string): Promise<any> {
 }
 
 export async function getSession() {
-  const sessionCookie = cookies().get('session')?.value;
+  const cookies = await getCookies(); // ✅ now correctly awaited
+  const sessionCookie = cookies.get('session')?.value;
   if (!sessionCookie) return null;
   const session = await decrypt(sessionCookie);
   return session;

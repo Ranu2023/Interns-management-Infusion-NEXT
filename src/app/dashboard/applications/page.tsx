@@ -1,4 +1,6 @@
 
+'use server';
+
 import Link from 'next/link';
 import {
   Table,
@@ -25,20 +27,20 @@ import type { IApplication } from '@/lib/models/Application';
 async function getApplications(): Promise<(IApplication & {_id: string})[]> {
   try {
     await dbConnect();
+    // This page is for HR/Admins, so we fetch all applications.
+    // The on-the-fly seeding logic is removed.
     let applications = await Application.find({}).sort({ date: -1 }).lean();
     
-    // Mongoose returns objects with _id. We convert them to strings for serialization.
     return applications.map(app => ({
         ...app, 
         _id: app._id.toString(),
-        date: new Date(app.date).toISOString() // Ensure date is a string
+        date: new Date(app.date).toISOString()
     }));
   } catch (e) {
     console.error(e);
     return [];
   }
 }
-
 
 export default async function ApplicationsPage() {
     const applications = await getApplications();
@@ -50,6 +52,11 @@ export default async function ApplicationsPage() {
                 <CardDescription>Review and manage intern applications.</CardDescription>
             </CardHeader>
             <CardContent>
+               {applications.length === 0 ? (
+                 <div className="text-center text-muted-foreground py-12">
+                    No applications have been submitted yet.
+                </div>
+               ) : (
                 <Table>
                     <TableHeader>
                         <TableRow>
@@ -86,6 +93,7 @@ export default async function ApplicationsPage() {
                         ))}
                     </TableBody>
                 </Table>
+               )}
             </CardContent>
         </Card>
     );
