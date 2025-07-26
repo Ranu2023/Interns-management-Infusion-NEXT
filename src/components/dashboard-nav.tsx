@@ -21,6 +21,7 @@ import {
   ClipboardPlus,
   GraduationCap,
   type LucideIcon,
+  UserPlus,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -46,13 +47,14 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/mentors', label: 'Mentors', icon: UserCheck },
     { href: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
     { href: '/dashboard/applications', label: 'Applications', icon: FileText },
+    { href: '/dashboard/assign-mentor', label: 'Assign Mentor', icon: UserPlus },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
   ],
   mentor: [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
     { href: '/dashboard/my-interns', label: 'My Interns', icon: Users },
-    { href: '/dashboard/projects', label: 'All Projects', icon: FolderKanban },
+    { href: '/dashboard/mentor-projects', label: 'My Projects', icon: FolderKanban },
     { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
     { href: '/dashboard/reports', label: 'Reports', icon: FileBarChart2 },
     { href: '/dashboard/mentorship', label: 'Mentorship', icon: Handshake },

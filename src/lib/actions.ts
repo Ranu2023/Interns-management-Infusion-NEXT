@@ -9,10 +9,11 @@ import Intern from './models/Intern';
 import DailyReport from './models/DailyReport';
 import User from './models/User';
 import Mentor from './models/Mentor';
+import Notification from './models/Notification';
 import { type Task } from './types';
 import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
-import { encrypt } from './session';
+import { encrypt, getSession } from './session';
 import { redirect } from 'next/navigation';
 import { Role } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
@@ -70,7 +71,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             await newMentor.save();
         }
         
-        return { success: true, message: 'Registration successful! You will be redirected to the login page.' };
+        return { success: true, message: 'Registration successful! You can now log in.' };
 
     } catch (error) {
         console.error('Registration failed:', error);
@@ -202,6 +203,11 @@ export async function assignProject(formData: FormData) {
         const intern = await Intern.findById(internId);
         if (!intern) return { success: false, message: 'Intern not found.' };
 
+        const session = await getSession();
+        if (!session?.user || session.user.name !== intern.mentor) {
+            return { success: false, message: 'You can only assign projects to your own interns.' };
+        }
+
         const tasks = [
             { id: 1, title: "Initial research and planning", completed: false },
             { id: 2, title: "Setup project boilerplate", completed: false },
@@ -228,6 +234,7 @@ export async function assignProject(formData: FormData) {
         await intern.save();
 
         revalidatePath('/dashboard/projects');
+        revalidatePath('/dashboard/mentor-projects');
         revalidatePath('/dashboard/assign-project');
         revalidatePath(`/dashboard/interns`);
         revalidatePath(`/dashboard/intern/${internId}`);
@@ -245,9 +252,7 @@ export async function submitDailyReport(formData: FormData) {
     const goals = formData.get('goals');
     const blockers = formData.get('blockers');
 
-    const { getSession } = await import('@/lib/session');
     const session = await getSession();
-
     if (!session?.user) return { success: false, message: "Authentication required." };
 
     const intern = await Intern.findOne({ email: session.user.email });
@@ -276,6 +281,26 @@ export async function submitDailyReport(formData: FormData) {
         return { success: false, message: 'Failed to submit report.' };
     }
 }
+
+// ✅ Get My Daily Reports (for the logged-in intern)
+export async function getMyDailyReports() {
+    const session = await getSession();
+    if (!session?.user) return [];
+
+    try {
+        await dbConnect();
+        const intern = await Intern.findOne({ email: session.user.email });
+        if (!intern) return [];
+
+        const reports = await DailyReport.find({ internId: intern._id }).sort({ date: -1 }).lean();
+        return JSON.parse(JSON.stringify(reports));
+
+    } catch (error) {
+        console.error('Failed to fetch reports', error);
+        return [];
+    }
+}
+
 
 // ✅ Save PPO Assessment
 export async function savePPOAssessment(internId: string, formData: FormData) {
@@ -324,6 +349,53 @@ export async function updatePPODecision(internId: string, decision: 'Accepted' |
         return { success: false, message: 'Failed to update PPO decision.' };
     }
 }
+
+// ✅ Assign Mentor
+export async function assignMentor(formData: FormData) {
+    const internId = formData.get('internId') as string;
+    const mentorId = formData.get('mentorId') as string;
+
+    if (!internId || !mentorId) {
+        return { success: false, message: 'Please select both an intern and a mentor.' };
+    }
+
+    try {
+        await dbConnect();
+        const intern = await Intern.findById(internId);
+        const mentor = await Mentor.findById(mentorId);
+
+        if (!intern || !mentor) {
+            return { success: false, message: 'Intern or Mentor not found.' };
+        }
+
+        intern.mentor = mentor.name;
+        await intern.save();
+
+        mentor.interns += 1;
+        await mentor.save();
+
+        // Create notifications
+        await new Notification({
+            userId: intern._id,
+            message: `You have been assigned to a new mentor: ${mentor.name}.`,
+        }).save();
+        await new Notification({
+            userId: mentor._id, // Assuming Mentor model can be linked via a User ID or similar
+            message: `You have been assigned a new intern: ${intern.name}.`,
+        }).save();
+
+        revalidatePath('/dashboard/assign-mentor');
+        revalidatePath('/dashboard/interns');
+        revalidatePath('/dashboard/mentors');
+        revalidatePath('/dashboard/my-interns');
+
+        return { success: true, message: `${intern.name} has been assigned to ${mentor.name}.` };
+    } catch (error) {
+        console.error('Failed to assign mentor:', error);
+        return { success: false, message: 'An internal error occurred.' };
+    }
+}
+
 
 export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });

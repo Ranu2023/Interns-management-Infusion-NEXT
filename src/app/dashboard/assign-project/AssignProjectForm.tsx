@@ -76,25 +76,31 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
       <CardHeader>
         <CardTitle>Assign New Project</CardTitle>
         <CardDescription>
-          Fill in the details below to assign a new project to an intern.
+          Fill in the details below to assign a new project to an intern from your team.
         </CardDescription>
       </CardHeader>
       <form ref={formRef} action={formAction}>
         <CardContent className="space-y-6">
           <div className="grid gap-2">
             <Label htmlFor="intern">Select Intern</Label>
-            <Select name="internId" required>
-              <SelectTrigger id="intern">
-                <SelectValue placeholder="Select an intern..." />
-              </SelectTrigger>
-              <SelectContent>
-                {interns.map((intern) => (
-                  <SelectItem key={intern._id} value={intern._id}>
-                    {intern.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            {interns.length > 0 ? (
+                 <Select name="internId" required>
+                    <SelectTrigger id="intern">
+                        <SelectValue placeholder="Select an intern from your team..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                        {interns.map((intern) => (
+                        <SelectItem key={intern._id} value={intern._id}>
+                            {intern.name}
+                        </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            ): (
+                <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
+                    All of your assigned interns already have projects.
+                </p>
+            )}
           </div>
           <div className="grid gap-2">
             <Label htmlFor="project-name">Project Name</Label>
@@ -103,6 +109,7 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
               name="projectName"
               placeholder="e.g., Customer Feedback Analysis Tool"
               required
+              disabled={interns.length === 0}
             />
           </div>
           <div className="grid gap-2">
@@ -113,6 +120,7 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
               placeholder="Provide a detailed description of the project, its goals, and expected outcomes."
               rows={6}
               required
+              disabled={interns.length === 0}
             />
           </div>
           <div className="grid gap-2">
@@ -122,8 +130,9 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
                   id="document-link"
                   name="documentLink"
                   placeholder="https://example.com/project-brief.pdf"
+                  disabled={interns.length === 0}
                 />
-                <Button type="button" variant="outline">
+                <Button type="button" variant="outline" disabled={interns.length === 0}>
                     <FileUp className="mr-2"/>
                     Upload
                 </Button>

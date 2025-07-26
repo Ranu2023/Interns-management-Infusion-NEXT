@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useActionState } from 'react';
+import { useEffect, useState, useActionState, useRef } from 'react';
 import { useFormStatus } from 'react-dom';
 import {
   Card,
@@ -16,7 +16,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Check, Send, Loader2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
-import { submitDailyReport } from '@/lib/actions';
+import { submitDailyReport, getMyDailyReports } from '@/lib/actions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 function SubmitButton() {
     const { pending } = useFormStatus();
@@ -28,17 +29,27 @@ function SubmitButton() {
     );
 }
 
-const pastSubmissions = [
-  { date: '2024-07-15', status: 'Submitted' },
-  { date: '2024-07-14', status: 'Submitted' },
-  { date: '2024-07-13', status: 'Submitted' },
-  { date: '2024-07-12', status: 'Submitted' },
-  { date: '2024-07-11', status: 'Submitted' },
-];
+
+type Report = {
+    _id: string;
+    date: string;
+}
 
 export default function DailyReportPage() {
     const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
+    const [reports, setReports] = useState<Report[]>([]);
+    const [loadingReports, setLoadingReports] = useState(true);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            setLoadingReports(true);
+            const fetchedReports = await getMyDailyReports();
+            setReports(fetchedReports);
+            setLoadingReports(false);
+        }
+        fetchReports();
+    }, [])
 
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         try {
@@ -49,6 +60,9 @@ export default function DailyReportPage() {
                     description: 'Your daily report has been successfully submitted.',
                 });
                 formRef.current?.reset();
+                // Refresh the list of reports
+                const fetchedReports = await getMyDailyReports();
+                setReports(fetchedReports);
             } else {
                 toast({
                     variant: 'destructive',
@@ -120,17 +134,25 @@ export default function DailyReportPage() {
                         <CardDescription>Your recent report history.</CardDescription>
                     </CardHeader>
                     <CardContent>
-                        <ul className="space-y-3">
-                            {pastSubmissions.map((sub, index) => (
-                                <li key={index} className="flex items-center justify-between text-sm">
-                                    <div className="flex items-center gap-2">
-                                        <Check className="h-4 w-4 text-green-500" />
-                                        <span>{sub.date}</span>
-                                    </div>
-                                    <span className="text-muted-foreground">{sub.status}</span>
-                                </li>
-                            ))}
-                        </ul>
+                        {loadingReports ? (
+                            <div className="space-y-3">
+                                {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-6 w-full" />)}
+                            </div>
+                        ) : reports.length > 0 ? (
+                            <ul className="space-y-3">
+                                {reports.slice(0, 10).map((sub) => (
+                                    <li key={sub._id} className="flex items-center justify-between text-sm">
+                                        <div className="flex items-center gap-2">
+                                            <Check className="h-4 w-4 text-green-500" />
+                                            <span>{new Date(sub.date).toLocaleDateString()}</span>
+                                        </div>
+                                        <span className="text-muted-foreground">Submitted</span>
+                                    </li>
+                                ))}
+                            </ul>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">No reports submitted yet.</p>
+                        )}
                     </CardContent>
                 </Card>
             </div>
