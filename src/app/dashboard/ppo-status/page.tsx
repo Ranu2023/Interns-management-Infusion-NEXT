@@ -9,13 +9,14 @@ import {
   CardContent,
   CardFooter
 } from "@/components/ui/card";
-import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, XCircle } from "lucide-react";
+import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, XCircle, Briefcase } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import dbConnect from "@/lib/db";
 import Intern from "@/lib/models/Intern";
 import { type IIntern } from "@/lib/models/Intern";
 import { updatePPODecision } from "@/lib/actions";
+import { getSession } from '@/lib/session';
 
 const timelineSteps = [
   { id: 1, title: "Internship Started", status: "Completed", icon: <CheckCircle /> },
@@ -33,12 +34,32 @@ async function getInternData(email: string): Promise<IIntern | null> {
 }
 
 export default async function PPOStatusPage() {
-    // In a real app, get from session
-    const internEmail = "intern@synergy.com";
-    const intern = await getInternData(internEmail);
+    const session = await getSession();
+    if (!session?.user) {
+        // This case should be handled by middleware, but as a fallback:
+        return <Card><CardContent className="pt-6"><p>Session not found. Please log in.</p></CardContent></Card>;
+    }
+    
+    const intern = await getInternData(session.user.email);
 
     if (!intern) {
-        return <Card><CardContent><p>No intern data found.</p></CardContent></Card>;
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle>PPO Status</CardTitle>
+                    <CardDescription>Check the status of your Pre-Placement Offer.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <div className="text-center text-muted-foreground py-20">
+                        <Briefcase className="mx-auto h-12 w-12" />
+                        <h3 className="mt-4 text-lg font-semibold">No PPO Information Available</h3>
+                        <p className="mt-2 text-sm">
+                           Your PPO status will be updated here by the HR team.
+                        </p>
+                    </div>
+                </CardContent>
+            </Card>
+        );
     }
     
     const { ppoStatus, ppoDecision } = intern;
