@@ -42,7 +42,6 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
-  // Ensure related models are registered
   Intern;
   Mentor;
 
