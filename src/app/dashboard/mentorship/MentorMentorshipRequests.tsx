@@ -24,21 +24,29 @@ import dbConnect from '@/lib/db';
 import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
-import { User } from "@/context/AuthContext";
+import { User as AuthUser } from "@/context/AuthContext";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
+import User from '@/lib/models/User';
+
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
     _id: string;
-    intern: User;
-    mentor: User;
+    intern: AuthUser;
+    mentor: AuthUser;
     createdAt: string;
 }
 
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
+    // Ensure User model is initialized before populating
+    User.init();
     const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
-        .populate<{intern: User}>({ path: 'intern', model: 'User', select: 'name email avatar' })
+        .populate<Pick<IMentorshipRequest, 'intern'>>({ 
+            path: 'intern', 
+            model: 'User', 
+            select: 'name email avatar' 
+        })
         .sort({ createdAt: -1 })
         .lean();
 
@@ -134,5 +142,3 @@ export async function MentorMentorshipRequests() {
         </Card>
     );
 }
-
-    

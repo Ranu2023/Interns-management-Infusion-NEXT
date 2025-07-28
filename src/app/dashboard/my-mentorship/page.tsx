@@ -23,24 +23,28 @@ import { Video } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
-import { User } from "@/context/AuthContext";
+import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
+import User from '@/lib/models/User';
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
     _id: string;
-    intern: User;
-    mentor: User;
+    intern: AuthUser;
+    mentor: AuthUser;
     createdAt: string;
 }
 
 
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
+    // Ensure the User model is registered before populating
+    // This is often a silent point of failure.
+    User.init(); 
     const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-        .populate<{mentor: User}>({ path: 'mentor', model: 'User' })
+        .populate<Pick<IMentorshipRequest, 'mentor'>>({ path: 'mentor', model: 'User' })
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
@@ -49,7 +53,7 @@ async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
 
 export default async function MyMentorshipPage() {
     const session = await getSession();
-    const user = session?.user as User;
+    const user = session?.user as AuthUser;
     if (!user || user.role !== 'intern') redirect('/dashboard');
     
     const mentorships = await getMyMentorships(user.id);
@@ -129,5 +133,3 @@ export default async function MyMentorshipPage() {
         </Card>
     );
 }
-
-    
