@@ -27,7 +27,6 @@ import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
-import User from '@/lib/models/User';
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
@@ -40,7 +39,7 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
-        .populate<{ intern: AuthUser }>('intern', 'name email avatar')
+        .populate<{ intern: AuthUser }>({ path: 'intern', model: 'User' })
         .sort({ createdAt: -1 })
         .lean();
 

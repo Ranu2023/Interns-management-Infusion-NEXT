@@ -22,6 +22,5 @@ const UserSchema: Schema<IUser> = new Schema({
     timestamps: true,
 });
 
-const User: Model<IUser> = models.User || mongoose.model<IUser>('User', UserSchema);
-
-export default User;
+// Ensure the model is registered correctly to be used in `ref`
+export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);

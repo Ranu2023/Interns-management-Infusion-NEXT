@@ -27,7 +27,6 @@ import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
-import User from '@/lib/models/User';
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
@@ -41,7 +40,7 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-        .populate<{ mentor: AuthUser }>('mentor', 'name email avatar expertise')
+        .populate<{ mentor: AuthUser }>({ path: 'mentor', model: 'User', select: 'name email avatar expertise' })
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
