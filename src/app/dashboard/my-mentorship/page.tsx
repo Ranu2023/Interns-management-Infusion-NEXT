@@ -39,7 +39,7 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ intern: internId })
-        .populate<{mentor: User}>('mentor', 'name email avatar expertise')
+        .populate<{mentor: User}>({ path: 'mentor', model: 'User' })
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
