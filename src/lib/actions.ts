@@ -20,6 +20,7 @@ import { Role, User as SessionUser } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
 import mongoose from 'mongoose';
 import User from '@/lib/models/User';
+import MentorshipSession from './models/MentorshipSession';
 
 
 
@@ -465,11 +466,10 @@ export async function requestMentorship(mentorId: string) {
         status: 'Pending',
       });
   
-      // Find the Mentor's main user record to get the correct user ID for notification
       const mentor = await Mentor.findById(mentorId).lean();
       if (mentor) {
         await new Notification({
-            userId: mentor._id, // This should be the User ID which is the same as the Mentor ID
+            userId: mentor._id,
             message: `${session.user.name} has requested premium mentorship.`,
             href: '/dashboard/mentorship',
         }).save();
@@ -483,46 +483,56 @@ export async function requestMentorship(mentorId: string) {
     }
 }
   
-  // ✅ Update Mentorship Request Status
 export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
-  const session = await getSession();
-  if (!session?.user || session.user.role !== 'mentor') {
-    return { success: false, message: 'Unauthorized: Only mentors can update requests.' };
-  }
-
-  try {
-    await dbConnect();
-    
-    const request = await MentorshipRequest.findById(requestId);
-
-    if (!request) {
-      return { success: false, message: 'Request not found.' };
-    }
-    
-    const mentor = await Mentor.findOne({email: session.user.email});
-    if (!mentor || request.mentor.toString() !== mentor._id.toString()) {
-      return { success: false, message: 'You are not authorized to update this request.' };
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'mentor') {
+        return { success: false, message: 'Unauthorized: Only mentors can update requests.' };
     }
 
-    request.status = status;
-    await request.save();
-    
-    const intern = await Intern.findById(request.intern);
-    
-    if (intern) {
-        await new Notification({
-          userId: intern._id,
-          message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
-          href: '/dashboard/my-mentorship',
-        }).save();
-    }
-    
-    revalidatePath('/dashboard/mentorship');
-    revalidatePath('/dashboard/my-mentorship'); 
+    try {
+        await dbConnect();
+        
+        const request = await MentorshipRequest.findById(requestId);
+        if (!request) {
+            return { success: false, message: 'Request not found.' };
+        }
 
-    return { success: true, message: `Request has been ${status}.` };
-  } catch (error: any) {
-    console.error('Failed to update request:', error);
-    return { success: false, message: error.message || 'An internal server error occurred.' };
-  }
+        const mentor = await Mentor.findById(request.mentor);
+        if (!mentor || mentor._id.toString() !== session.user.id) {
+             return { success: false, message: 'You are not authorized to update this request.' };
+        }
+
+        request.status = status;
+        
+        if (status === 'Accepted') {
+            const newSession = await MentorshipSession.create({
+                intern: request.intern,
+                mentor: request.mentor,
+                chat: [{
+                    senderId: mentor._id,
+                    message: `Hello! I've accepted your mentorship request. How can I help you get started?`
+                }]
+            });
+            request.sessionId = newSession._id;
+        }
+
+        await request.save();
+        
+        const intern = await Intern.findById(request.intern);
+        if (intern) {
+            await new Notification({
+                userId: intern._id,
+                message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
+                href: '/dashboard/my-mentorship',
+            }).save();
+        }
+        
+        revalidatePath('/dashboard/mentorship');
+        revalidatePath('/dashboard/my-mentorship'); 
+
+        return { success: true, message: `Request has been ${status}.` };
+    } catch (error: any) {
+        console.error('Failed to update request:', error);
+        return { success: false, message: error.message || 'An internal server error occurred.' };
+    }
 }

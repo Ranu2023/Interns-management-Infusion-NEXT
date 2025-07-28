@@ -8,6 +8,7 @@ export interface IMentorshipRequest extends Document {
   mentor: mongoose.Schema.Types.ObjectId;
   status: 'Pending' | 'Accepted' | 'Rejected';
   reason?: string;
+  sessionId?: mongoose.Schema.Types.ObjectId;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -17,6 +18,7 @@ const MentorshipRequestSchema: Schema<IMentorshipRequest> = new Schema({
   mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor', required: true },
   status: { type: String, required: true, enum: ['Pending', 'Accepted', 'Rejected'], default: 'Pending' },
   reason: { type: String },
+  sessionId: { type: mongoose.Schema.Types.ObjectId, ref: 'MentorshipSession' }
 }, { timestamps: true });
 
 const MentorshipRequest: Model<IMentorshipRequest> = models.MentorshipRequest || mongoose.model<IMentorshipRequest>('MentorshipRequest', MentorshipRequestSchema);

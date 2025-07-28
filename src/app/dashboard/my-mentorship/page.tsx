@@ -19,13 +19,13 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { Video, Handshake } from 'lucide-react';
+import { Eye, Handshake } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
-import Intern, { type IIntern } from "@/lib/models/Intern";
+import Intern from "@/lib/models/Intern";
 import Mentor, { type IMentor } from "@/lib/models/Mentor";
 import mongoose from "mongoose";
 import Link from "next/link";
@@ -33,16 +33,14 @@ import Link from "next/link";
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
   _id: string;
-  intern: IIntern;
   mentor: IMentor;
   createdAt: string;
+  sessionId?: string;
 };
 
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
-  // Ensure related models are registered to be used in populate
-  Intern;
   Mentor; 
 
   const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
@@ -63,7 +61,6 @@ export default async function MyMentorshipPage() {
 
   if (!user || user.role !== 'intern') redirect('/dashboard');
   
-  // Fetch the intern profile using the email from the session, which is more reliable.
   const internProfile = await Intern.findOne({ email: user.email }).lean();
   
   if (!internProfile) {
@@ -165,15 +162,11 @@ export default async function MyMentorshipPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {req.status === "Accepted" && (
+                    {req.status === "Accepted" && req.sessionId && (
                       <Button asChild>
-                        <a
-                          href="https://zoom.us/j/1234567890"
-                          target="_blank"
-                          rel="noopener noreferrer"
-                        >
-                          <Video className="mr-2 h-4 w-4" /> Join Call
-                        </a>
+                        <Link href={`/dashboard/mentorship/${req.sessionId}`}>
+                          <Eye className="mr-2 h-4 w-4" /> View Session
+                        </Link>
                       </Button>
                     )}
                     {req.status === "Pending" && (
