@@ -18,6 +18,7 @@ import { encrypt, getSession } from './session';
 import { redirect } from 'next/navigation';
 import { Role, User as SessionUser } from '@/context/AuthContext';
 import { cookies } from 'next/headers';
+import mongoose from 'mongoose';
 
 // ✅ User Registration
 export async function registerUser(prevState: any, formData: FormData) {
@@ -111,6 +112,7 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         const sessionUser: SessionUser = {
             id: user._id.toString(),
+            _id: user._id.toString(),
             name: user.name,
             email: user.email,
             role: user.role,
@@ -436,14 +438,18 @@ export async function requestMentorship(mentorId: string) {
     try {
         await dbConnect();
         
-        const existingRequest = await MentorshipRequest.findOne({ intern: session.user.id, mentor: mentorId });
+        const existingRequest = await MentorshipRequest.findOne({ 
+            intern: new mongoose.Types.ObjectId(session.user.id), 
+            mentor: new mongoose.Types.ObjectId(mentorId) 
+        });
+
         if (existingRequest) {
             return { success: false, message: 'You have already sent a request to this mentor.' };
         }
 
         const mentorshipRequest = new MentorshipRequest({
-            intern: session.user.id,
-            mentor: mentorId,
+            intern: new mongoose.Types.ObjectId(session.user.id),
+            mentor: new mongoose.Types.ObjectId(mentorId),
             status: 'Pending',
         });
         await mentorshipRequest.save();
@@ -513,3 +519,5 @@ export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });
   redirect('/');
 }
+
+    
