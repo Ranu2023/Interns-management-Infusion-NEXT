@@ -40,7 +40,7 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-        .populate<{mentor: User}>({ path: 'mentor', model: 'User', select: 'name email avatar expertise' })
+        .populate<{mentor: User}>({ path: 'mentor', model: 'User' })
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
