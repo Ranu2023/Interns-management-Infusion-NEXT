@@ -57,8 +57,9 @@ async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedReque
 export async function MentorMentorshipRequests() {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') return null;
-
-  const requests = await getMyMentorshipRequests(session.user.id);
+  
+  const mentorId = session.user.id;
+  const requests = await getMyMentorshipRequests(mentorId);
 
   return (
     <Card>

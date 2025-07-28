@@ -404,20 +404,19 @@ export async function assignMentor(formData: FormData) {
         mentor.interns += 1;
         await mentor.save();
         
-        // Use the IDs from the found documents, which are guaranteed to be correct.
-        const userForIntern = await User.findById(intern._id);
-        const userForMentor = await User.findById(mentor._id);
+        const internUser = await User.findById(intern._id).lean();
+        const mentorUser = await User.findById(mentor._id).lean();
 
-        if (userForIntern) {
+        if (internUser) {
             await new Notification({
-                userId: userForIntern._id,
+                userId: internUser._id,
                 message: `You have been assigned to a new mentor: ${mentor.name}.`,
                 href: `/dashboard/my-interns`
             }).save();
         }
-        if (userForMentor) {
+        if (mentorUser) {
             await new Notification({
-                userId: userForMentor._id,
+                userId: mentorUser._id,
                 message: `You have been assigned a new intern: ${intern.name}.`,
                 href: `/dashboard/my-interns`
             }).save();
@@ -444,7 +443,11 @@ export async function requestMentorship(mentorId: string) {
     try {
       await dbConnect();
       
-      const internId = session.user.id;
+      const intern = await Intern.findOne({ email: session.user.email }).lean();
+      if (!intern) {
+          return { success: false, message: 'Intern profile not found.' };
+      }
+      const internId = intern._id;
   
       const existingRequest = await MentorshipRequest.findOne({
         intern: new mongoose.Types.ObjectId(internId),
@@ -462,11 +465,15 @@ export async function requestMentorship(mentorId: string) {
         status: 'Pending',
       });
   
-      await new Notification({
-        userId: new mongoose.Types.ObjectId(mentorId),
-        message: `${session.user.name} has requested premium mentorship.`,
-        href: '/dashboard/mentorship',
-      }).save();
+      // Find the Mentor's main user record to get the correct user ID for notification
+      const mentor = await Mentor.findById(mentorId).lean();
+      if (mentor) {
+        await new Notification({
+            userId: mentor._id, // This should be the User ID which is the same as the Mentor ID
+            message: `${session.user.name} has requested premium mentorship.`,
+            href: '/dashboard/mentorship',
+        }).save();
+      }
   
       revalidatePath('/dashboard/my-mentorship');
       return { success: true, message: `Your request to the mentor has been sent.` };
@@ -480,8 +487,6 @@ export async function requestMentorship(mentorId: string) {
 export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') {
-    // This action is mentor-specific, so we return early if the user is not a mentor.
-    // In a real app, you might want to handle this more gracefully.
     return { success: false, message: 'Unauthorized: Only mentors can update requests.' };
   }
 
@@ -493,31 +498,27 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
     if (!request) {
       return { success: false, message: 'Request not found.' };
     }
-
-    // Ensure only the assigned mentor can update the request.
-    if (request.mentor.toString() !== session.user.id) {
+    
+    const mentor = await Mentor.findOne({email: session.user.email});
+    if (!mentor || request.mentor.toString() !== mentor._id.toString()) {
       return { success: false, message: 'You are not authorized to update this request.' };
     }
 
     request.status = status;
     await request.save();
-
-    const mentor = await Mentor.findById(session.user.id);
-    if (!mentor) {
-      // This is an unlikely scenario but good practice to handle.
-      return { success: false, message: 'Mentor profile not found.' };
+    
+    const intern = await Intern.findById(request.intern);
+    
+    if (intern) {
+        await new Notification({
+          userId: intern._id,
+          message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
+          href: '/dashboard/my-mentorship',
+        }).save();
     }
-
-    // Notify the intern about the status update.
-    await new Notification({
-      userId: request.intern,
-      message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
-      href: '/dashboard/my-mentorship',
-    }).save();
-
-    // Revalidate paths to ensure both dashboards are updated.
-    revalidatePath('/dashboard/mentorship'); // For the mentor
-    revalidatePath('/dashboard/my-mentorship'); // For the intern
+    
+    revalidatePath('/dashboard/mentorship');
+    revalidatePath('/dashboard/my-mentorship'); 
 
     return { success: true, message: `Request has been ${status}.` };
   } catch (error: any) {
