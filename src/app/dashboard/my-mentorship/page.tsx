@@ -26,107 +26,158 @@ import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
+import { type IIntern } from "@/lib/models/Intern";
+import { type IMentor } from "@/lib/models/Mentor";
 import mongoose from "mongoose";
-import User from '@/lib/models/User'; // Import the User model to ensure it's registered
+import Intern from "@/lib/models/Intern";
+import Mentor from "@/lib/models/Mentor";
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
-    _id: string;
-    intern: AuthUser;
-    mentor: AuthUser;
-    createdAt: string;
-}
-
+  _id: string;
+  intern: IIntern;
+  mentor: IMentor;
+  createdAt: string;
+};
 
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
-    await dbConnect();
-    const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-        .populate<{ mentor: AuthUser }>({ path: 'mentor', model: 'User', select: 'name email avatar expertise' })
-        .sort({ createdAt: -1 })
-        .lean();
-    return JSON.parse(JSON.stringify(requests));
+  await dbConnect();
+
+  // Ensure related models are registered to be used in populate
+  Intern;
+  Mentor; 
+
+  const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
+    .populate<{ mentor: IMentor }>({
+      path: 'mentor',
+      model: 'Mentor',
+      select: 'name email avatar expertise',
+    })
+    .sort({ createdAt: -1 })
+    .lean();
+
+  return JSON.parse(JSON.stringify(requests));
 }
 
-
 export default async function MyMentorshipPage() {
-    const session = await getSession();
-    const user = session?.user as AuthUser;
-    if (!user || user.role !== 'intern') redirect('/dashboard');
-    
-    const mentorships = await getMyMentorships(user.id);
+  const session = await getSession();
+  const user = session?.user as AuthUser;
 
-    return (
+  if (!user || user.role !== 'intern') redirect('/dashboard');
+  
+  const internProfile = await Intern.findOne({ email: user.email }).lean();
+  if (!internProfile) {
+       return (
         <Card>
-            <CardHeader>
-                <CardTitle>My Premium Mentorships</CardTitle>
-                <CardDescription>Track the status of your mentorship requests and connect with your mentors.</CardDescription>
-            </CardHeader>
-            <CardContent>
-                {mentorships.length === 0 ? (
-                    <div className="text-center text-muted-foreground py-12">
-                        You have not requested any mentorship sessions yet.
-                    </div>
-                ) : (
-                    <Table>
-                        <TableHeader>
-                            <TableRow>
-                                <TableHead>Mentor</TableHead>
-                                <TableHead>Expertise</TableHead>
-                                <TableHead>Status</TableHead>
-                                <TableHead className="text-right">Actions</TableHead>
-                            </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                            {mentorships.map((req) => (
-                                <TableRow key={req._id}>
-                                    <TableCell>
-                                        {req.mentor ? (
-                                            <div className="flex items-center gap-3">
-                                                <Avatar>
-                                                    <AvatarImage src={req.mentor.avatar} alt={req.mentor.name} data-ai-hint="avatar person" />
-                                                    <AvatarFallback>{req.mentor.name.charAt(0)}</AvatarFallback>
-                                                </Avatar>
-                                                <div>
-                                                    <p className="font-medium">{req.mentor.name}</p>
-                                                    <p className="text-sm text-muted-foreground">{req.mentor.email}</p>
-                                                </div>
-                                            </div>
-                                        ) : (
-                                            <p className="text-sm text-muted-foreground">Mentor not found</p>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        {req.mentor?.expertise ? (
-                                            <Badge variant="secondary">{req.mentor.expertise}</Badge>
-                                        ) : (
-                                            <Badge variant="outline">N/A</Badge>
-                                        )}
-                                    </TableCell>
-                                    <TableCell>
-                                        <Badge variant={
-                                            req.status === 'Accepted' ? 'default' :
-                                            req.status === 'Rejected' ? 'destructive' : 'outline'
-                                        }>
-                                            {req.status}
-                                        </Badge>
-                                    </TableCell>
-                                    <TableCell className="text-right">
-                                        {req.status === 'Accepted' && (
-                                            <Button asChild>
-                                                <a href="https://zoom.us/j/1234567890" target="_blank" rel="noopener noreferrer">
-                                                    <Video className="mr-2"/> Join Call
-                                                </a>
-                                            </Button>
-                                        )}
-                                        {req.status === 'Pending' && <span className="text-xs text-muted-foreground">Awaiting response</span>}
-                                        {req.status === 'Rejected' && <span className="text-xs text-muted-foreground">Not accepted</span>}
-                                    </TableCell>
-                                </TableRow>
-                            ))}
-                        </TableBody>
-                    </Table>
-                )}
+            <CardContent className="pt-6">
+                <p>Intern profile not found.</p>
             </CardContent>
         </Card>
-    );
+       )
+  }
+
+  const mentorships = await getMyMentorships(internProfile._id.toString());
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>My Premium Mentorships</CardTitle>
+        <CardDescription>
+          Track the status of your mentorship requests and connect with your mentors.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        {mentorships.length === 0 ? (
+          <div className="text-center text-muted-foreground py-12">
+            You have not requested any mentorship sessions yet.
+          </div>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Mentor</TableHead>
+                <TableHead>Expertise</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {mentorships.map((req) => (
+                <TableRow key={req._id}>
+                  <TableCell>
+                    {req.mentor ? (
+                      <div className="flex items-center gap-3">
+                        <Avatar>
+                          <AvatarImage
+                            src={req.mentor.avatar}
+                            alt={req.mentor.name}
+                          />
+                          <AvatarFallback>
+                            {req.mentor.name.charAt(0)}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div>
+                          <p className="font-medium">{req.mentor.name}</p>
+                          <p className="text-sm text-muted-foreground">
+                            {req.mentor.email}
+                          </p>
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="text-sm text-muted-foreground">
+                        Mentor not found
+                      </p>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    {req.mentor?.expertise ? (
+                      <Badge variant="secondary">{req.mentor.expertise}</Badge>
+                    ) : (
+                      <Badge variant="outline">N/A</Badge>
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={
+                        req.status === "Accepted"
+                          ? "default"
+                          : req.status === "Rejected"
+                          ? "destructive"
+                          : "outline"
+                      }
+                    >
+                      {req.status}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="text-right">
+                    {req.status === "Accepted" && (
+                      <Button asChild>
+                        <a
+                          href="https://zoom.us/j/1234567890"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                        >
+                          <Video className="mr-2" /> Join Call
+                        </a>
+                      </Button>
+                    )}
+                    {req.status === "Pending" && (
+                      <span className="text-xs text-muted-foreground">
+                        Awaiting response
+                      </span>
+                    )}
+                    {req.status === "Rejected" && (
+                      <span className="text-xs text-muted-foreground">
+                        Not accepted
+                      </span>
+                    )}
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </CardContent>
+    </Card>
+  );
 }
