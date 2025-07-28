@@ -6,6 +6,7 @@ export interface IIntern extends Document {
     _id: mongoose.Types.ObjectId;
     name: string;
     email: string;
+    avatar: string;
     project: string;
     mentor: string;
     status: 'Active' | 'Completed' | 'On-Hold';
@@ -25,6 +26,7 @@ const InternSchema: Schema<IIntern> = new Schema({
     _id: { type: Schema.Types.ObjectId, required: true },
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
+    avatar: { type: String, required: true },
     project: { type: String, required: true },
     mentor: { type: String, required: true },
     status: { type: String, required: true, enum: ['Active', 'Completed', 'On-Hold'] },

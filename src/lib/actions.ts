@@ -64,6 +64,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 _id: newUser._id, // Use same ID for linking
                 name,
                 email,
+                avatar: `https://placehold.co/100x100.png`,
                 project: 'Unassigned',
                 mentor: 'Unassigned',
                 status: 'Active',
@@ -200,6 +201,7 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
                  _id: newUser._id,
                 name: application.name,
                 email: email,
+                avatar: `https://placehold.co/100x100.png`,
                 project: 'Unassigned',
                 mentor: 'Unassigned',
                 status: 'Active',
@@ -442,12 +444,12 @@ export async function requestMentorship(mentorId: string) {
     try {
       await dbConnect();
       
-      // The intern's primary ID is their User ID.
       const internId = session.user.id;
   
       const existingRequest = await MentorshipRequest.findOne({
         intern: new mongoose.Types.ObjectId(internId),
         mentor: new mongoose.Types.ObjectId(mentorId),
+        status: 'Pending',
       });
   
       if (existingRequest) {
@@ -478,7 +480,9 @@ export async function requestMentorship(mentorId: string) {
 export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') {
-    return { success: false, message: 'Only mentors can update requests.' };
+    // This action is mentor-specific, so we return early if the user is not a mentor.
+    // In a real app, you might want to handle this more gracefully.
+    return { success: false, message: 'Unauthorized: Only mentors can update requests.' };
   }
 
   try {
@@ -490,7 +494,7 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
       return { success: false, message: 'Request not found.' };
     }
 
-    // Ensure only the assigned mentor can update
+    // Ensure only the assigned mentor can update the request.
     if (request.mentor.toString() !== session.user.id) {
       return { success: false, message: 'You are not authorized to update this request.' };
     }
@@ -498,21 +502,26 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
     request.status = status;
     await request.save();
 
-    const mentor = await User.findById(session.user.id);
+    const mentor = await Mentor.findById(session.user.id);
+    if (!mentor) {
+      // This is an unlikely scenario but good practice to handle.
+      return { success: false, message: 'Mentor profile not found.' };
+    }
 
-    // Notify the intern
+    // Notify the intern about the status update.
     await new Notification({
       userId: request.intern,
-      message: `Your mentorship request with ${mentor?.name} has been ${status.toLowerCase()}.`,
+      message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
       href: '/dashboard/my-mentorship',
     }).save();
 
-    revalidatePath('/dashboard/mentorship');
-    revalidatePath('/dashboard/my-mentorship');
+    // Revalidate paths to ensure both dashboards are updated.
+    revalidatePath('/dashboard/mentorship'); // For the mentor
+    revalidatePath('/dashboard/my-mentorship'); // For the intern
+
     return { success: true, message: `Request has been ${status}.` };
   } catch (error: any) {
     console.error('Failed to update request:', error);
     return { success: false, message: error.message || 'An internal server error occurred.' };
   }
 }
-

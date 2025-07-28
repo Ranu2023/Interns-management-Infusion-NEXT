@@ -21,16 +21,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { Video } from 'lucide-react';
 import dbConnect from '@/lib/db';
-import MentorshipRequest from '@/lib/models/MentorshipRequest';
+import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
-import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
-import { type IIntern } from "@/lib/models/Intern";
-import { type IMentor } from "@/lib/models/Mentor";
+import Intern, { type IIntern } from "@/lib/models/Intern";
+import Mentor, { type IMentor } from "@/lib/models/Mentor";
 import mongoose from "mongoose";
-import Intern from "@/lib/models/Intern";
-import Mentor from "@/lib/models/Mentor";
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
@@ -50,7 +47,7 @@ async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
   const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
     .populate<{ mentor: IMentor }>({
       path: 'mentor',
-      model: 'Mentor',
+      model: Mentor,
       select: 'name email avatar expertise',
     })
     .sort({ createdAt: -1 })
@@ -65,7 +62,7 @@ export default async function MyMentorshipPage() {
 
   if (!user || user.role !== 'intern') redirect('/dashboard');
   
-  const internProfile = await Intern.findOne({ email: user.email }).lean();
+  const internProfile = await Intern.findById(user.id).lean();
   if (!internProfile) {
        return (
         <Card>
@@ -111,6 +108,7 @@ export default async function MyMentorshipPage() {
                           <AvatarImage
                             src={req.mentor.avatar}
                             alt={req.mentor.name}
+                            data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
                             {req.mentor.name.charAt(0)}
@@ -157,7 +155,7 @@ export default async function MyMentorshipPage() {
                           target="_blank"
                           rel="noopener noreferrer"
                         >
-                          <Video className="mr-2" /> Join Call
+                          <Video className="mr-2 h-4 w-4" /> Join Call
                         </a>
                       </Button>
                     )}

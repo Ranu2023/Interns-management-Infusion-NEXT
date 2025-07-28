@@ -21,34 +21,32 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { ThumbsUp, ThumbsDown, Mail } from 'lucide-react';
 import dbConnect from '@/lib/db';
-import MentorshipRequest from '@/lib/models/MentorshipRequest';
+import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
-import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
+import Intern, { type IIntern } from "@/lib/models/Intern";
 import mongoose from "mongoose";
-import User from "@/lib/models/User";
 
 // Define a type for the populated request to ensure type safety
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern'> & {
   _id: string;
-  intern: {
-    _id: string;
-    name: string;
-    email: string;
-    avatar: string;
-  };
+  intern: IIntern;
   createdAt: string;
 };
 
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
+  // This registers the Intern model if it's not already registered.
+  // It's a required step for populate to work correctly in Next.js server components.
+  Intern; 
+  
   const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
-    .populate<{ intern: PopulatedRequest['intern'] }>({
+    .populate<{ intern: IIntern }>({
       path: 'intern',
-      model: User, // Populate from the User collection
-      select: 'name email avatar', // Select specific fields
+      model: Intern, // Explicitly tell mongoose which model to use for population
+      select: 'name email avatar', // Select specific fields from the Intern model
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -93,7 +91,7 @@ export async function MentorMentorshipRequests() {
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={req.intern.avatar}
+                            src={req.intern.avatar || 'https://placehold.co/100x100.png'}
                             alt={req.intern.name}
                             data-ai-hint="avatar person"
                           />
@@ -147,7 +145,7 @@ export async function MentorMentorshipRequests() {
                     ) : req.status === "Accepted" && req.intern ? (
                       <Button variant="outline" size="sm" asChild>
                         <a href={`mailto:${req.intern.email}`}>
-                          <Mail className="mr-2" /> Contact Intern
+                          <Mail className="mr-2 h-4 w-4" /> Contact Intern
                         </a>
                       </Button>
                     ) : (
