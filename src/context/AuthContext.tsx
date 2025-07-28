@@ -9,15 +9,17 @@ import {
   type ReactNode,
 } from 'react';
 import { logout } from '@/lib/actions';
-import type { Role } from '@/types';
+export type Role = 'intern' | 'mentor' | 'hr' | 'employee';
  // Make sure this is correctly imported if separated
 
 export type User = {
   id: string;
+  _id: string;
   name: string;
   email: string;
   role: Role;
   avatar: string;
+  expertise?: string;
 };
 
 type AuthContextType = {
@@ -43,6 +45,7 @@ export function AuthProvider({
   useEffect(() => {
     if (!initialUser) {
       const checkSession = async () => {
+        setIsLoading(true);
         try {
           const res = await fetch('/api/auth/session');
           if (res.ok) {

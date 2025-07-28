@@ -72,6 +72,10 @@ export async function registerUser(prevState: any, formData: FormData) {
                 avatar: `https://placehold.co/100x100.png`,
             });
             await newMentor.save();
+
+            // Also update the main user document with expertise
+            newUser.expertise = newMentor.expertise;
+            await newUser.save();
         }
         
         return { success: true, message: 'Registration successful! You can now log in.' };
@@ -455,6 +459,7 @@ export async function requestMentorship(mentorId: string) {
 
 
         revalidatePath('/dashboard/mentorship');
+        revalidatePath('/dashboard/my-mentorship');
         return { success: true, message: `Your request to the mentor has been sent.` };
     } catch (error) {
         console.error('Failed to request mentorship:', error);
@@ -476,19 +481,20 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
         }
         
         // Ensure the logged-in mentor is the one the request was sent to
-        if (request.mentor._id.toString() !== session.user.id) {
+        const mentorUser = request.mentor as SessionUser;
+        if (mentorUser._id.toString() !== session.user.id) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
         
         request.status = status;
         await request.save();
 
-        const userForIntern = await User.findById(request.intern._id);
+        const internUser = request.intern as SessionUser;
 
-        if (userForIntern) {
+        if (internUser) {
             await new Notification({
-                userId: userForIntern._id,
-                message: `Your mentorship request with ${request.mentor.name} has been ${status}.`,
+                userId: internUser._id,
+                message: `Your mentorship request with ${mentorUser.name} has been ${status}.`,
                 href: '/dashboard/my-mentorship'
             }).save();
         }
