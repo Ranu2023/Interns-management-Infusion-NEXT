@@ -81,10 +81,6 @@ export async function registerUser(prevState: any, formData: FormData) {
                 avatar: `https://placehold.co/100x100.png`,
             });
             await newMentor.save();
-
-            // Also update the main user document with expertise
-            newUser.expertise = newMentor.expertise;
-            await newUser.save();
         }
         
         return { success: true, message: 'Registration successful! You can now log in.' };
@@ -446,13 +442,11 @@ export async function requestMentorship(mentorId: string) {
     try {
       await dbConnect();
       
-      const intern = await Intern.findOne({ email: session.user.email });
-      if (!intern) {
-          return { success: false, message: 'Intern profile not found.' };
-      }
+      // The intern's primary ID is their User ID.
+      const internId = session.user.id;
   
       const existingRequest = await MentorshipRequest.findOne({
-        intern: new mongoose.Types.ObjectId(intern._id),
+        intern: new mongoose.Types.ObjectId(internId),
         mentor: new mongoose.Types.ObjectId(mentorId),
       });
   
@@ -461,68 +455,64 @@ export async function requestMentorship(mentorId: string) {
       }
   
       await MentorshipRequest.create({
-        intern: new mongoose.Types.ObjectId(intern._id),
+        intern: new mongoose.Types.ObjectId(internId),
         mentor: new mongoose.Types.ObjectId(mentorId),
         status: 'Pending',
       });
   
-      const mentorUser = await User.findById(mentorId);
-      if (mentorUser) {
-        await new Notification({
-          userId: mentorUser._id,
-          message: `${session.user.name} has requested premium mentorship.`,
-          href: '/dashboard/mentorship',
-        }).save();
-      }
+      await new Notification({
+        userId: new mongoose.Types.ObjectId(mentorId),
+        message: `${session.user.name} has requested premium mentorship.`,
+        href: '/dashboard/mentorship',
+      }).save();
   
-      revalidatePath('/dashboard/mentorship');
       revalidatePath('/dashboard/my-mentorship');
       return { success: true, message: `Your request to the mentor has been sent.` };
     } catch (error) {
       console.error('Failed to request mentorship:', error);
       return { success: false, message: 'An internal error occurred.' };
     }
-  }
+}
   
   // ✅ Update Mentorship Request Status
-  export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
-    const session = await getSession();
-    if (!session?.user || session.user.role !== 'mentor') {
-      return { success: false, message: 'Only mentors can update requests.' };
-    }
-  
-    try {
-      await dbConnect();
-  
-      const request = await MentorshipRequest.findById(requestId).populate('mentor');
-  
-      if (!request) {
-        return { success: false, message: 'Request not found.' };
-      }
-  
-      // Ensure only the assigned mentor can update
-      const mentor = request.mentor as any;
-      if (!mentor || mentor._id.toString() !== session.user.id) {
-        return { success: false, message: 'You are not authorized to update this request.' };
-      }
-  
-      request.status = status;
-      await request.save();
-  
-      const internUser = await User.findById(request.intern);
-      if (internUser) {
-        await new Notification({
-          userId: internUser._id,
-          message: `Your mentorship request with ${mentor.name} has been ${status}.`,
-          href: '/dashboard/my-mentorship',
-        }).save();
-      }
-  
-      revalidatePath('/dashboard/mentorship');
-      revalidatePath('/dashboard/my-mentorship');
-      return { success: true, message: `Request has been ${status}.` };
-    } catch (error) {
-      console.error('Failed to update request:', error);
-      return { success: false, message: 'An internal error occurred.' };
-    }
+export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
+  const session = await getSession();
+  if (!session?.user || session.user.role !== 'mentor') {
+    return { success: false, message: 'Only mentors can update requests.' };
   }
+
+  try {
+    await dbConnect();
+    
+    const request = await MentorshipRequest.findById(requestId);
+
+    if (!request) {
+      return { success: false, message: 'Request not found.' };
+    }
+
+    // Ensure only the assigned mentor can update
+    if (request.mentor.toString() !== session.user.id) {
+      return { success: false, message: 'You are not authorized to update this request.' };
+    }
+
+    request.status = status;
+    await request.save();
+
+    const mentor = await User.findById(session.user.id);
+
+    // Notify the intern
+    await new Notification({
+      userId: request.intern,
+      message: `Your mentorship request with ${mentor?.name} has been ${status.toLowerCase()}.`,
+      href: '/dashboard/my-mentorship',
+    }).save();
+
+    revalidatePath('/dashboard/mentorship');
+    revalidatePath('/dashboard/my-mentorship');
+    return { success: true, message: `Request has been ${status}.` };
+  } catch (error: any) {
+    console.error('Failed to update request:', error);
+    return { success: false, message: error.message || 'An internal server error occurred.' };
+  }
+}
+

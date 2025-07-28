@@ -25,31 +25,30 @@ import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
-import { type IIntern } from "@/lib/models/Intern";
-import { type IMentor } from "@/lib/models/Mentor";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
-import Intern from "@/lib/models/Intern";
-import Mentor from "@/lib/models/Mentor";
+import User from "@/lib/models/User";
 
+// Define a type for the populated request to ensure type safety
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern'> & {
   _id: string;
-  intern: IIntern;
+  intern: {
+    _id: string;
+    name: string;
+    email: string;
+    avatar: string;
+  };
   createdAt: string;
 };
 
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
-  // Ensure related models are registered to be used in populate
-  Intern;
-  Mentor;
-
   const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
-    .populate<{ intern: IIntern }>({
+    .populate<{ intern: PopulatedRequest['intern'] }>({
       path: 'intern',
-      model: Intern, // Use the imported model directly
-      select: 'name email avatar',
+      model: User, // Populate from the User collection
+      select: 'name email avatar', // Select specific fields
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -61,18 +60,7 @@ export async function MentorMentorshipRequests() {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') return null;
 
-  const mentorProfile = await Mentor.findOne({email: session.user.email});
-  if (!mentorProfile) {
-    return (
-        <Card>
-            <CardContent className="pt-6">
-                <p className="text-center text-muted-foreground">Could not load your mentor profile.</p>
-            </CardContent>
-        </Card>
-    )
-  }
-  
-  const requests = await getMyMentorshipRequests(mentorProfile._id.toString());
+  const requests = await getMyMentorshipRequests(session.user.id);
 
   return (
     <Card>
