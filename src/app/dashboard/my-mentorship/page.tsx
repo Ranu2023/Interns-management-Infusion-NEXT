@@ -25,12 +25,21 @@ import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
+import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 
 
-async function getMyMentorships(internId: string) {
+type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
+    _id: string;
+    intern: User;
+    mentor: User;
+    createdAt: string;
+}
+
+
+async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
     const requests = await MentorshipRequest.find({ intern: internId })
-        .populate('mentor', 'name email avatar expertise')
+        .populate<{mentor: User}>('mentor', 'name email avatar expertise')
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
@@ -66,22 +75,30 @@ export default async function MyMentorshipPage() {
                             </TableRow>
                         </TableHeader>
                         <TableBody>
-                            {mentorships.map((req: any) => (
+                            {mentorships.map((req) => (
                                 <TableRow key={req._id}>
                                     <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={req.mentor.avatar} alt={req.mentor.name} data-ai-hint="avatar person" />
-                                                <AvatarFallback>{req.mentor.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-medium">{req.mentor.name}</p>
-                                                <p className="text-sm text-muted-foreground">{req.mentor.email}</p>
+                                        {req.mentor ? (
+                                            <div className="flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarImage src={req.mentor.avatar} alt={req.mentor.name} data-ai-hint="avatar person" />
+                                                    <AvatarFallback>{req.mentor.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-medium">{req.mentor.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{req.mentor.email}</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">Mentor not found</p>
+                                        )}
                                     </TableCell>
                                     <TableCell>
-                                        <Badge variant="secondary">{req.mentor.expertise}</Badge>
+                                        {req.mentor ? (
+                                            <Badge variant="secondary">{req.mentor.expertise}</Badge>
+                                        ) : (
+                                            <Badge variant="outline">N/A</Badge>
+                                        )}
                                     </TableCell>
                                     <TableCell>
                                         <Badge variant={

@@ -26,20 +26,22 @@ import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
+import mongoose from "mongoose";
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
     _id: string;
     intern: User;
     mentor: User;
+    createdAt: string;
 }
 
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
-    const requests = await MentorshipRequest.find({ mentor: mentorId })
+    const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
         .populate<{intern: User}>('intern', 'name email avatar')
-        .populate<{mentor: User}>('mentor', 'name email avatar')
         .sort({ createdAt: -1 })
         .lean();
+
     return JSON.parse(JSON.stringify(requests));
 }
 
@@ -75,16 +77,20 @@ export async function MentorMentorshipRequests() {
                             {requests.map((req) => (
                                 <TableRow key={req._id}>
                                     <TableCell>
-                                        <div className="flex items-center gap-3">
-                                            <Avatar>
-                                                <AvatarImage src={req.intern.avatar} alt={req.intern.name} data-ai-hint="avatar person" />
-                                                <AvatarFallback>{req.intern.name.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            <div>
-                                                <p className="font-medium">{req.intern.name}</p>
-                                                <p className="text-sm text-muted-foreground">{req.intern.email}</p>
+                                        {req.intern ? (
+                                            <div className="flex items-center gap-3">
+                                                <Avatar>
+                                                    <AvatarImage src={req.intern.avatar} alt={req.intern.name} data-ai-hint="avatar person" />
+                                                    <AvatarFallback>{req.intern.name.charAt(0)}</AvatarFallback>
+                                                </Avatar>
+                                                <div>
+                                                    <p className="font-medium">{req.intern.name}</p>
+                                                    <p className="text-sm text-muted-foreground">{req.intern.email}</p>
+                                                </div>
                                             </div>
-                                        </div>
+                                        ) : (
+                                            <p className="text-sm text-muted-foreground">Unknown Intern</p>
+                                        )}
                                     </TableCell>
                                     <TableCell>{new Date(req.createdAt).toLocaleDateString()}</TableCell>
                                     <TableCell>
@@ -109,7 +115,7 @@ export async function MentorMentorshipRequests() {
                                                     </Button>
                                                 </form>
                                             </div>
-                                        ) : req.status === 'Accepted' ? (
+                                        ) : req.status === 'Accepted' && req.intern ? (
                                             <Button variant="outline" size="sm" asChild>
                                                 <a href={`mailto:${req.intern.email}`}>
                                                     <Mail className="mr-2"/> Contact Intern
