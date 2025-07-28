@@ -117,6 +117,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             email: user.email,
             role: user.role,
             avatar: user.avatar,
+            expertise: user.expertise
         };
 
         const session = await encrypt({ user: sessionUser });
@@ -447,12 +448,11 @@ export async function requestMentorship(mentorId: string) {
             return { success: false, message: 'You have already sent a request to this mentor.' };
         }
 
-        const mentorshipRequest = new MentorshipRequest({
+        await MentorshipRequest.create({
             intern: new mongoose.Types.ObjectId(session.user.id),
             mentor: new mongoose.Types.ObjectId(mentorId),
-            status: 'Pending',
+            status: 'Pending'
         });
-        await mentorshipRequest.save();
 
         const mentorUser = await User.findById(mentorId);
         if (mentorUser) {
@@ -519,5 +519,3 @@ export async function logout() {
   cookies().set('session', '', { expires: new Date(0) });
   redirect('/');
 }
-
-    

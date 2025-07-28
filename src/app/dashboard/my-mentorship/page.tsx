@@ -40,11 +40,8 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
     await dbConnect();
-    // Ensure the User model is registered before populating
-    // This is often a silent point of failure.
-    User.init(); 
     const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-        .populate<Pick<IMentorshipRequest, 'mentor'>>({ path: 'mentor', model: 'User' })
+        .populate<{ mentor: AuthUser }>('mentor', 'name email avatar expertise')
         .sort({ createdAt: -1 })
         .lean();
     return JSON.parse(JSON.stringify(requests));
