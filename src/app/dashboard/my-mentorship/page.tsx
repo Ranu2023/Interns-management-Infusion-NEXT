@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { Video } from 'lucide-react';
+import { Video, Handshake } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
@@ -28,6 +28,7 @@ import { redirect } from "next/navigation";
 import Intern, { type IIntern } from "@/lib/models/Intern";
 import Mentor, { type IMentor } from "@/lib/models/Mentor";
 import mongoose from "mongoose";
+import Link from "next/link";
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
@@ -39,7 +40,7 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
-
+  
   // Ensure related models are registered to be used in populate
   Intern;
   Mentor; 
@@ -62,12 +63,21 @@ export default async function MyMentorshipPage() {
 
   if (!user || user.role !== 'intern') redirect('/dashboard');
   
-  const internProfile = await Intern.findById(user.id).lean();
+  // Fetch the intern profile using the email from the session, which is more reliable.
+  const internProfile = await Intern.findOne({ email: user.email }).lean();
+  
   if (!internProfile) {
        return (
         <Card>
+            <CardHeader>
+                <CardTitle>My Premium Mentorships</CardTitle>
+                <CardDescription>Track the status of your mentorship requests.</CardDescription>
+            </CardHeader>
             <CardContent className="pt-6">
-                <p>Intern profile not found.</p>
+                <div className="text-center text-muted-foreground py-12">
+                    <h3 className="text-lg font-semibold">Intern Profile Not Found</h3>
+                    <p className="mt-2 text-sm">We could not find your intern profile. Please contact support.</p>
+                </div>
             </CardContent>
         </Card>
        )
@@ -85,8 +95,15 @@ export default async function MyMentorshipPage() {
       </CardHeader>
       <CardContent>
         {mentorships.length === 0 ? (
-          <div className="text-center text-muted-foreground py-12">
-            You have not requested any mentorship sessions yet.
+          <div className="text-center text-muted-foreground py-20">
+            <Handshake className="mx-auto h-12 w-12" />
+            <h3 className="mt-4 text-lg font-semibold">No Mentorship Requests Sent</h3>
+            <p className="mt-2 text-sm">
+              You haven't requested any premium mentorship sessions yet.
+            </p>
+            <Button asChild className="mt-4">
+                <Link href="/dashboard/mentorship">Explore Mentors</Link>
+            </Button>
           </div>
         ) : (
           <Table>
