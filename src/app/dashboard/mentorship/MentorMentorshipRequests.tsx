@@ -32,23 +32,23 @@ import mongoose from "mongoose";
 import Intern from "@/lib/models/Intern";
 import Mentor from "@/lib/models/Mentor";
 
-type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
+type PopulatedRequest = Omit<IMentorshipRequest, 'intern'> & {
   _id: string;
   intern: IIntern;
-  mentor: IMentor;
   createdAt: string;
 };
 
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
+  // Ensure related models are registered to be used in populate
   Intern;
   Mentor;
 
   const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
     .populate<{ intern: IIntern }>({
       path: 'intern',
-      model: 'Intern',
+      model: Intern, // Use the imported model directly
       select: 'name email avatar',
     })
     .sort({ createdAt: -1 })
@@ -61,7 +61,18 @@ export async function MentorMentorshipRequests() {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') return null;
 
-  const requests = await getMyMentorshipRequests(session.user.id);
+  const mentorProfile = await Mentor.findOne({email: session.user.email});
+  if (!mentorProfile) {
+    return (
+        <Card>
+            <CardContent className="pt-6">
+                <p className="text-center text-muted-foreground">Could not load your mentor profile.</p>
+            </CardContent>
+        </Card>
+    )
+  }
+  
+  const requests = await getMyMentorshipRequests(mentorProfile._id.toString());
 
   return (
     <Card>
@@ -96,6 +107,7 @@ export async function MentorMentorshipRequests() {
                           <AvatarImage
                             src={req.intern.avatar}
                             alt={req.intern.name}
+                            data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
                             {req.intern.name.charAt(0)}
