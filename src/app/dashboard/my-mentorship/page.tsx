@@ -27,6 +27,7 @@ import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
 import { type IMentorshipRequest } from "@/lib/models/MentorshipRequest";
 import mongoose from "mongoose";
+import User from '@/lib/models/User'; // Import the User model to ensure it's registered
 
 
 type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {

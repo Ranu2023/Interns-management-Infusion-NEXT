@@ -22,5 +22,5 @@ const UserSchema: Schema<IUser> = new Schema({
     timestamps: true,
 });
 
-// Ensure the model is registered correctly to be used in `ref`
+// The key fix: Ensure the model is always registered as 'User' to match the 'ref' in other schemas.
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
