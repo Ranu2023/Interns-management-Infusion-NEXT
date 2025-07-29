@@ -493,7 +493,8 @@ export async function updateMentorshipRequest(requestId: string, status: 'approv
             return { success: false, message: 'Request not found.' };
         }
 
-        if (request.mentor.toString() !== session.user.id) {
+        const mentor = await Mentor.findById(request.mentor);
+        if (mentor?.email !== session.user.email) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
 
@@ -513,10 +514,11 @@ export async function updateMentorshipRequest(requestId: string, status: 'approv
 
         await request.save();
         
-        const intern = await Intern.findById(request.intern);
-        if (intern) {
+        // Find the intern's user account to send a notification
+        const internProfile = await Intern.findById(request.intern).lean();
+        if (internProfile) {
             await new Notification({
-                userId: intern._id,
+                userId: internProfile._id,
                 message: `Your mentorship request with ${session.user.name} has been ${status}.`,
                 href: '/dashboard/my-mentorship',
             }).save();
