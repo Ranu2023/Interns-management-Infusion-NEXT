@@ -25,7 +25,7 @@ import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
-import Intern, { type IIntern } from "@/lib/models/Intern";
+import { type IIntern } from "@/lib/models/Intern";
 import Link from 'next/link';
 import mongoose from 'mongoose';
 
@@ -43,7 +43,7 @@ async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedReque
   const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
     .populate<{ intern: IIntern }>({
       path: 'intern',
-      model: Intern,
+      model: 'Intern',
       select: 'name email avatar interestField',
     })
     .sort({ createdAt: -1 })
@@ -125,6 +125,7 @@ export async function MentorMentorshipRequests() {
                           ? "destructive"
                           : "outline"
                       }
+                      className="capitalize"
                     >
                       {req.status}
                     </Badge>

@@ -471,6 +471,7 @@ export async function requestMentorship(mentorId: string) {
       }
   
       revalidatePath('/dashboard/my-mentorship');
+      revalidatePath('/dashboard/mentorship');
       return { success: true, message: `Your request to the mentor has been sent.` };
     } catch (error) {
       console.error('Failed to request mentorship:', error);
@@ -500,8 +501,8 @@ export async function updateMentorshipRequest(requestId: string, status: 'approv
         
         if (status === 'approved') {
             const newSession = await MentorshipSession.create({
-                internId: request.intern,
-                mentorId: request.mentor,
+                intern: request.intern,
+                mentor: request.mentor,
                 chat: [{
                     senderId: request.mentor,
                     message: `Hello! I've accepted your mentorship request. How can I help you get started?`
