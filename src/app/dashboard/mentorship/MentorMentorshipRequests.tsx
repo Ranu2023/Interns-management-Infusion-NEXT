@@ -19,7 +19,7 @@ import {
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
-import { ThumbsUp, ThumbsDown, Mail, Eye } from 'lucide-react';
+import { ThumbsUp, ThumbsDown, Eye } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
@@ -29,9 +29,9 @@ import Intern, { type IIntern } from "@/lib/models/Intern";
 import Link from 'next/link';
 import mongoose from 'mongoose';
 
-type PopulatedRequest = Omit<IMentorshipRequest, 'intern'> & {
+type PopulatedRequest = Omit<IMentorshipRequest, 'internId'> & {
   _id: string;
-  intern: IIntern;
+  internId: IIntern;
   createdAt: string;
   sessionId?: string;
 };
@@ -39,13 +39,14 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern'> & {
 async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
+  // Ensure Intern model is registered before populating
   Intern; 
   
-  const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
-    .populate<{ intern: IIntern }>({
-      path: 'intern',
+  const requests = await MentorshipRequest.find({ mentorId: new mongoose.Types.ObjectId(mentorId) })
+    .populate<{ internId: IIntern }>({
+      path: 'internId',
       model: Intern,
-      select: 'name email avatar',
+      select: 'name email avatar interestField',
     })
     .sort({ createdAt: -1 })
     .lean();
@@ -63,7 +64,7 @@ export async function MentorMentorshipRequests() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Premium Mentorship Requests</CardTitle>
+        <CardTitle>Mentorship Requests</CardTitle>
         <CardDescription>
           Review and respond to mentorship requests from interns.
         </CardDescription>
@@ -78,6 +79,7 @@ export async function MentorMentorshipRequests() {
             <TableHeader>
               <TableRow>
                 <TableHead>Intern</TableHead>
+                <TableHead>Field of Interest</TableHead>
                 <TableHead>Requested On</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
@@ -87,22 +89,22 @@ export async function MentorMentorshipRequests() {
               {requests.map((req) => (
                 <TableRow key={req._id}>
                   <TableCell>
-                    {req.intern ? (
+                    {req.internId ? (
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={req.intern.avatar || 'https://placehold.co/100x100.png'}
-                            alt={req.intern.name}
+                            src={req.internId.avatar || 'https://placehold.co/100x100.png'}
+                            alt={req.internId.name}
                             data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
-                            {req.intern.name.charAt(0)}
+                            {req.internId.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{req.intern.name}</p>
+                          <p className="font-medium">{req.internId.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {req.intern.email}
+                            {req.internId.email}
                           </p>
                         </div>
                       </div>
@@ -112,6 +114,7 @@ export async function MentorMentorshipRequests() {
                       </p>
                     )}
                   </TableCell>
+                  <TableCell>{req.internId?.interestField || 'N/A'}</TableCell>
                   <TableCell>
                     {new Date(req.createdAt).toLocaleDateString()}
                   </TableCell>

@@ -66,11 +66,6 @@ export async function registerUser(prevState: any, formData: FormData) {
                 name,
                 email,
                 avatar: `https://placehold.co/100x100.png`,
-                project: 'Unassigned',
-                mentor: 'Unassigned',
-                status: 'Active',
-                ppoStatus: 'Pending',
-                ppoDecision: 'Pending',
             });
             await newIntern.save();
         } else if (role === 'mentor') {
@@ -78,8 +73,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                  _id: newUser._id, // Use same ID for linking
                 name,
                 email,
-                expertise: 'General',
-                interns: 0,
+                expertise: 'General', // Default value
                 avatar: `https://placehold.co/100x100.png`,
             });
             await newMentor.save();
@@ -115,6 +109,13 @@ export async function authenticate(prevState: any, formData: FormData) {
         if (user.role !== role) {
              return { success: false, message: `Incorrect role selected. This user is a ${user.role}.` };
         }
+        
+        // Fetch role-specific details to add to session
+        let roleDetails = {};
+        if(role === 'mentor') {
+            const mentorProfile = await Mentor.findById(user._id).lean();
+            if(mentorProfile) roleDetails = { expertise: mentorProfile.expertise };
+        }
 
         const sessionUser: SessionUser = {
             id: user._id.toString(),
@@ -123,7 +124,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             email: user.email,
             role: user.role,
             avatar: user.avatar,
-            expertise: user.expertise
+            ...roleDetails
         };
 
         const session = await encrypt({ user: sessionUser });
@@ -132,7 +133,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             path: '/',
-            maxAge: 60 * 60, // 1 hour
+            maxAge: 60 * 60 * 24 * 7, // 7 days
         });
         
     } catch (error) {
@@ -203,11 +204,6 @@ export async function updateApplicationStatus(applicationId: string, status: 'Ac
                 name: application.name,
                 email: email,
                 avatar: `https://placehold.co/100x100.png`,
-                project: 'Unassigned',
-                mentor: 'Unassigned',
-                status: 'Active',
-                ppoStatus: 'Pending',
-                ppoDecision: 'Pending',
             });
             await newIntern.save();
         }
@@ -451,8 +447,8 @@ export async function requestMentorship(mentorId: string) {
       const internId = intern._id;
   
       const existingRequest = await MentorshipRequest.findOne({
-        intern: new mongoose.Types.ObjectId(internId),
-        mentor: new mongoose.Types.ObjectId(mentorId),
+        internId: new mongoose.Types.ObjectId(internId),
+        mentorId: new mongoose.Types.ObjectId(mentorId),
         status: 'Pending',
       });
   
@@ -461,8 +457,8 @@ export async function requestMentorship(mentorId: string) {
       }
   
       await MentorshipRequest.create({
-        intern: new mongoose.Types.ObjectId(internId),
-        mentor: new mongoose.Types.ObjectId(mentorId),
+        internId: new mongoose.Types.ObjectId(internId),
+        mentorId: new mongoose.Types.ObjectId(mentorId),
         status: 'Pending',
       });
   
@@ -470,7 +466,7 @@ export async function requestMentorship(mentorId: string) {
       if (mentor) {
         await new Notification({
             userId: mentor._id,
-            message: `${session.user.name} has requested premium mentorship.`,
+            message: `${session.user.name} has requested mentorship.`,
             href: '/dashboard/mentorship',
         }).save();
       }
@@ -497,8 +493,7 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
             return { success: false, message: 'Request not found.' };
         }
 
-        const mentor = await Mentor.findById(request.mentor);
-        if (!mentor || mentor._id.toString() !== session.user.id) {
+        if (request.mentorId.toString() !== session.user.id) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
 
@@ -506,10 +501,10 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
         
         if (status === 'Accepted') {
             const newSession = await MentorshipSession.create({
-                intern: request.intern,
-                mentor: request.mentor,
+                internId: request.internId,
+                mentorId: request.mentorId,
                 chat: [{
-                    senderId: mentor._id,
+                    senderId: request.mentorId,
                     message: `Hello! I've accepted your mentorship request. How can I help you get started?`
                 }]
             });
@@ -518,11 +513,11 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
 
         await request.save();
         
-        const intern = await Intern.findById(request.intern);
+        const intern = await Intern.findById(request.internId);
         if (intern) {
             await new Notification({
                 userId: intern._id,
-                message: `Your mentorship request with ${mentor.name} has been ${status.toLowerCase()}.`,
+                message: `Your mentorship request has been ${status.toLowerCase()}.`,
                 href: '/dashboard/my-mentorship',
             }).save();
         }

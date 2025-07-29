@@ -31,9 +31,9 @@ import mongoose from "mongoose";
 import Link from "next/link";
 
 
-type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
+type PopulatedRequest = Omit<IMentorshipRequest, 'mentorId'> & {
   _id: string;
-  mentor: IMentor;
+  mentorId: IMentor;
   createdAt: string;
   sessionId?: string;
 };
@@ -41,11 +41,12 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'intern' | 'mentor'> & {
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
+  // Ensure the Mentor model is registered
   Mentor; 
 
-  const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
-    .populate<{ mentor: IMentor }>({
-      path: 'mentor',
+  const requests = await MentorshipRequest.find({ internId: new mongoose.Types.ObjectId(internId) })
+    .populate<{ mentorId: IMentor }>({
+      path: 'mentorId',
       model: Mentor,
       select: 'name email avatar expertise',
     })
@@ -67,7 +68,7 @@ export default async function MyMentorshipPage() {
        return (
         <Card>
             <CardHeader>
-                <CardTitle>My Premium Mentorships</CardTitle>
+                <CardTitle>My Mentorships</CardTitle>
                 <CardDescription>Track the status of your mentorship requests.</CardDescription>
             </CardHeader>
             <CardContent className="pt-6">
@@ -85,7 +86,7 @@ export default async function MyMentorshipPage() {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>My Premium Mentorships</CardTitle>
+        <CardTitle>My Mentorships</CardTitle>
         <CardDescription>
           Track the status of your mentorship requests and connect with your mentors.
         </CardDescription>
@@ -96,7 +97,7 @@ export default async function MyMentorshipPage() {
             <Handshake className="mx-auto h-12 w-12" />
             <h3 className="mt-4 text-lg font-semibold">No Mentorship Requests Sent</h3>
             <p className="mt-2 text-sm">
-              You haven't requested any premium mentorship sessions yet.
+              You haven't requested any mentorship sessions yet.
             </p>
             <Button asChild className="mt-4">
                 <Link href="/dashboard/mentorship">Explore Mentors</Link>
@@ -116,22 +117,22 @@ export default async function MyMentorshipPage() {
               {mentorships.map((req) => (
                 <TableRow key={req._id}>
                   <TableCell>
-                    {req.mentor ? (
+                    {req.mentorId ? (
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={req.mentor.avatar}
-                            alt={req.mentor.name}
+                            src={req.mentorId.avatar}
+                            alt={req.mentorId.name}
                             data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
-                            {req.mentor.name.charAt(0)}
+                            {req.mentorId.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{req.mentor.name}</p>
+                          <p className="font-medium">{req.mentorId.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {req.mentor.email}
+                            {req.mentorId.email}
                           </p>
                         </div>
                       </div>
@@ -142,8 +143,8 @@ export default async function MyMentorshipPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {req.mentor?.expertise ? (
-                      <Badge variant="secondary">{req.mentor.expertise}</Badge>
+                    {req.mentorId?.expertise ? (
+                      <Badge variant="secondary">{req.mentorId.expertise}</Badge>
                     ) : (
                       <Badge variant="outline">N/A</Badge>
                     )}
@@ -162,23 +163,21 @@ export default async function MyMentorshipPage() {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {req.status === "Accepted" && req.sessionId && (
+                    {req.status === "Accepted" && req.sessionId ? (
                       <Button asChild>
                         <Link href={`/dashboard/mentorship/${req.sessionId}`}>
-                          <Eye className="mr-2 h-4 w-4" /> View Session
+                          <Eye className="mr-2 h-4 w-4" /> Go to Mentorship Room
                         </Link>
                       </Button>
-                    )}
-                    {req.status === "Pending" && (
+                    ) : req.status === 'Pending' ? (
                       <span className="text-xs text-muted-foreground">
                         Awaiting response
                       </span>
-                    )}
-                    {req.status === "Rejected" && (
+                    ) : req.status === 'Rejected' ? (
                       <span className="text-xs text-muted-foreground">
                         Not accepted
                       </span>
-                    )}
+                    ) : null}
                   </TableCell>
                 </TableRow>
               ))}

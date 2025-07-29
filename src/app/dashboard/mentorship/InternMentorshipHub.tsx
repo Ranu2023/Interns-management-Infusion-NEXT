@@ -7,6 +7,7 @@ import {
   CardTitle,
   CardContent,
   CardFooter,
+  CardDescription
 } from "@/components/ui/card";
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -50,15 +51,17 @@ export async function InternMentorshipHub() {
                                     <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                                 <CardTitle>{mentor.name}</CardTitle>
+                                <CardDescription>
+                                    <Badge variant="secondary">{mentor.expertise}</Badge>
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="text-center">
-                                <Badge variant="secondary">{mentor.expertise}</Badge>
                                 <p className="text-sm text-muted-foreground mt-2">
-                                    An experienced professional in {mentor.expertise.toLowerCase()} looking to help the next generation of talent.
+                                    Experience: {mentor.experience}
                                 </p>
                             </CardContent>
                             <CardFooter>
-                                <MentorshipRequestDialog mentorId={mentor._id} mentorName={mentor.name} />
+                                <MentorshipRequestDialog mentorId={mentor._id.toString()} mentorName={mentor.name} />
                             </CardFooter>
                         </Card>
                     ))}
