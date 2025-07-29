@@ -21,7 +21,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from '@/components/ui/button';
 import { Eye, Handshake } from 'lucide-react';
 import dbConnect from '@/lib/db';
-import MentorshipRequest, { type IMentorshipRequest } from '@/lib/models/MentorshipRequest';
+import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { getSession } from "@/lib/session";
 import { User as AuthUser } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
@@ -31,9 +31,10 @@ import mongoose from "mongoose";
 import Link from "next/link";
 
 
-type PopulatedRequest = Omit<IMentorshipRequest, 'mentorId'> & {
+type PopulatedRequest = {
   _id: string;
-  mentorId: IMentor;
+  mentor: IMentor;
+  status: 'pending' | 'approved' | 'rejected';
   createdAt: string;
   sessionId?: string;
 };
@@ -41,12 +42,9 @@ type PopulatedRequest = Omit<IMentorshipRequest, 'mentorId'> & {
 async function getMyMentorships(internId: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
-  // Ensure the Mentor model is registered
-  Mentor; 
-
-  const requests = await MentorshipRequest.find({ internId: new mongoose.Types.ObjectId(internId) })
-    .populate<{ mentorId: IMentor }>({
-      path: 'mentorId',
+  const requests = await MentorshipRequest.find({ intern: new mongoose.Types.ObjectId(internId) })
+    .populate<{ mentor: IMentor }>({
+      path: 'mentor',
       model: Mentor,
       select: 'name email avatar expertise',
     })
@@ -117,22 +115,22 @@ export default async function MyMentorshipPage() {
               {mentorships.map((req) => (
                 <TableRow key={req._id}>
                   <TableCell>
-                    {req.mentorId ? (
+                    {req.mentor ? (
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={req.mentorId.avatar}
-                            alt={req.mentorId.name}
+                            src={req.mentor.avatar}
+                            alt={req.mentor.name}
                             data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
-                            {req.mentorId.name.charAt(0)}
+                            {req.mentor.name.charAt(0)}
                           </AvatarFallback>
                         </Avatar>
                         <div>
-                          <p className="font-medium">{req.mentorId.name}</p>
+                          <p className="font-medium">{req.mentor.name}</p>
                           <p className="text-sm text-muted-foreground">
-                            {req.mentorId.email}
+                            {req.mentor.email}
                           </p>
                         </div>
                       </div>
@@ -143,8 +141,8 @@ export default async function MyMentorshipPage() {
                     )}
                   </TableCell>
                   <TableCell>
-                    {req.mentorId?.expertise ? (
-                      <Badge variant="secondary">{req.mentorId.expertise}</Badge>
+                    {req.mentor?.expertise ? (
+                      <Badge variant="secondary">{req.mentor.expertise}</Badge>
                     ) : (
                       <Badge variant="outline">N/A</Badge>
                     )}
@@ -152,28 +150,29 @@ export default async function MyMentorshipPage() {
                   <TableCell>
                     <Badge
                       variant={
-                        req.status === "Accepted"
+                        req.status === "approved"
                           ? "default"
-                          : req.status === "Rejected"
+                          : req.status === "rejected"
                           ? "destructive"
                           : "outline"
                       }
+                      className="capitalize"
                     >
                       {req.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    {req.status === "Accepted" && req.sessionId ? (
+                    {req.status === "approved" && req.sessionId ? (
                       <Button asChild>
                         <Link href={`/dashboard/mentorship/${req.sessionId}`}>
                           <Eye className="mr-2 h-4 w-4" /> Go to Mentorship Room
                         </Link>
                       </Button>
-                    ) : req.status === 'Pending' ? (
+                    ) : req.status === 'pending' ? (
                       <span className="text-xs text-muted-foreground">
                         Awaiting response
                       </span>
-                    ) : req.status === 'Rejected' ? (
+                    ) : req.status === 'rejected' ? (
                       <span className="text-xs text-muted-foreground">
                         Not accepted
                       </span>

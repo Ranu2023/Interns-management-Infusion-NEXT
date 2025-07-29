@@ -447,9 +447,9 @@ export async function requestMentorship(mentorId: string) {
       const internId = intern._id;
   
       const existingRequest = await MentorshipRequest.findOne({
-        internId: new mongoose.Types.ObjectId(internId),
-        mentorId: new mongoose.Types.ObjectId(mentorId),
-        status: 'Pending',
+        intern: new mongoose.Types.ObjectId(internId),
+        mentor: new mongoose.Types.ObjectId(mentorId),
+        status: 'pending',
       });
   
       if (existingRequest) {
@@ -457,9 +457,8 @@ export async function requestMentorship(mentorId: string) {
       }
   
       await MentorshipRequest.create({
-        internId: new mongoose.Types.ObjectId(internId),
-        mentorId: new mongoose.Types.ObjectId(mentorId),
-        status: 'Pending',
+        intern: new mongoose.Types.ObjectId(internId),
+        mentor: new mongoose.Types.ObjectId(mentorId),
       });
   
       const mentor = await Mentor.findById(mentorId).lean();
@@ -479,7 +478,7 @@ export async function requestMentorship(mentorId: string) {
     }
 }
   
-export async function updateMentorshipRequest(requestId: string, status: 'Accepted' | 'Rejected') {
+export async function updateMentorshipRequest(requestId: string, status: 'approved' | 'rejected') {
     const session = await getSession();
     if (!session?.user || session.user.role !== 'mentor') {
         return { success: false, message: 'Unauthorized: Only mentors can update requests.' };
@@ -493,18 +492,18 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
             return { success: false, message: 'Request not found.' };
         }
 
-        if (request.mentorId.toString() !== session.user.id) {
+        if (request.mentor.toString() !== session.user.id) {
              return { success: false, message: 'You are not authorized to update this request.' };
         }
 
         request.status = status;
         
-        if (status === 'Accepted') {
+        if (status === 'approved') {
             const newSession = await MentorshipSession.create({
-                internId: request.internId,
-                mentorId: request.mentorId,
+                internId: request.intern,
+                mentorId: request.mentor,
                 chat: [{
-                    senderId: request.mentorId,
+                    senderId: request.mentor,
                     message: `Hello! I've accepted your mentorship request. How can I help you get started?`
                 }]
             });
@@ -513,7 +512,7 @@ export async function updateMentorshipRequest(requestId: string, status: 'Accept
 
         await request.save();
         
-        const intern = await Intern.findById(request.internId);
+        const intern = await Intern.findById(request.intern);
         if (intern) {
             await new Notification({
                 userId: intern._id,
