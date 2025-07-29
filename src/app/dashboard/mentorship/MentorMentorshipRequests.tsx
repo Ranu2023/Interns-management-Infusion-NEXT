@@ -27,6 +27,7 @@ import { getSession } from "@/lib/session";
 import { type IIntern } from "@/lib/models/Intern";
 import Link from 'next/link';
 import mongoose from 'mongoose';
+import Mentor from "@/lib/models/Mentor";
 
 type PopulatedRequest = {
   _id: string;
@@ -36,10 +37,15 @@ type PopulatedRequest = {
   sessionId?: string;
 };
 
-async function getMyMentorshipRequests(mentorId: string): Promise<PopulatedRequest[]> {
+async function getMyMentorshipRequests(mentorEmail: string): Promise<PopulatedRequest[]> {
   await dbConnect();
   
-  const requests = await MentorshipRequest.find({ mentor: new mongoose.Types.ObjectId(mentorId) })
+  const mentor = await Mentor.findOne({ email: mentorEmail }).lean();
+  if (!mentor) {
+    return [];
+  }
+  
+  const requests = await MentorshipRequest.find({ mentor: mentor._id })
     .populate<{ intern: IIntern }>({
       path: 'intern',
       model: 'Intern',
@@ -55,8 +61,7 @@ export async function MentorMentorshipRequests() {
   const session = await getSession();
   if (!session?.user || session.user.role !== 'mentor') return null;
   
-  const mentorId = session.user.id;
-  const requests = await getMyMentorshipRequests(mentorId);
+  const requests = await getMyMentorshipRequests(session.user.email);
 
   return (
     <Card>
