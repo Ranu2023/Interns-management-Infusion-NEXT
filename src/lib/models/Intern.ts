@@ -9,7 +9,7 @@ export interface IIntern extends Document {
     project: string;
     mentor: string;
     status: 'Active' | 'Completed' | 'On-Hold';
-    interestField: string; // Added as per new spec
+    interestField: string;
     assessmentScore?: number;
     ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
     ppoReasoning?: string;

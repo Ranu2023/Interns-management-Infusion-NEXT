@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { Paperclip, Send } from "lucide-react";
 import { Textarea } from "@/components/ui/textarea";
 
-async function getSessionData(sessionId: string, userId: string) {
+async function getSessionData(sessionId: string, userId: string, userRole: string) {
     await dbConnect();
 
     const session = await MentorshipSession.findById(sessionId)
@@ -27,7 +27,9 @@ async function getSessionData(sessionId: string, userId: string) {
     }
     
     // Security check: ensure the logged-in user is part of this session
-    const isParticipant = session.intern._id.toString() === userId || session.mentor._id.toString() === userId;
+    const isParticipant = (userRole === 'intern' && session.intern._id.toString() === userId) || 
+                          (userRole === 'mentor' && session.mentor._id.toString() === userId);
+
     if (!isParticipant) {
         return null;
     }
@@ -41,14 +43,14 @@ export default async function MentorshipSessionPage({ params }: { params: { sess
     if (!session?.user) {
         redirect('/');
     }
+    const currentUser = session.user as User;
 
-    const sessionData = await getSessionData(params.sessionId, session.user.id);
+    const sessionData = await getSessionData(params.sessionId, currentUser.id, currentUser.role);
 
     if (!sessionData) {
         notFound();
     }
     
-    const currentUser = session.user as User;
     const otherUser = currentUser.role === 'intern' ? sessionData.mentor : sessionData.intern;
 
     return (
@@ -68,14 +70,14 @@ export default async function MentorshipSessionPage({ params }: { params: { sess
                 </CardHeader>
                 <CardContent className="flex-grow p-6 space-y-4 overflow-y-auto">
                     {sessionData.chat.map((item: any, index: number) => (
-                        <div key={index} className={`flex items-end gap-2 ${item.senderId === currentUser.id ? 'justify-end' : 'justify-start'}`}>
-                            {item.senderId !== currentUser.id && (
+                        <div key={index} className={`flex items-end gap-2 ${item.senderId.toString() === currentUser.id ? 'justify-end' : 'justify-start'}`}>
+                            {item.senderId.toString() !== currentUser.id && (
                                 <Avatar className="h-8 w-8">
                                     <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="avatar person" />
                                     <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                             )}
-                             <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${item.senderId === currentUser.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
+                             <div className={`max-w-xs lg:max-w-md p-3 rounded-lg ${item.senderId.toString() === currentUser.id ? 'bg-primary text-primary-foreground' : 'bg-muted'}`}>
                                 <p className="text-sm">{item.message}</p>
                             </div>
                         </div>

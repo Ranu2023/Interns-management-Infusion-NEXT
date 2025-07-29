@@ -14,6 +14,9 @@ import { Badge } from '@/components/ui/badge';
 import dbConnect from "@/lib/db";
 import Mentor from "@/lib/models/Mentor";
 import { MentorshipRequestDialog } from './MentorshipRequestDialog';
+import { getSession } from "@/lib/session";
+import MentorshipRequest from "@/lib/models/MentorshipRequest";
+import Intern from "@/lib/models/Intern";
 
 
 async function getAllMentors() {
@@ -22,9 +25,19 @@ async function getAllMentors() {
     return mentors.map(mentor => ({ ...mentor, _id: mentor._id.toString() }));
 }
 
+async function getMySentRequests(internId: string) {
+    await dbConnect();
+    const requests = await MentorshipRequest.find({ intern: internId }).lean();
+    // Return a map of mentorId to request status for quick lookup
+    return new Map(requests.map(req => [req.mentor.toString(), req.status]));
+}
+
 
 export async function InternMentorshipHub() {
     const allMentors = await getAllMentors();
+    const session = await getSession();
+    const intern = await Intern.findOne({ email: session?.user.email }).lean();
+    const myRequests = intern ? await getMySentRequests(intern._id.toString()) : new Map();
 
     return (
         <div>
@@ -61,7 +74,11 @@ export async function InternMentorshipHub() {
                                 </p>
                             </CardContent>
                             <CardFooter>
-                                <MentorshipRequestDialog mentorId={mentor._id.toString()} mentorName={mentor.name} />
+                                <MentorshipRequestDialog 
+                                    mentorId={mentor._id.toString()} 
+                                    mentorName={mentor.name} 
+                                    requestStatus={myRequests.get(mentor._id.toString())}
+                                />
                             </CardFooter>
                         </Card>
                     ))}

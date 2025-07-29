@@ -5,7 +5,7 @@ export interface IMentor extends Document {
   name: string;
   email: string;
   expertise: string;
-  experience: string; // Added as per new spec
+  experience: string;
   interns: number;
   avatar: string;
 }
@@ -14,7 +14,7 @@ const MentorSchema: Schema<IMentor> = new Schema({
   name: { type: String, required: true },
   email: { type: String, required: true, unique: true },
   expertise: { type: String, required: true },
-  experience: { type: String, default: '2+ years' }, // Added default
+  experience: { type: String, default: '2+ years' },
   interns: { type: Number, required: true, default: 0 },
   avatar: { type: String, required: true },
 });

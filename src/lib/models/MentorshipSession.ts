@@ -1,6 +1,4 @@
 
-'use server';
-
 import mongoose, { Schema, Document, models, Model } from 'mongoose';
 
 interface IChatMessage {
@@ -10,12 +8,12 @@ interface IChatMessage {
 }
 
 export interface IMentorshipSession extends Document {
-  internId: mongoose.Schema.Types.ObjectId;
-  mentorId: mongoose.Schema.Types.ObjectId;
+  intern: mongoose.Schema.Types.ObjectId;
+  mentor: mongoose.Schema.Types.ObjectId;
   chat: IChatMessage[];
   meetLink?: string;
   roadmapLinks?: string[];
-  resources?: string[];
+  resources?: { title: string; link: string }[];
   createdAt: Date;
   updatedAt: Date;
 }
@@ -27,12 +25,15 @@ const ChatMessageSchema: Schema<IChatMessage> = new Schema({
 });
 
 const MentorshipSessionSchema: Schema<IMentorshipSession> = new Schema({
-  internId: { type: mongoose.Schema.Types.ObjectId, ref: 'Intern', required: true },
-  mentorId: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor', required: true },
+  intern: { type: mongoose.Schema.Types.ObjectId, ref: 'Intern', required: true },
+  mentor: { type: mongoose.Schema.Types.ObjectId, ref: 'Mentor', required: true },
   chat: [ChatMessageSchema],
-  meetLink: { type: String },
+  meetLink: { type: String, default: '' },
   roadmapLinks: [{ type: String }],
-  resources: [{ type: String }],
+  resources: [{ 
+      title: { type: String },
+      link: { type: String }
+  }],
 }, { timestamps: true });
 
 const MentorshipSession: Model<IMentorshipSession> = models.MentorshipSession || mongoose.model<IMentorshipSession>('MentorshipSession', MentorshipSessionSchema);

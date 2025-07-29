@@ -17,9 +17,10 @@ import { useToast } from '@/hooks/use-toast';
 import { requestMentorship } from '@/lib/actions';
 import { useTransition } from 'react';
 import { Loader2 } from 'lucide-react';
+import { Badge } from '@/components/ui/badge';
 
 
-export function MentorshipRequestDialog({ mentorId, mentorName }: { mentorId: string, mentorName: string }) {
+export function MentorshipRequestDialog({ mentorId, mentorName, requestStatus }: { mentorId: string, mentorName: string, requestStatus?: 'pending' | 'approved' | 'rejected' }) {
     const { toast } = useToast();
     const [isPending, startTransition] = useTransition();
 
@@ -41,6 +42,18 @@ export function MentorshipRequestDialog({ mentorId, mentorName }: { mentorId: st
         });
     }
 
+    if (requestStatus) {
+        return (
+             <Button className="w-full" disabled>
+                <Badge variant={
+                    requestStatus === 'approved' ? 'default' :
+                    requestStatus === 'rejected' ? 'destructive' :
+                    'secondary'
+                } className="capitalize">{requestStatus}</Badge>
+             </Button>
+        )
+    }
+
     return (
         <AlertDialog>
             <AlertDialogTrigger asChild>
@@ -51,10 +64,9 @@ export function MentorshipRequestDialog({ mentorId, mentorName }: { mentorId: st
             </AlertDialogTrigger>
             <AlertDialogContent>
                 <AlertDialogHeader>
-                <AlertDialogTitle>Premium Mentorship Request</AlertDialogTitle>
+                <AlertDialogTitle>Confirm Mentorship Request</AlertDialogTitle>
                 <AlertDialogDescription>
-                    You are about to request a premium mentorship session with {mentorName}.
-                    This is a paid service. Are you sure you want to proceed?
+                    You are about to send a mentorship request to {mentorName}. Are you sure you want to proceed?
                 </AlertDialogDescription>
                 </AlertDialogHeader>
                 <AlertDialogFooter>

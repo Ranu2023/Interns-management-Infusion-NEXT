@@ -165,7 +165,7 @@ export default async function MyMentorshipPage() {
                     {req.status === "approved" && req.sessionId ? (
                       <Button asChild>
                         <Link href={`/dashboard/mentorship/${req.sessionId}`}>
-                          <Eye className="mr-2 h-4 w-4" /> Go to Mentorship Room
+                          <Eye className="mr-2 h-4 w-4" /> Open Mentorship Room
                         </Link>
                       </Button>
                     ) : req.status === 'pending' ? (

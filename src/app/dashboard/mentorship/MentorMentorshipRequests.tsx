@@ -24,7 +24,6 @@ import dbConnect from '@/lib/db';
 import MentorshipRequest from '@/lib/models/MentorshipRequest';
 import { updateMentorshipRequest } from '@/lib/actions';
 import { getSession } from "@/lib/session";
-import { User as AuthUser } from "@/context/AuthContext";
 import { type IIntern } from "@/lib/models/Intern";
 import Link from 'next/link';
 import mongoose from 'mongoose';
