@@ -21,6 +21,7 @@ import { cookies } from 'next/headers';
 import mongoose from 'mongoose';
 import User from '@/lib/models/User';
 import MentorshipSession from './models/MentorshipSession';
+import DocumentModel, { DocumentType } from './models/Document';
 
 
 
@@ -658,5 +659,68 @@ export async function updateMentorshipRequest(requestId: string, status: 'approv
     } catch (error: any) {
         console.error('Failed to update request:', error);
         return { success: false, message: error.message || 'An internal server error occurred.' };
+    }
+}
+
+
+export async function assignDocuments(internId: string, prevState: any, formData: FormData) {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+        return { success: false, message: 'Unauthorized: Only HR can assign documents.' };
+    }
+
+    const certificateLink = formData.get('certificateLink') as string;
+    const lorLink = formData.get('lorLink') as string;
+
+    if (!certificateLink || !lorLink) {
+        return { success: false, message: 'Both document links are required.' };
+    }
+    
+    try {
+        await dbConnect();
+
+        const intern = await Intern.findById(internId);
+        if(!intern) {
+             return { success: false, message: 'Intern not found.' };
+        }
+        
+        const documentsToCreate: { userId: string, name: string, type: DocumentType, href: string }[] = [];
+
+        if (certificateLink) {
+            documentsToCreate.push({
+                userId: intern._id,
+                name: 'Internship Completion Certificate',
+                type: 'Completion Certificate',
+                href: certificateLink,
+            });
+        }
+        if (lorLink) {
+            documentsToCreate.push({
+                userId: intern._id,
+                name: 'Letter of Recommendation',
+                type: 'LOR',
+                href: lorLink,
+            });
+        }
+
+        // Use bulk operations to avoid multiple DB calls
+        await DocumentModel.insertMany(documentsToCreate);
+        
+        // Notify the intern
+        await new Notification({
+            userId: intern._id,
+            message: `New documents have been assigned to you by HR.`,
+            href: '/dashboard/documents',
+        }).save();
+
+        revalidatePath('/dashboard/documents');
+        revalidatePath(`/dashboard/assign-documents/${internId}`);
+        revalidatePath('/dashboard/assign-documents');
+
+        return { success: true, message: 'Documents assigned successfully!' };
+
+    } catch (error) {
+        console.error('Failed to assign documents:', error);
+        return { success: false, message: 'An internal server error occurred.' };
     }
 }

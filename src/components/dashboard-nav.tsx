@@ -22,6 +22,7 @@ import {
   GraduationCap,
   type LucideIcon,
   UserPlus,
+  FileUp,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -48,6 +49,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
     { href: '/dashboard/applications', label: 'Applications', icon: FileText },
     { href: '/dashboard/assign-mentor', label: 'Assign Mentor', icon: UserPlus },
+    { href: '/dashboard/assign-documents', label: 'Assign Documents', icon: FileUp },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
   ],

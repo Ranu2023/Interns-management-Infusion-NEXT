@@ -16,6 +16,7 @@ export interface IIntern extends Document {
     ppoDecision?: 'Accepted' | 'Rejected' | 'Pending';
     // Timeline tracking fields
     internshipStartDate?: Date;
+    internshipEndDate?: Date;
     finalAssessmentDate?: Date;
     ppoRecommendationDate?: Date;
     hrInterviewDate?: Date;
@@ -36,7 +37,8 @@ const InternSchema: Schema<IIntern> = new Schema({
     ppoReasoning: { type: String },
     ppoDecision: { type: String, enum: ['Accepted', 'Rejected', 'Pending'], default: 'Pending' },
     // Timeline tracking fields
-    internshipStartDate: { type: Date },
+    internshipStartDate: { type: Date, default: () => new Date(new Date().setMonth(new Date().getMonth() - 2)) }, // Default to 2 months ago
+    internshipEndDate: { type: Date, default: () => new Date(new Date().setMonth(new Date().getMonth() + 1)) }, // Default to 1 month from now
     finalAssessmentDate: { type: Date },
     ppoRecommendationDate: { type: Date },
     hrInterviewDate: { type: Date },

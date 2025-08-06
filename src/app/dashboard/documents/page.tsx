@@ -23,6 +23,8 @@ import Document from "@/lib/models/Document";
 import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
+import { type DocumentType } from "@/lib/models/Document";
+
 
 async function getMyDocuments() {
     const session = await getSession();
@@ -30,7 +32,8 @@ async function getMyDocuments() {
     if (!user) redirect('/');
 
     await dbConnect();
-    const documents = await Document.find({ userId: user.id }).lean();
+    // Interns can only see their own documents
+    const documents = await Document.find({ userId: user.id }).sort({ date: -1 }).lean();
     
     return documents.map(doc => ({
         ...doc,
@@ -44,11 +47,12 @@ async function getMyDocuments() {
 export default async function DocumentsPage() {
     const documents = await getMyDocuments();
 
-    const getIcon = (type: string) => {
+    const getIcon = (type: DocumentType) => {
         switch(type) {
             case 'Offer Letter': return <FileText className="h-4 w-4" />;
             case 'LOR': return <Award className="h-4 w-4" />;
             case 'Completion Certificate': return <Award className="h-4 w-4" />;
+            case 'Feedback': return <FileText className="h-4 w-4" />;
             default: return <FileText className="h-4 w-4" />;
         }
     }
@@ -75,7 +79,7 @@ export default async function DocumentsPage() {
                                 <TableRow key={doc._id}>
                                     <TableCell>
                                         <div className="flex items-center gap-2 font-medium">
-                                            {getIcon(doc.type)}
+                                            {getIcon(doc.type as DocumentType)}
                                             <span>{doc.name}</span>
                                         </div>
                                     </TableCell>
