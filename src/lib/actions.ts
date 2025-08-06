@@ -278,6 +278,7 @@ export async function submitDailyReport(formData: FormData) {
     const projectId = formData.get('projectId') as string;
     const progressNote = formData.get('progressNote') as string;
     const blockers = formData.get('blockers') as string;
+    const completedTasks = formData.getAll('completedTasks') as string[];
     
     const session = await getSession();
     if (!session?.user) return { success: false, message: "Authentication required." };
@@ -306,7 +307,8 @@ export async function submitDailyReport(formData: FormData) {
             projectName: project.title,
             date: new Date(),
             progressNote,
-            blockers
+            blockers,
+            completedTasks
         });
         await report.save();
 
@@ -361,9 +363,37 @@ export async function submitMentorFeedback(prevState: any, formData: FormData) {
         
         await report.save();
 
+        // If approved, update project tasks
+        if (status === 'Approved' && report.completedTasks.length > 0) {
+            const project = await Project.findById(report.projectId);
+            if (project) {
+                let tasksUpdated = false;
+                report.completedTasks.forEach((taskId: string) => {
+                    const task = project.tasks.find((t: Task) => t.id === parseInt(taskId, 10));
+                    if (task && !task.completed) {
+                        task.completed = true;
+                        tasksUpdated = true;
+                    }
+                });
+
+                if (tasksUpdated) {
+                     const completedCount = project.tasks.filter((t: Task) => t.completed).length;
+                     project.progress = Math.round((completedCount / project.tasks.length) * 100);
+                     if (project.progress === 100) {
+                         project.status = 'Completed';
+                     }
+                     await project.save();
+                }
+            }
+        }
+
+
         revalidatePath(`/dashboard/reports/${reportId}`);
         revalidatePath('/dashboard/reports');
         revalidatePath('/dashboard/my-feedback');
+        revalidatePath('/dashboard/my-projects');
+        revalidatePath(`/dashboard/my-projects/${report.projectId.toString()}`);
+        revalidatePath('/dashboard');
 
         return { success: true, message: "Feedback submitted successfully." };
 

@@ -6,11 +6,12 @@ import dbConnect from '@/lib/db';
 import DailyReport from '@/lib/models/DailyReport';
 import Intern from '@/lib/models/Intern';
 import Mentor from '@/lib/models/Mentor';
+import Project from '@/lib/models/Project';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { getSession } from '@/lib/session';
 import { type User } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
-import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, Briefcase, Award, GraduationCap, Mic, UserCheck, XCircle, AlertTriangle } from "lucide-react";
+import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, Briefcase, Award, GraduationCap, Mic, UserCheck, XCircle, AlertTriangle, ListChecks } from "lucide-react";
 import { FeedbackForm } from './FeedbackForm';
 
 
@@ -20,6 +21,7 @@ async function getReportData(reportId: string, user: User) {
     await dbConnect();
     const report = await DailyReport.findById(reportId)
         .populate({ path: 'internId', model: Intern, select: 'name email' })
+        .populate({ path: 'projectId', model: Project, select: 'tasks' })
         .lean();
 
     if (!report) return null;
@@ -52,6 +54,12 @@ export default async function ReportFeedbackPage({ params }: { params: { reportI
     if (!report) {
         notFound();
     }
+    
+    const getTaskTitleById = (id: string) => {
+        const taskIdNumber = parseInt(id, 10);
+        const task = report.projectId.tasks.find((t: any) => t.id === taskIdNumber);
+        return task ? task.title : `Task ID ${id} not found`;
+    }
 
     return (
         <div className="grid md:grid-cols-3 gap-6">
@@ -64,6 +72,16 @@ export default async function ReportFeedbackPage({ params }: { params: { reportI
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">
+                         {report.completedTasks && report.completedTasks.length > 0 && (
+                            <div>
+                                <h3 className="font-semibold text-base flex items-center gap-2"><ListChecks className="h-5 w-5" /> Completed Tasks</h3>
+                                <ul className="list-disc list-inside text-muted-foreground text-sm mt-2 space-y-1">
+                                    {report.completedTasks.map((taskId: string) => (
+                                        <li key={taskId}>{getTaskTitleById(taskId)}</li>
+                                    ))}
+                                </ul>
+                            </div>
+                        )}
                         <div>
                             <h3 className="font-semibold text-base">Progress Note</h3>
                             <p className="text-muted-foreground text-sm mt-1">{report.progressNote}</p>

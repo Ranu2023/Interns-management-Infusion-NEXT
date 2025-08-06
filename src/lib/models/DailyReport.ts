@@ -1,3 +1,4 @@
+
 import mongoose, { Schema, Document, models, Model, Types } from 'mongoose';
 
 export type MentorFeedbackStatus = 'Approved' | 'Rejected' | 'Changes-Required';
@@ -16,6 +17,7 @@ export interface IDailyReport extends Document {
   progressNote: string;
   blockers?: string;
   date: Date;
+  completedTasks: string[];
   mentorFeedback?: IMentorFeedback;
 }
 
@@ -32,6 +34,7 @@ const DailyReportSchema: Schema<IDailyReport> = new Schema({
   projectName: { type: String, required: true },
   progressNote: { type: String, required: true },
   blockers: { type: String },
+  completedTasks: { type: [String], default: [] },
   date: { type: Date, required: true, default: Date.now },
   mentorFeedback: { type: MentorFeedbackSchema },
 });

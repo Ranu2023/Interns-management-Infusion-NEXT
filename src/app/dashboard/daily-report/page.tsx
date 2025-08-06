@@ -21,11 +21,13 @@ import {
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Check, Send, Loader2 } from "lucide-react";
+import { Check, Send, Loader2, CheckCheck } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { submitDailyReport, getMyDailyReports } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
 import { type IProject } from '@/lib/models/Project';
+import { type Task } from '@/lib/types';
+import { Checkbox } from '@/components/ui/checkbox';
 
 function SubmitButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();
@@ -54,6 +56,8 @@ export default function DailyReportPage() {
     const [loadingReports, setLoadingReports] = useState(true);
     const [projects, setProjects] = useState<Project[]>([]);
     const [loadingProjects, setLoadingProjects] = useState(true);
+    const [selectedProject, setSelectedProject] = useState<Project | null>(null);
+    const [selectedTasks, setSelectedTasks] = useState<number[]>([]);
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -73,6 +77,10 @@ export default function DailyReportPage() {
     }, []);
 
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+        const completedTaskIds = selectedTasks.map(String);
+        formData.delete('completedTasks'); // Clear existing single values
+        completedTaskIds.forEach(id => formData.append('completedTasks', id));
+
         try {
             const result = await submitDailyReport(formData);
             if (result.success) {
@@ -81,6 +89,8 @@ export default function DailyReportPage() {
                     description: 'Your daily report has been successfully submitted.',
                 });
                 formRef.current?.reset();
+                setSelectedProject(null);
+                setSelectedTasks([]);
                 const fetchedReports = await getMyDailyReports();
                 setReports(fetchedReports);
             } else {
@@ -101,7 +111,20 @@ export default function DailyReportPage() {
         }
     }, { success: false, message: null });
     
+    const handleProjectChange = (projectId: string) => {
+        const project = projects.find(p => p._id === projectId);
+        setSelectedProject(project || null);
+        setSelectedTasks([]);
+    }
+    
+    const handleTaskToggle = (taskId: number) => {
+        setSelectedTasks(prev => 
+            prev.includes(taskId) ? prev.filter(id => id !== taskId) : [...prev, taskId]
+        );
+    }
+    
     const noProjects = !loadingProjects && projects.length === 0;
+    const uncompletedTasks = selectedProject?.tasks.filter(t => !t.completed) || [];
 
     return (
         <div className="grid md:grid-cols-3 gap-6">
@@ -112,11 +135,11 @@ export default function DailyReportPage() {
                             <CardTitle>Daily Progress Report</CardTitle>
                             <CardDescription>Submit your report for today, {new Date().toLocaleDateString()}.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="space-y-6">
                             <div className="grid gap-2">
                                 <Label htmlFor="project">Project Name</Label>
                                 {loadingProjects ? <Skeleton className="h-10 w-full" /> : (
-                                     <Select name="projectId" required disabled={noProjects}>
+                                     <Select name="projectId" required disabled={noProjects} onValueChange={handleProjectChange} value={selectedProject?._id || ''}>
                                         <SelectTrigger id="project">
                                             <SelectValue placeholder="Select the project you worked on..." />
                                         </SelectTrigger>
@@ -130,6 +153,27 @@ export default function DailyReportPage() {
                                     </Select>
                                 )}
                             </div>
+
+                             {selectedProject && (
+                                <div className="grid gap-3">
+                                    <Label>Tasks Completed Today</Label>
+                                    <div className="space-y-2 rounded-md border p-4 max-h-60 overflow-y-auto">
+                                        {uncompletedTasks.length > 0 ? uncompletedTasks.map(task => (
+                                             <div key={task.id} className="flex items-center space-x-2">
+                                                <Checkbox
+                                                    id={`task-${task.id}`}
+                                                    checked={selectedTasks.includes(task.id)}
+                                                    onCheckedChange={() => handleTaskToggle(task.id)}
+                                                />
+                                                <Label htmlFor={`task-${task.id}`} className="font-normal">{task.title}</Label>
+                                            </div>
+                                        )) : (
+                                            <p className="text-sm text-muted-foreground">All tasks for this project are already completed.</p>
+                                        )}
+                                    </div>
+                                </div>
+                            )}
+
                              <div className="grid gap-2">
                                 <Label htmlFor="progress-note">Progress Note</Label>
                                 <Textarea
@@ -138,7 +182,7 @@ export default function DailyReportPage() {
                                     placeholder="e.g., Completed the user authentication flow. Integrated the payment gateway API..."
                                     rows={5}
                                     required
-                                    disabled={noProjects}
+                                    disabled={!selectedProject}
                                 />
                             </div>
                             
@@ -149,7 +193,7 @@ export default function DailyReportPage() {
                                     name="blockers"
                                     placeholder="e.g., I'm waiting for the API documentation for the new service..."
                                     rows={3}
-                                    disabled={noProjects}
+                                    disabled={!selectedProject}
                                 />
                             </div>
                             {noProjects && (
@@ -157,7 +201,7 @@ export default function DailyReportPage() {
                             )}
                         </CardContent>
                         <CardFooter>
-                             <SubmitButton disabled={noProjects}/>
+                             <SubmitButton disabled={noProjects || !selectedProject}/>
                         </CardFooter>
                     </Card>
                 </form>
@@ -194,6 +238,3 @@ export default function DailyReportPage() {
         </div>
     );
 }
-
-// Need an API route to fetch projects for the client-side component
-export const dynamic = 'force-dynamic'; // ensure it's always dynamic
