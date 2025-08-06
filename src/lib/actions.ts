@@ -220,9 +220,11 @@ export async function assignProject(formData: FormData) {
     const projectName = formData.get('projectName') as string;
     const projectDescription = formData.get('projectDescription') as string;
     const documentLink = formData.get('documentLink') as string | null;
+    const projectTasks = formData.get('projectTasks') as string;
 
-    if (!internId || !projectName || !projectDescription) {
-        return { success: false, message: 'Missing required fields.' };
+
+    if (!internId || !projectName || !projectDescription || !projectTasks) {
+        return { success: false, message: 'Missing required fields. Project Name, Description and Tasks are required.' };
     }
 
     try {
@@ -235,14 +237,18 @@ export async function assignProject(formData: FormData) {
             return { success: false, message: 'You can only assign projects to your own interns.' };
         }
 
-        const tasks = [
-            { id: 1, title: "Initial research and planning", completed: false },
-            { id: 2, title: "Setup project boilerplate", completed: false },
-            { id: 3, title: "Develop core feature A", completed: false },
-            { id: 4, title: "Develop core feature B", completed: false },
-            { id: 5, title: "Write unit tests", completed: false },
-            { id: 6, title: "Deploy to staging environment", completed: false },
-        ];
+        const tasks: Task[] = projectTasks
+            .split('\n')
+            .filter(line => line.trim() !== '')
+            .map((line, index) => ({
+                id: index + 1,
+                title: line.trim(),
+                completed: false,
+            }));
+
+        if(tasks.length === 0) {
+            return { success: false, message: 'Please provide at least one task.' };
+        }
 
         const newProject = new Project({
             title: projectName,

@@ -118,11 +118,25 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
               id="project-description"
               name="projectDescription"
               placeholder="Provide a detailed description of the project, its goals, and expected outcomes."
-              rows={6}
+              rows={4}
               required
               disabled={interns.length === 0}
             />
           </div>
+           <div className="grid gap-2">
+                <Label htmlFor="project-tasks">Project Tasks</Label>
+                <Textarea
+                    id="project-tasks"
+                    name="projectTasks"
+                    placeholder="List the tasks for this project, one task per line."
+                    rows={8}
+                    required
+                    disabled={interns.length === 0}
+                />
+                <p className="text-xs text-muted-foreground">
+                    Enter each task on a new line. These will become the trackable tasks for the intern.
+                </p>
+            </div>
           <div className="grid gap-2">
             <Label htmlFor="document-link">Task Document Link</Label>
              <div className="flex gap-2">
