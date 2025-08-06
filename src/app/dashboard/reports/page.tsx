@@ -1,6 +1,7 @@
 
-'use client';
+'use server';
 
+import Link from 'next/link';
 import {
   Table,
   TableBody,
@@ -17,54 +18,85 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { Download } from "lucide-react";
+import { Badge } from '@/components/ui/badge';
+import { ArrowRight, FileText } from "lucide-react";
+import dbConnect from '@/lib/db';
+import { getSession } from '@/lib/session';
+import DailyReport from '@/lib/models/DailyReport';
+import Intern from '@/lib/models/Intern';
+import { type User } from '@/context/AuthContext';
+import { redirect } from 'next/navigation';
 
-const reports = [
-  { id: 1, intern: "Alice Johnson", date: "2024-07-15", type: "Weekly Summary" },
-  { id: 2, intern: "Bob Williams", date: "2024-07-15", type: "Weekly Summary" },
-  { id: 3, intern: "Fiona Garcia", date: "2024-07-15", type: "Weekly Summary" },
-  { id: 4, intern: "George Rodriguez", date: "2024-07-15", type: "Weekly Summary" },
-  { id: 5, intern: "Alice Johnson", date: "2024-07-08", type: "Weekly Summary" },
-  { id: 6, intern: "Bob Williams", date: "2024-07-08", type: "Weekly Summary" },
-  { id: 7, intern: "Charlie Brown", date: "2024-07-01", type: "Final Report" },
-  { id: 8, intern: "Hannah Martinez", date: "2024-07-01", type: "Final Report" },
-  { id: 9, intern: "Ian Hernandez", date: "2024-07-15", type: "Weekly Summary" },
-  { id: 10, intern: "Jasmine Lopez", date: "2024-07-15", type: "Weekly Summary" },
-];
+async function getMyInternsReports() {
+    const session = await getSession();
+    const user = session?.user as User;
+    if (!user || user.role !== 'mentor') redirect('/dashboard');
+    
+    await dbConnect();
+    
+    const myInterns = await Intern.find({ mentor: user.name }).select('_id').lean();
+    const myInternIds = myInterns.map(i => i._id);
 
-export default function ReportsPage() {
+    const reports = await DailyReport.find({ internId: { $in: myInternIds } })
+        .populate({ path: 'internId', model: Intern, select: 'name' })
+        .sort({ date: -1 })
+        .lean();
+    
+    return JSON.parse(JSON.stringify(reports));
+}
+
+export default async function ReportsPage() {
+    const reports = await getMyInternsReports();
+    
     return (
         <Card>
             <CardHeader>
-                <CardTitle>Intern Reports</CardTitle>
-                <CardDescription>View and manage intern reports.</CardDescription>
+                <CardTitle>Intern Daily Reports</CardTitle>
+                <CardDescription>View and provide feedback on reports from your interns.</CardDescription>
             </CardHeader>
             <CardContent>
-                <Table>
-                    <TableHeader>
-                        <TableRow>
-                            <TableHead>Intern Name</TableHead>
-                            <TableHead>Report Type</TableHead>
-                            <TableHead>Submission Date</TableHead>
-                            <TableHead className="text-right">Actions</TableHead>
-                        </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                        {reports.map((report) => (
-                            <TableRow key={report.id}>
-                                <TableCell className="font-medium">{report.intern}</TableCell>
-                                <TableCell>{report.type}</TableCell>
-                                <TableCell>{report.date}</TableCell>
-                                <TableCell className="text-right">
-                                    <Button variant="ghost" size="icon">
-                                        <Download className="h-4 w-4" />
-                                        <span className="sr-only">Download</span>
-                                    </Button>
-                                </TableCell>
+                {reports.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-12">
+                        <FileText className="mx-auto h-12 w-12" />
+                        <h3 className="mt-4 text-lg font-semibold">No Reports Submitted</h3>
+                        <p className="mt-2 text-sm">
+                            Your assigned interns have not submitted any daily reports yet.
+                        </p>
+                    </div>
+                ) : (
+                    <Table>
+                        <TableHeader>
+                            <TableRow>
+                                <TableHead>Intern Name</TableHead>
+                                <TableHead>Project</TableHead>
+                                <TableHead>Submission Date</TableHead>
+                                <TableHead>Feedback Status</TableHead>
+                                <TableHead className="text-right">Actions</TableHead>
                             </TableRow>
-                        ))}
-                    </TableBody>
-                </Table>
+                        </TableHeader>
+                        <TableBody>
+                            {reports.map((report: any) => (
+                                <TableRow key={report._id}>
+                                    <TableCell className="font-medium">{report.internId?.name || 'N/A'}</TableCell>
+                                    <TableCell>{report.projectName}</TableCell>
+                                    <TableCell>{new Date(report.date).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                        <Badge variant={report.mentorFeedback ? "secondary" : "outline"}>
+                                            {report.mentorFeedback ? 'Feedback Sent' : 'Pending Review'}
+                                        </Badge>
+                                    </TableCell>
+                                    <TableCell className="text-right">
+                                        <Button asChild variant="outline" size="sm">
+                                            <Link href={`/dashboard/reports/${report._id}`}>
+                                                View <ArrowRight className="ml-2 h-4 w-4" />
+                                            </Link>
+                                        </Button>
+                                    </TableCell>
+                                </TableRow>
+                            ))}
+                        </TableBody>
+                    </Table>
+                )}
             </CardContent>
         </Card>
     );

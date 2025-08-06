@@ -11,6 +11,13 @@ import {
   CardContent,
   CardFooter
 } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
@@ -18,28 +25,35 @@ import { Check, Send, Loader2 } from "lucide-react";
 import { useToast } from '@/hooks/use-toast';
 import { submitDailyReport, getMyDailyReports } from '@/lib/actions';
 import { Skeleton } from '@/components/ui/skeleton';
+import { type IProject } from '@/lib/models/Project';
 
-function SubmitButton() {
+function SubmitButton({ disabled }: { disabled: boolean }) {
     const { pending } = useFormStatus();
     return (
-        <Button disabled={pending}>
+        <Button disabled={pending || disabled}>
             {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Send className="mr-2 h-4 w-4" />}
             {pending ? 'Submitting...' : 'Submit Report'}
         </Button>
     );
 }
 
+type Report = { _id: string; date: string; }
+type Project = IProject & { _id: string };
 
-type Report = {
-    _id: string;
-    date: string;
+async function getMyProjects(): Promise<Project[]> {
+    const res = await fetch('/api/intern/projects');
+    if (!res.ok) return [];
+    return res.json();
 }
+
 
 export default function DailyReportPage() {
     const { toast } = useToast();
     const formRef = useRef<HTMLFormElement>(null);
     const [reports, setReports] = useState<Report[]>([]);
     const [loadingReports, setLoadingReports] = useState(true);
+    const [projects, setProjects] = useState<Project[]>([]);
+    const [loadingProjects, setLoadingProjects] = useState(true);
 
     useEffect(() => {
         const fetchReports = async () => {
@@ -48,8 +62,15 @@ export default function DailyReportPage() {
             setReports(fetchedReports);
             setLoadingReports(false);
         }
+        const fetchProjects = async () => {
+            setLoadingProjects(true);
+            const fetchedProjects = await getMyProjects();
+            setProjects(fetchedProjects);
+            setLoadingProjects(false);
+        }
         fetchReports();
-    }, [])
+        fetchProjects();
+    }, []);
 
     const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
         try {
@@ -60,7 +81,6 @@ export default function DailyReportPage() {
                     description: 'Your daily report has been successfully submitted.',
                 });
                 formRef.current?.reset();
-                // Refresh the list of reports
                 const fetchedReports = await getMyDailyReports();
                 setReports(fetchedReports);
             } else {
@@ -80,6 +100,8 @@ export default function DailyReportPage() {
             return { success: false, message: e.message };
         }
     }, { success: false, message: null });
+    
+    const noProjects = !loadingProjects && projects.length === 0;
 
     return (
         <div className="grid md:grid-cols-3 gap-6">
@@ -91,38 +113,51 @@ export default function DailyReportPage() {
                             <CardDescription>Submit your report for today, {new Date().toLocaleDateString()}.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
+                            <div className="grid gap-2">
+                                <Label htmlFor="project">Project Name</Label>
+                                {loadingProjects ? <Skeleton className="h-10 w-full" /> : (
+                                     <Select name="projectId" required disabled={noProjects}>
+                                        <SelectTrigger id="project">
+                                            <SelectValue placeholder="Select the project you worked on..." />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            {projects.map((project) => (
+                                            <SelectItem key={project._id} value={project._id}>
+                                                {project.title}
+                                            </SelectItem>
+                                            ))}
+                                        </SelectContent>
+                                    </Select>
+                                )}
+                            </div>
                              <div className="grid gap-2">
-                                <Label htmlFor="yesterday-tasks">What did you accomplish yesterday?</Label>
+                                <Label htmlFor="progress-note">Progress Note</Label>
                                 <Textarea
-                                    id="yesterday-tasks"
-                                    name="accomplishments"
+                                    id="progress-note"
+                                    name="progressNote"
                                     placeholder="e.g., Completed the user authentication flow. Integrated the payment gateway API..."
                                     rows={5}
                                     required
+                                    disabled={noProjects}
                                 />
                             </div>
-                            <div className="grid gap-2">
-                                <Label htmlFor="today-tasks">What are your goals for today?</Label>
-                                <Textarea
-                                    id="today-tasks"
-                                    name="goals"
-                                    placeholder="e.g., Start working on the profile page. Write unit tests for the new components..."
-                                    rows={5}
-                                    required
-                                />
-                            </div>
+                            
                              <div className="grid gap-2">
-                                <Label htmlFor="blockers">Are there any blockers or challenges?</Label>
+                                <Label htmlFor="blockers">Blockers (if any)</Label>
                                 <Textarea
                                     id="blockers"
                                     name="blockers"
                                     placeholder="e.g., I'm waiting for the API documentation for the new service..."
                                     rows={3}
+                                    disabled={noProjects}
                                 />
                             </div>
+                            {noProjects && (
+                                <p className="text-sm text-destructive text-center p-4 bg-destructive/10 rounded-md">You cannot submit a report because you are not assigned to any projects yet.</p>
+                            )}
                         </CardContent>
                         <CardFooter>
-                             <SubmitButton />
+                             <SubmitButton disabled={noProjects}/>
                         </CardFooter>
                     </Card>
                 </form>
@@ -159,3 +194,6 @@ export default function DailyReportPage() {
         </div>
     );
 }
+
+// Need an API route to fetch projects for the client-side component
+export const dynamic = 'force-dynamic'; // ensure it's always dynamic

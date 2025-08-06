@@ -275,32 +275,43 @@ export async function assignProject(formData: FormData) {
 
 // ✅ Submit Daily Report
 export async function submitDailyReport(formData: FormData) {
-    const accomplishments = formData.get('accomplishments');
-    const goals = formData.get('goals');
-    const blockers = formData.get('blockers');
-
+    const projectId = formData.get('projectId') as string;
+    const progressNote = formData.get('progressNote') as string;
+    const blockers = formData.get('blockers') as string;
+    
     const session = await getSession();
     if (!session?.user) return { success: false, message: "Authentication required." };
 
     const intern = await Intern.findOne({ email: session.user.email });
     if (!intern) return { success: false, message: "Intern profile not found." };
-
-    if (!accomplishments || !goals) {
-        return { success: false, message: "Please fill out yesterday's accomplishments and today's goals." };
+    if (!intern.mentor || intern.mentor === 'Unassigned') return { success: false, message: "You must have a mentor assigned to submit reports."}
+    
+    if (!projectId || !progressNote) {
+        return { success: false, message: "Please select a project and provide a progress note." };
     }
 
     try {
         await dbConnect();
+
+        const project = await Project.findById(projectId);
+        if (!project) return { success: false, message: 'Project not found' };
+
+        const mentor = await Mentor.findOne({ name: intern.mentor });
+        if (!mentor) return { success: false, message: 'Mentor not found' };
+
         const report = new DailyReport({
             internId: intern._id,
+            mentorId: mentor._id,
+            projectId: project._id,
+            projectName: project.title,
             date: new Date(),
-            accomplishments,
-            goals,
+            progressNote,
             blockers
         });
         await report.save();
 
         revalidatePath('/dashboard/daily-report');
+        revalidatePath('/dashboard/reports'); // For mentor
         return { success: true, message: 'Report submitted successfully' };
 
     } catch (error) {
@@ -308,6 +319,7 @@ export async function submitDailyReport(formData: FormData) {
         return { success: false, message: 'Failed to submit report.' };
     }
 }
+
 
 // ✅ Get My Daily Reports (for the logged-in intern)
 export async function getMyDailyReports() {
@@ -326,6 +338,40 @@ export async function getMyDailyReports() {
         console.error('Failed to fetch reports', error);
         return [];
     }
+}
+
+export async function submitMentorFeedback(prevState: any, formData: FormData) {
+    const reportId = formData.get('reportId') as string;
+    const status = formData.get('status') as 'Approved' | 'Rejected' | 'Changes-Required';
+    const comments = formData.get('comments') as string;
+    
+    if(!reportId || !status) return { success: false, message: "Missing required fields." };
+    if(status === 'Changes-Required' && !comments) return { success: false, message: "Comments are required when requesting changes." };
+
+    try {
+        await dbConnect();
+        const report = await DailyReport.findById(reportId);
+        if(!report) return { success: false, message: "Report not found." };
+        
+        report.mentorFeedback = {
+            status,
+            comments: comments || undefined,
+            date: new Date(),
+        };
+        
+        await report.save();
+
+        revalidatePath(`/dashboard/reports/${reportId}`);
+        revalidatePath('/dashboard/reports');
+        revalidatePath('/dashboard/my-feedback');
+
+        return { success: true, message: "Feedback submitted successfully." };
+
+    } catch (error) {
+        console.error('Failed to submit feedback:', error);
+        return { success: false, message: "An internal error occurred." };
+    }
+
 }
 
 
@@ -478,6 +524,51 @@ export async function requestMentorship(mentorId: string) {
     }
 }
   
+
+export async function addMessageToSession(sessionId: string, formData: FormData) {
+    const session = await getSession();
+    if (!session?.user) {
+        return { success: false, message: 'Authentication required.' };
+    }
+
+    const message = formData.get('message') as string;
+    if (!message || message.trim() === '') {
+        return { success: false, message: 'Message cannot be empty.' };
+    }
+
+    try {
+        await dbConnect();
+        
+        const mentorshipSession = await MentorshipSession.findById(sessionId);
+        if (!mentorshipSession) {
+            return { success: false, message: 'Session not found.' };
+        }
+
+        // Security check
+        const isParticipant =
+            mentorshipSession.intern.toString() === session.user.id ||
+            mentorshipSession.mentor.toString() === session.user.id;
+        
+        if (!isParticipant) {
+            return { success: false, message: 'Unauthorized.' };
+        }
+
+        mentorshipSession.chat.push({
+            senderId: new mongoose.Types.ObjectId(session.user.id),
+            message: message,
+            timestamp: new Date()
+        });
+
+        await mentorshipSession.save();
+
+        revalidatePath(`/dashboard/mentorship/${sessionId}`);
+        return { success: true };
+    } catch (error) {
+        console.error('Failed to send message:', error);
+        return { success: false, message: 'Failed to send message.' };
+    }
+}
+
 
 export async function updateMentorshipRequest(requestId: string, status: 'approved' | 'rejected') {
     const session = await getSession();

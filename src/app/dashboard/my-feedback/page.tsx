@@ -1,5 +1,5 @@
 
-'use client';
+'use server';
 
 import {
   Card,
@@ -8,29 +8,75 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
-import { MessageSquare } from "lucide-react";
+import { MessageSquare, CheckCircle, XCircle, AlertTriangle } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import dbConnect from "@/lib/db";
+import { getSession } from "@/lib/session";
+import Intern from "@/lib/models/Intern";
+import DailyReport, { type IDailyReport } from "@/lib/models/DailyReport";
 
-// The hardcoded data has been removed to be replaced by a dynamic fetch in a future step.
-// For now, we represent the "no data" state for a new user.
-const feedbackItems: any[] = [];
+async function getMyFeedback(): Promise<IDailyReport[]> {
+    const session = await getSession();
+    if (!session?.user) return [];
 
-export default function MyFeedbackPage() {
+    await dbConnect();
+    const intern = await Intern.findOne({ email: session.user.email }).lean();
+    if (!intern) return [];
+
+    const reports = await DailyReport.find({
+        internId: intern._id,
+        mentorFeedback: { $exists: true }
+    }).sort({ 'mentorFeedback.date': -1 }).lean();
+
+    return JSON.parse(JSON.stringify(reports));
+}
+
+const getFeedbackIcon = (status: string) => {
+    switch (status) {
+        case 'Approved': return <CheckCircle className="h-5 w-5 text-green-500" />;
+        case 'Rejected': return <XCircle className="h-5 w-5 text-red-500" />;
+        case 'Changes-Required': return <AlertTriangle className="h-5 w-5 text-yellow-500" />;
+        default: return <MessageSquare className="h-5 w-5" />;
+    }
+}
+
+export default async function MyFeedbackPage() {
+    const feedbackItems = await getMyFeedback();
+
     return (
         <div>
             <div className="mb-6">
                 <h1 className="text-2xl font-bold tracking-tight font-headline">My Feedback</h1>
-                <p className="text-muted-foreground">View feedback from your mentor and track your growth.</p>
+                <p className="text-muted-foreground">View feedback from your mentor on your daily reports.</p>
             </div>
             <div className="space-y-6">
                 {feedbackItems.length > 0 ? (
                     feedbackItems.map((item) => (
-                        <Card key={item.id}>
-                            <CardHeader className="flex flex-row items-start justify-between">
-                                {/* Content removed for brevity as it's not currently used */}
+                        <Card key={item._id}>
+                            <CardHeader>
+                                <div className="flex justify-between items-start">
+                                    <div>
+                                        <CardTitle className="text-lg">Feedback on Report for {item.projectName}</CardTitle>
+                                        <CardDescription>Submitted on {new Date(item.date).toLocaleDateString()} | Reviewed on {new Date(item.mentorFeedback!.date).toLocaleDateString()}</CardDescription>
+                                    </div>
+                                    <div className="flex items-center gap-2">
+                                        {getFeedbackIcon(item.mentorFeedback!.status)}
+                                        <Badge variant={
+                                            item.mentorFeedback!.status === 'Approved' ? 'secondary' :
+                                            item.mentorFeedback!.status === 'Rejected' ? 'destructive' :
+                                            'default'
+                                        }>{item.mentorFeedback!.status.replace('-', ' ')}</Badge>
+                                    </div>
+                                </div>
                             </CardHeader>
-                            <CardContent>
-                                <p className="italic">"{item.content}"</p>
-                            </CardContent>
+                            {item.mentorFeedback?.comments && (
+                                <CardContent>
+                                    <p className="text-sm font-semibold mb-2">Mentor's Comments:</p>
+                                    <blockquote className="border-l-2 pl-4 italic text-muted-foreground">
+                                       "{item.mentorFeedback.comments}"
+                                    </blockquote>
+                                </CardContent>
+                            )}
                         </Card>
                     ))
                 ) : (
