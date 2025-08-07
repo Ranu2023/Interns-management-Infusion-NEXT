@@ -4,15 +4,12 @@
 import { revalidatePath } from 'next/cache';
 import dbConnect from './db';
 import Project from './models/Project';
-import Application from './models/Application';
 import Intern from './models/Intern';
 import DailyReport from './models/DailyReport';
-
 import Mentor from './models/Mentor';
 import Notification from './models/Notification';
 import MentorshipRequest from './models/MentorshipRequest';
 import { type Task } from './types';
-import { type IProject } from './models/Project';
 import bcrypt from 'bcryptjs';
 import { encrypt, getSession } from './session';
 import { redirect } from 'next/navigation';
@@ -177,43 +174,6 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
     }
 }
 
-// ✅ Application Status Update
-export async function updateApplicationStatus(applicationId: string, status: 'Accepted' | 'Rejected') {
-    await dbConnect();
-    const application = await Application.findByIdAndUpdate(applicationId, { status }, { new: true });
-    if (!application) throw new Error('Application not found');
-
-    if (status === 'Accepted') {
-        const email = `${application.name.split(' ').join('.').toLowerCase()}@synergy.com`;
-        const existingUser = await User.findOne({ email });
-
-        if (!existingUser) {
-            const tempPassword = "password" 
-            const hashedPassword = await bcrypt.hash(tempPassword, 10);
-            
-            const newUser = new User({
-                name: application.name,
-                email,
-                password: hashedPassword,
-                role: 'intern',
-                avatar: `https://placehold.co/100x100.png`
-            });
-            await newUser.save();
-
-            const newIntern = new Intern({
-                 _id: newUser._id,
-                name: application.name,
-                email: email,
-                avatar: `https://placehold.co/100x100.png`,
-            });
-            await newIntern.save();
-        }
-        revalidatePath('/dashboard/interns');
-    }
-
-    revalidatePath(`/dashboard/applications`);
-    revalidatePath(`/dashboard/applications/${applicationId}`);
-}
 
 // ✅ Assign Project
 export async function assignProject(formData: FormData) {
@@ -723,4 +683,86 @@ export async function assignDocuments(internId: string, prevState: any, formData
         console.error('Failed to assign documents:', error);
         return { success: false, message: 'An internal server error occurred.' };
     }
+}
+
+
+export async function addApplicant(prevState: any, formData: FormData) {
+  const session = await getSession();
+  if (!session?.user || session.user.role !== 'hr') {
+    return { success: false, message: 'Unauthorized: Only HR can add applicants.' };
+  }
+
+  const name = formData.get('name') as string;
+  const email = formData.get('email') as string;
+  const role = formData.get('role') as Role;
+
+  if (!name || !email || !role) {
+    return { success: false, message: 'Full Name, Email, and Role are required.' };
+  }
+
+  try {
+    await dbConnect();
+    const existingUser = await User.findOne({ email });
+    if (existingUser) {
+      return { success: false, message: 'A user with this email already exists.' };
+    }
+
+    // Generate random password
+    const tempPassword = Math.random().toString(36).slice(-8);
+    const hashedPassword = await bcrypt.hash(tempPassword, 10);
+
+    const newUser = new User({
+      name,
+      email,
+      password: hashedPassword,
+      role,
+      avatar: 'https://placehold.co/100x100.png',
+    });
+    await newUser.save();
+
+    if (role === 'intern') {
+      const college = formData.get('college') as string;
+      const year = formData.get('year') as string;
+      const course = formData.get('course') as string;
+      const interestField = formData.get('interestField') as string;
+
+      const newIntern = new Intern({
+        _id: newUser._id,
+        name,
+        email,
+        college,
+        year,
+        course,
+        interestField,
+        avatar: 'https://placehold.co/100x100.png',
+      });
+      await newIntern.save();
+    } else if (role === 'mentor') {
+      const expertise = formData.get('expertise') as string;
+      const experience = formData.get('experience') as string;
+
+      const newMentor = new Mentor({
+        _id: newUser._id,
+        name,
+        email,
+        expertise,
+        experience,
+        avatar: 'https://placehold.co/100x100.png',
+      });
+      await newMentor.save();
+    }
+
+    revalidatePath('/dashboard/interns');
+    revalidatePath('/dashboard/mentors');
+    revalidatePath('/dashboard');
+
+    return {
+      success: true,
+      message: `${role.charAt(0).toUpperCase() + role.slice(1)} added successfully!`,
+      password: tempPassword,
+    };
+  } catch (error) {
+    console.error('Failed to add applicant:', error);
+    return { success: false, message: 'An internal server error occurred.' };
+  }
 }

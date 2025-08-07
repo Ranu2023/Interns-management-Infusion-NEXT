@@ -1,4 +1,3 @@
-
 'use client';
 
 import Link from 'next/link';
@@ -47,7 +46,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/interns', label: 'Interns', icon: Users },
     { href: '/dashboard/mentors', label: 'Mentors', icon: UserCheck },
     { href: '/dashboard/projects', label: 'Projects', icon: FolderKanban },
-    { href: '/dashboard/applications', label: 'Applications', icon: FileText },
+    { href: '/dashboard/add-applicant', label: 'Add Applicants', icon: UserPlus },
     { href: '/dashboard/assign-mentor', label: 'Assign Mentor', icon: UserPlus },
     { href: '/dashboard/assign-documents', label: 'Assign Documents', icon: FileUp },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },

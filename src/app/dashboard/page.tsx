@@ -5,17 +5,28 @@ import { Suspense } from 'react';
 import { getSession } from '@/lib/session';
 import { redirect } from 'next/navigation';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Users, Briefcase, FolderKanban, DollarSign, Loader2 } from 'lucide-react';
+import { Users, Briefcase, FolderKanban, DollarSign, Loader2, UserCheck } from 'lucide-react';
 import { OverviewChart } from '@/components/overview-chart';
-import { initialData } from '@/lib/seed-data';
 import { InternDashboard } from '@/components/intern-dashboard';
 import { User } from '@/context/AuthContext';
+import dbConnect from '@/lib/db';
+import Intern from '@/lib/models/Intern';
+import Mentor from '@/lib/models/Mentor';
+import Project from '@/lib/models/Project';
+
+async function getHRDashboardData() {
+    await dbConnect();
+    const internCount = await Intern.countDocuments();
+    const mentorCount = await Mentor.countDocuments();
+    const projectCount = await Project.countDocuments({ status: 'In Progress' });
+    const ppoCount = await Intern.countDocuments({ ppoStatus: 'Recommended' });
+
+    return { internCount, mentorCount, projectCount, ppoCount };
+}
 
 
-function HRDashboard() {
-  const internCount = initialData.interns.length;
-  const ppoCount = initialData.interns.filter(i => i.ppoStatus === 'Recommended').length;
-  const projectCount = initialData.projects.filter(p => p.status === 'In Progress').length;
+async function HRDashboard() {
+  const { internCount, mentorCount, projectCount, ppoCount } = await getHRDashboardData();
 
   return (
     <div className="grid gap-4 md:gap-8">
@@ -27,17 +38,17 @@ function HRDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{internCount}</div>
-            <p className="text-xs text-muted-foreground">+10 since last month</p>
+            <p className="text-xs text-muted-foreground">Currently onboarded</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">PPOs Issued</CardTitle>
-            <Briefcase className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">Total Mentors</CardTitle>
+            <UserCheck className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{ppoCount}</div>
-            <p className="text-xs text-muted-foreground">+5 this month</p>
+            <div className="text-2xl font-bold">{mentorCount}</div>
+             <p className="text-xs text-muted-foreground">Available to guide</p>
           </CardContent>
         </Card>
         <Card>
@@ -47,17 +58,17 @@ function HRDashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{projectCount}</div>
-            <p className="text-xs text-muted-foreground">+8 since last week</p>
+            <p className="text-xs text-muted-foreground">Currently in progress</p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Stipend Paid</CardTitle>
-            <DollarSign className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium">PPOs Recommended</CardTitle>
+            <Briefcase className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">$15,231.89</div>
-            <p className="text-xs text-muted-foreground">For this month</p>
+            <div className="text-2xl font-bold">{ppoCount}</div>
+             <p className="text-xs text-muted-foreground">Based on performance</p>
           </CardContent>
         </Card>
       </div>

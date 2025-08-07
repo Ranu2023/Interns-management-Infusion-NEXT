@@ -9,7 +9,7 @@ export interface IIntern extends Document {
     project: string;
     mentor: string;
     status: 'Active' | 'Completed' | 'On-Hold';
-    interestField: string;
+    interestField?: string;
     assessmentScore?: number;
     ppoStatus?: 'Recommended' | 'Not Recommended' | 'Pending';
     ppoReasoning?: string;
@@ -21,6 +21,10 @@ export interface IIntern extends Document {
     ppoRecommendationDate?: Date;
     hrInterviewDate?: Date;
     finalDecisionDate?: Date;
+    // New fields from HR form
+    college?: string;
+    year?: string;
+    course?: string;
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
@@ -31,7 +35,7 @@ const InternSchema: Schema<IIntern> = new Schema({
     project: { type: String, required: true, default: 'Unassigned' },
     mentor: { type: String, required: true, default: 'Unassigned' },
     status: { type: String, required: true, enum: ['Active', 'Completed', 'On-Hold'], default: 'Active' },
-    interestField: { type: String, default: 'Software Development' },
+    interestField: { type: String },
     assessmentScore: { type: Number },
     ppoStatus: { type: String, enum: ['Recommended', 'Not Recommended', 'Pending'], default: 'Pending' },
     ppoReasoning: { type: String },
@@ -43,6 +47,10 @@ const InternSchema: Schema<IIntern> = new Schema({
     ppoRecommendationDate: { type: Date },
     hrInterviewDate: { type: Date },
     finalDecisionDate: { type: Date },
+    // New fields from HR form
+    college: { type: String },
+    year: { type: String },
+    course: { type: String },
 });
 
 // To prevent overwriting the model if it already exists, especially during hot-reloading
