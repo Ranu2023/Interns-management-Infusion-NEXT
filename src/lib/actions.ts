@@ -725,6 +725,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
       const year = formData.get('year') as string;
       const course = formData.get('course') as string;
       const interestField = formData.get('interestField') as string;
+      const internshipDuration = formData.get('internshipDuration') as string;
 
       const newIntern = new Intern({
         _id: newUser._id,
@@ -734,6 +735,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
         year,
         course,
         interestField,
+        internshipDuration: Number(internshipDuration),
         avatar: 'https://placehold.co/100x100.png',
       });
       await newIntern.save();

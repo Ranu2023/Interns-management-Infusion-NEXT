@@ -87,7 +87,7 @@ export default function AddInternPage() {
                 <Label htmlFor="college">College Name</Label>
                 <Input id="college" name="college" placeholder="University of Technology" />
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="grid gap-2">
                   <Label htmlFor="year">Year</Label>
                   <Select name="year">
@@ -103,6 +103,18 @@ export default function AddInternPage() {
                 <div className="grid gap-2">
                   <Label htmlFor="course">Course of Study</Label>
                   <Input id="course" name="course" placeholder="B.Tech in Computer Science" />
+                </div>
+                 <div className="grid gap-2">
+                  <Label htmlFor="internshipDuration">Duration</Label>
+                  <Select name="internshipDuration">
+                    <SelectTrigger><SelectValue placeholder="Select duration" /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="1">1 Month</SelectItem>
+                      <SelectItem value="3">3 Months</SelectItem>
+                      <SelectItem value="5">5 Months</SelectItem>
+                      <SelectItem value="6">6+ Months</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid gap-2">

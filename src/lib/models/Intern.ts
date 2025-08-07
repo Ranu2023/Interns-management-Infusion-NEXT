@@ -25,6 +25,7 @@ export interface IIntern extends Document {
     college?: string;
     year?: string;
     course?: string;
+    internshipDuration?: number;
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
@@ -51,6 +52,7 @@ const InternSchema: Schema<IIntern> = new Schema({
     college: { type: String },
     year: { type: String },
     course: { type: String },
+    internshipDuration: { type: Number },
 });
 
 // To prevent overwriting the model if it already exists, especially during hot-reloading
