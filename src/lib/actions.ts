@@ -768,3 +768,51 @@ export async function addApplicant(prevState: any, formData: FormData) {
     return { success: false, message: 'An internal server error occurred.' };
   }
 }
+
+export async function updatePassword(prevState: any, formData: FormData) {
+    const session = await getSession();
+    if (!session?.user) {
+        return { success: false, message: 'You must be logged in to change your password.' };
+    }
+  
+    const currentPassword = formData.get('currentPassword') as string;
+    const newPassword = formData.get('newPassword') as string;
+    const confirmPassword = formData.get('confirmPassword') as string;
+  
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      return { success: false, message: 'All password fields are required.' };
+    }
+  
+    if (newPassword !== confirmPassword) {
+      return { success: false, message: 'New password and confirmation do not match.' };
+    }
+  
+    if (newPassword.length < 6) {
+      return { success: false, message: 'New password must be at least 6 characters long.' };
+    }
+  
+    try {
+      await dbConnect();
+      const user = await User.findById(session.user.id);
+  
+      if (!user || !user.password) {
+        return { success: false, message: 'User not found.' };
+      }
+  
+      const passwordsMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!passwordsMatch) {
+        return { success: false, message: 'The current password you entered is incorrect.' };
+      }
+  
+      const hashedNewPassword = await bcrypt.hash(newPassword, 10);
+      user.password = hashedNewPassword;
+      await user.save();
+  
+      revalidatePath('/dashboard/profile');
+  
+      return { success: true, message: 'Your password has been updated successfully.' };
+    } catch (error) {
+      console.error('Failed to update password:', error);
+      return { success: false, message: 'An internal server error occurred.' };
+    }
+  }

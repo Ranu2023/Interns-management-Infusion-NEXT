@@ -1,6 +1,7 @@
 
 'use client';
 
+import Link from 'next/link';
 import {
   Avatar,
   AvatarFallback,
@@ -21,7 +22,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useAuth } from '@/context/AuthContext';
-import { Monitor, Moon, Sun, LogOut, User } from 'lucide-react';
+import { Monitor, Moon, Sun, LogOut, Settings } from 'lucide-react';
 import { useTheme } from 'next-themes';
 import { logout } from '@/lib/actions';
 
@@ -54,9 +55,11 @@ export function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            <User className="mr-2 h-4 w-4" />
-            <span>Profile</span>
+          <DropdownMenuItem asChild>
+            <Link href="/dashboard/profile">
+                <Settings className="mr-2 h-4 w-4" />
+                <span>Profile</span>
+            </Link>
           </DropdownMenuItem>
 
            <DropdownMenuSub>
@@ -92,5 +95,3 @@ export function UserNav() {
     </DropdownMenu>
   );
 }
-
-    

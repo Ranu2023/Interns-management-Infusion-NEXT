@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -22,6 +23,7 @@ import {
   type LucideIcon,
   UserPlus,
   FileUp,
+  Settings,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -51,6 +53,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/assign-documents', label: 'Assign Documents', icon: FileUp },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
+    { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
   mentor: [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -59,6 +62,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
     { href: '/dashboard/reports', label: 'Reports', icon: FileBarChart2 },
     { href: '/dashboard/mentorship', label: 'Mentorship Requests', icon: Handshake },
+    { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
   intern: [
     { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, exact: true },
@@ -71,10 +75,12 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/documents', label: 'Documents', icon: FileDown },
     { href: '/dashboard/my-review', label: 'My Review', icon: PenSquare },
     { href: '/dashboard/assessment', label: 'Final Assessment', icon: GraduationCap },
+    { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
   employee: [
     { href: '/dashboard', label: 'My Profile', icon: User, exact: true },
     { href: '/dashboard/documents', label: 'My Documents', icon: FileDown },
+    { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
 };
 
