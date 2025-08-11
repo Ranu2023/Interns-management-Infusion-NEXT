@@ -53,7 +53,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             email,
             password: hashedPassword,
             role,
-            avatar: `https://placehold.co/100x100.png`
+            avatar: ``
         });
         await newUser.save();
 
@@ -63,7 +63,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 _id: newUser._id, // Use same ID for linking
                 name,
                 email,
-                avatar: `https://placehold.co/100x100.png`,
+                avatar: ``,
             });
             await newIntern.save();
         } else if (role === 'mentor') {
@@ -72,7 +72,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 name,
                 email,
                 expertise: 'General', // Default value
-                avatar: `https://placehold.co/100x100.png`,
+                avatar: ``,
             });
             await newMentor.save();
         }
@@ -150,7 +150,7 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
         if (task) task.completed = completed;
 
         const completedTasks = project.tasks.filter((t: Task) => t.completed).length;
-        project.progress = (completedTasks / project.tasks.length) * 100;
+        project.progress = Math.round((completedTasks / project.tasks.length) * 100);
         project.status = project.progress === 100 ? 'Completed' : 'In Progress';
         project.recentActivity = `Task "${task?.title}" marked as ${completed ? 'complete' : 'incomplete'}.`
 
@@ -711,7 +711,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
       email,
       password: hashedPassword,
       role,
-      avatar: 'https://placehold.co/100x100.png',
+      avatar: '',
     });
     await newUser.save();
 
@@ -731,7 +731,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
         course,
         interestField,
         internshipDuration: Number(internshipDuration),
-        avatar: 'https://placehold.co/100x100.png',
+        avatar: '',
       });
       await newIntern.save();
     } else if (role === 'mentor') {
@@ -744,7 +744,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
         email,
         expertise,
         experience,
-        avatar: 'https://placehold.co/100x100.png',
+        avatar: '',
       });
       await newMentor.save();
     }
@@ -811,3 +811,5 @@ export async function updatePassword(prevState: any, formData: FormData) {
       return { success: false, message: 'An internal server error occurred.' };
     }
   }
+
+    

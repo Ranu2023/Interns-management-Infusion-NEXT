@@ -117,3 +117,5 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
     </div>
   );
 }
+
+    

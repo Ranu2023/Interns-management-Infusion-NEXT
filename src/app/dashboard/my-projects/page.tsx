@@ -45,7 +45,7 @@ export default async function MyProjectsPage() {
         }
         const tasksCompleted = p.tasks.filter(task => task.completed).length;
         const tasksTotal = p.tasks.length;
-        const progress = p.progress || 0;
+        const progress = Math.round(p.progress || 0);
         const status = p.status;
         return { ...p, tasksCompleted, tasksTotal, progress, status };
     });
@@ -75,3 +75,5 @@ export default async function MyProjectsPage() {
         </div>
     );
 }
+
+    

@@ -1,3 +1,4 @@
+
 'use server';
 
 import 'dotenv/config'; // Load environment variables from .env file
@@ -33,7 +34,7 @@ async function seedDatabase() {
         // The seed data for projects needs to be processed to match the schema.
         const projectsToSeed = initialData.projects.map(p => ({
             ...p,
-            progress: p.tasks.length > 0 ? (p.tasks.filter(t => t.completed).length / p.tasks.length) * 100 : 0,
+            progress: p.tasks.length > 0 ? Math.round((p.tasks.filter(t => t.completed).length / p.tasks.length) * 100) : 0,
         }));
 
         await Project.insertMany(projectsToSeed);
@@ -48,3 +49,5 @@ async function seedDatabase() {
 }
 
 seedDatabase();
+
+    
