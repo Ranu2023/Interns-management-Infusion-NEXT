@@ -21,14 +21,14 @@ function Icon(props: LucideProps) {
       xmlns="http://www.w3.org/2000/svg"
       width="24"
       height="24"
-      viewBox="0 0 24"
+      viewBox="0 0 24 24"
       fill="none"
       stroke="currentColor"
       strokeWidth="2"
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      <path d="M9.37 7.72a4.44 4.44 0 0 1 5.26 0l1.18 1.18a4.44 4.44 0 0 1 0 5.26l-1.18 1.18a4.44 4.44 0 0 1-5.26 0l-1.18-1.18a4.44 4.44 0 0 1 0-5.26l1.18-1.18zM9.37 16.28a4.44 4.44 0 0 1 5.26 0l1.18-1.18a4.44 4.44 0 0 1 0-5.26l-1.18-1.18a4.44 4.44 0 0 1-5.26 0l-1.18 1.18a4.44 4.44 0 0 1 0 5.26l1.18 1.18z" />
     </svg>
   );
 }
@@ -80,7 +80,7 @@ export default function DashboardLayout({
         <div className="flex h-16 items-center border-b px-4 lg:h-[60px] lg:px-6">
           <Link href="/dashboard" className="flex items-center gap-2 font-bold font-headline text-primary">
             <Icon className="h-6 w-6" />
-            {!isCollapsed && <span>Synergy</span>}
+            {!isCollapsed && <span>Infusion NEXT</span>}
           </Link>
           {isDesktop && (
             <Button variant="ghost" size="icon" className="ml-auto" onClick={toggleCollapse}>
@@ -106,7 +106,7 @@ export default function DashboardLayout({
                <div className="flex h-16 items-center border-b px-4 lg:h-[60px] lg:px-6">
                   <Link href="/dashboard" className="flex items-center gap-2 font-bold font-headline text-primary">
                     <Icon className="h-6 w-6" />
-                    <span>Synergy</span>
+                    <span>Infusion NEXT</span>
                   </Link>
                 </div>
               <DashboardNav isCollapsed={false} />

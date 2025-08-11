@@ -6,8 +6,8 @@ import { Toaster } from '@/components/ui/toaster';
 import { getSession } from '@/lib/session';
 
 export const metadata: Metadata = {
-  title: 'Synergy Interns',
-  description: 'Smart Intern Feedback & Mentorship System',
+  title: 'Infusion NEXT',
+  description: 'Infusion NEXT: Smart Intern Feedback & Mentorship System',
 };
 
 export default async function RootLayout({

@@ -43,7 +43,7 @@ function Icon(props: React.ComponentProps<'svg'>) {
       strokeLinecap="round"
       strokeLinejoin="round"
     >
-      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+      <path d="M9.37 7.72a4.44 4.44 0 0 1 5.26 0l1.18 1.18a4.44 4.44 0 0 1 0 5.26l-1.18 1.18a4.44 4.44 0 0 1-5.26 0l-1.18-1.18a4.44 4.44 0 0 1 0-5.26l1.18-1.18zM9.37 16.28a4.44 4.44 0 0 1 5.26 0l1.18-1.18a4.44 4.44 0 0 1 0-5.26l-1.18-1.18a4.44 4.44 0 0 1-5.26 0l-1.18 1.18a4.44 4.44 0 0 1 0 5.26l1.18 1.18z" />
     </svg>
   );
 }
@@ -90,7 +90,7 @@ export default function RegisterPage() {
                     </div>
                     <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
                     <CardDescription className="text-gray-400">
-                    Join Synergy Interns to start your journey.
+                    Join Infusion NEXT to start your journey.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
