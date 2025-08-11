@@ -28,10 +28,6 @@ function Icon(props: React.ComponentProps<'svg'>) {
           <stop offset="0%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
           <stop offset="100%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
         </linearGradient>
-        <linearGradient id="grad2" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'rgb(74,74,255)', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
-        </linearGradient>
       </defs>
       <path
         fill="url(#grad1)"
