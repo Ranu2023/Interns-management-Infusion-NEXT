@@ -40,13 +40,13 @@ function Icon(props: React.ComponentProps<'svg'>) {
     >
       <defs>
         <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
+          <stop offset="0%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
         </linearGradient>
       </defs>
       <path
         fill="url(#grad1)"
-        d="M181.88 24.32C159.87 2.31 129.53-5.24 102.43 4.88C51.27 23.36 24.08 81.33 43.12 133.58C52.12 158.03 69.83 177.64 91.24 189.53C95.27 191.73 97.46 196.44 96.53 201.07C94.43 211.53 89.54 220.9 82.38 228.06C81.01 229.43 82.02 231.63 83.82 231.63H156.41C158.21 231.63 159.22 229.43 157.85 228.06C148.16 218.37 142.3 205.5 141.52 191.36C140.85 178.9 146.61 166.97 156.41 158.42C182.02 136.56 200.41 100.41 181.88 24.32Z"
+        d="M171.13,24.88,84.87,143.19V24.88H24.88V231.12h58.7L171.13,112.81V231.12h60V24.88Z"
       />
     </svg>
   );
