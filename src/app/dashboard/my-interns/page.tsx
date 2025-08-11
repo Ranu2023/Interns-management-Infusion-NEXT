@@ -52,7 +52,6 @@ async function getMyInterns() {
         ...intern,
         _id: intern._id.toString(),
         progress: projectProgressMap.get(intern.project) || 0,
-        avatar: "https://placehold.co/100x100.png",
     }));
 }
 
@@ -88,7 +87,7 @@ export default async function MyInternsPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={intern.avatar} alt={intern.name} data-ai-hint="avatar person" />
+                                                <AvatarImage src={intern.avatar} alt={intern.name} />
                                                 <AvatarFallback>{intern.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>

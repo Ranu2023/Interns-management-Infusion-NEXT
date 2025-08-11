@@ -95,9 +95,8 @@ export async function MentorMentorshipRequests() {
                       <div className="flex items-center gap-3">
                         <Avatar>
                           <AvatarImage
-                            src={req.intern.avatar || 'https://placehold.co/100x100.png'}
+                            src={req.intern.avatar}
                             alt={req.intern.name}
-                            data-ai-hint="avatar person"
                           />
                           <AvatarFallback>
                             {req.intern.name.charAt(0)}

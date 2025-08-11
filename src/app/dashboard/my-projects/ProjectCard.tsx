@@ -41,7 +41,7 @@ export function ProjectCard({ project }: { project: Project }) {
         </div>
         <div className="flex items-center pt-2 gap-2">
           <Avatar className="h-6 w-6">
-            <AvatarImage src="https://placehold.co/100x100.png" alt={project.mentor} data-ai-hint="avatar person" />
+            <AvatarImage src="" alt={project.mentor} />
             <AvatarFallback>{project.mentor.charAt(0)}</AvatarFallback>
           </Avatar>
           <span className="text-sm text-muted-foreground">Mentor: {project.mentor}</span>

@@ -59,7 +59,7 @@ export default async function InternProfilePage({ params }: { params: { id: stri
                 <Card>
                     <CardHeader className="items-center text-center">
                         <Avatar className="w-24 h-24 mb-4">
-                            <AvatarImage src={`https://placehold.co/100x100.png`} data-ai-hint="avatar person" />
+                            <AvatarImage src={intern.avatar} />
                             <AvatarFallback>{intern.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <CardTitle className="text-2xl">{intern.name}</CardTitle>

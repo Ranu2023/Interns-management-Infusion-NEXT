@@ -59,7 +59,7 @@ export default async function MentorshipSessionPage({ params }: { params: { sess
                 <CardHeader className="border-b">
                     <div className="flex items-center gap-3">
                          <Avatar>
-                            <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="avatar person" />
+                            <AvatarImage src={otherUser.avatar} alt={otherUser.name} />
                             <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
                         </Avatar>
                         <div>
@@ -73,7 +73,7 @@ export default async function MentorshipSessionPage({ params }: { params: { sess
                         <div key={index} className={`flex items-end gap-2 ${item.senderId.toString() === currentUser.id ? 'justify-end' : 'justify-start'}`}>
                             {item.senderId.toString() !== currentUser.id && (
                                 <Avatar className="h-8 w-8">
-                                    <AvatarImage src={otherUser.avatar} alt={otherUser.name} data-ai-hint="avatar person" />
+                                    <AvatarImage src={otherUser.avatar} alt={otherUser.name} />
                                     <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
                                 </Avatar>
                             )}
