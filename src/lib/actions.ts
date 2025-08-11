@@ -92,7 +92,6 @@ export async function authenticate(prevState: any, formData: FormData) {
         await dbConnect();
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
-        const role = formData.get('role') as Role;
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -103,14 +102,10 @@ export async function authenticate(prevState: any, formData: FormData) {
         if (!passwordsMatch) {
             return { success: false, message: 'Invalid credentials.' };
         }
-
-        if (user.role !== role) {
-             return { success: false, message: `Incorrect role selected. This user is a ${user.role}.` };
-        }
         
         // Fetch role-specific details to add to session
         let roleDetails = {};
-        if(role === 'mentor') {
+        if(user.role === 'mentor') {
             const mentorProfile = await Mentor.findById(user._id).lean();
             if(mentorProfile) roleDetails = { expertise: mentorProfile.expertise };
         }

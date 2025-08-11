@@ -6,13 +6,6 @@ import { useFormStatus } from 'react-dom';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
 import { authenticate } from '@/lib/actions';
 import { Loader2 } from 'lucide-react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -69,10 +62,9 @@ export function LoginForm() {
                             id="email"
                             name="email"
                             type="email"
-                            placeholder="hr@synergy.com"
+                            placeholder="name@example.com"
                             required
                             className="bg-gray-800 border-gray-700"
-                            defaultValue="intern@synergy.com"
                         />
                     </div>
                     <div className="space-y-2">
@@ -81,23 +73,10 @@ export function LoginForm() {
                             id="password"
                             name="password"
                             type="password"
+                            placeholder="Enter your password"
                             required
-                            defaultValue="password"
                             className="bg-gray-800 border-gray-700"
                         />
-                    </div>
-                     <div className="space-y-2">
-                        <Label htmlFor="role">Role</Label>
-                        <Select name="role" required defaultValue="intern">
-                            <SelectTrigger id="role" className="bg-gray-800 border-gray-700">
-                                <SelectValue placeholder="Select a role" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="hr">HR / Admin</SelectItem>
-                                <SelectItem value="mentor">Mentor</SelectItem>
-                                <SelectItem value="intern">Intern</SelectItem>
-                            </SelectContent>
-                        </Select>
                     </div>
                 </div>
                 
@@ -119,4 +98,3 @@ export function LoginForm() {
         </div>
     );
 }
-
