@@ -57,18 +57,12 @@ export default function DashboardLayout({
   }, [isLoading, isAuthenticated]);
 
 
-  if (isLoading) {
+  if (isLoading || !isAuthenticated || !user) {
     return (
         <div className="h-screen w-full flex items-center justify-center">
             <Loader2 className="h-8 w-8 animate-spin" />
         </div>
     );
-  }
-
-  if (!isAuthenticated || !user) {
-    // This part should ideally not be reached due to the useEffect redirect,
-    // but it's a good failsafe.
-    return null;
   }
 
   const toggleCollapse = () => {

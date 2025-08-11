@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useRouter } from 'next/navigation';
@@ -43,29 +44,10 @@ export function AuthProvider({
   const router = useRouter();
 
   useEffect(() => {
-    if (!initialUser) {
-      const checkSession = async () => {
-        setIsLoading(true);
-        try {
-          const res = await fetch('/api/auth/session');
-          if (res.ok) {
-            const data = await res.json();
-            setUser(data.user);
-          } else {
-            setUser(null);
-          }
-        } catch (err) {
-          console.error('Session check failed:', err);
-          setUser(null);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-      checkSession();
-    } else {
-      setIsLoading(false);
-    }
+    setUser(initialUser);
+    setIsLoading(false);
   }, [initialUser]);
+
 
   const handleLogout = async () => {
     try {
