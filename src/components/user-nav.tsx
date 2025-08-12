@@ -37,8 +37,12 @@ export function UserNav() {
   }
 
   const handleLogout = async () => {
-    await logout();
-    router.push('/');
+    try {
+      await logout();        // clear auth state
+      router.replace('/');   // forcefully replace page
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
   };
 
   return (
