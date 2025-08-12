@@ -41,58 +41,69 @@ export async function registerUser(prevState: any, formData: FormData) {
         return { success: false, message: 'All fields are required.' };
     }
 
+    await dbConnect();
+
+    // Start a session for atomicity
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
     try {
-        await dbConnect();
-        const existingUser = await User.findOne({ email });
+        const existingUser = await User.findOne({ email }).session(session);
         if (existingUser) {
+            await session.abortTransaction();
+            session.endSession();
             return { success: false, message: 'User with this email already exists.' };
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        // 1. Create the main User for authentication first.
+        const newUserId = new mongoose.Types.ObjectId();
+
+        // 1. Create the role-specific profile first
+        if (role === 'intern') {
+            const newIntern = new Intern({
+                _id: newUserId,
+                name,
+                email,
+                avatar: '', // Ensure default value
+            });
+            await newIntern.save({ session });
+        } else if (role === 'mentor') {
+            const newMentor = new Mentor({
+                _id: newUserId,
+                name,
+                email,
+                expertise: 'General', // Ensure default value
+                avatar: '', // Ensure default value
+            });
+            await newMentor.save({ session });
+        }
+        
+        // 2. Create the main User for authentication
         const newUser = new User({
+            _id: newUserId, // Use the same ID
             name,
             email,
             password: hashedPassword,
             role,
-            avatar: '', // Provide a default empty avatar
+            avatar: '',
         });
-        await newUser.save();
-
-        // 2. If the user is an intern or mentor, create the role-specific profile
-        // using the ID from the newly created User document.
-        if (role === 'intern') {
-            const newIntern = new Intern({
-                _id: newUser._id, // Use the same ID
-                name,
-                email,
-                avatar: '', // Ensure all required fields are present
-            });
-            await newIntern.save();
-        } else if (role === 'mentor') {
-            const newMentor = new Mentor({
-                _id: newUser._id, // Use the same ID
-                name,
-                email,
-                expertise: 'General', // Provide a default
-                avatar: '', // Ensure all required fields are present
-            });
-            await newMentor.save();
-        }
+        await newUser.save({ session });
         
+        await session.commitTransaction();
+        session.endSession();
+
         return { success: true, message: 'Registration successful! You can now log in.' };
 
     } catch (error) {
+        await session.abortTransaction();
+        session.endSession();
+
         console.error('Registration failed:', error);
-        // Provide a more specific error message
         if (error instanceof mongoose.Error.ValidationError) {
              return { success: false, message: `Validation error: ${error.message}` };
         }
-        if (error instanceof mongoose.Error) {
-             return { success: false, message: 'Database error during registration. Please try again.' };
-        }
-        return { success: false, message: 'An internal server error occurred.' };
+        return { success: false, message: 'Database error during registration. Please try again.' };
     }
 }
 
@@ -834,5 +845,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
     
 
 
+
+    
 
     
