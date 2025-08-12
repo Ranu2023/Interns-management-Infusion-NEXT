@@ -50,48 +50,45 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        let newUserProfile;
-
-        // 1. Create the role-specific profile first to get the _id
-        if (role === 'intern') {
-            const newIntern = new Intern({ name, email, avatar: '' });
-            newUserProfile = await newIntern.save();
-        } else if (role === 'mentor') {
-            const newMentor = new Mentor({ name, email, expertise: 'General', avatar: '' });
-            newUserProfile = await newMentor.save();
-        } else {
-             // For HR or other roles that don't have a separate profile collection
-             newUserProfile = new User({
-                name,
-                email,
-                password: hashedPassword,
-                role,
-                avatar: '',
-            });
-            await newUserProfile.save();
-            return { success: true, message: 'Registration successful! You can now log in.' };
-        }
-        
-        if (!newUserProfile) {
-            throw new Error('Could not create user profile.');
-        }
-
-        // 2. Create the main user for authentication using the new profile's ID
+        // 1. Create the main User for authentication first.
         const newUser = new User({
-            _id: newUserProfile._id, // Use the ID from the created profile
             name,
             email,
             password: hashedPassword,
             role,
-            avatar: '',
+            avatar: '', // Provide a default empty avatar
         });
         await newUser.save();
+
+        // 2. If the user is an intern or mentor, create the role-specific profile
+        // using the ID from the newly created User document.
+        if (role === 'intern') {
+            const newIntern = new Intern({
+                _id: newUser._id, // Use the same ID
+                name,
+                email,
+                avatar: '', // Ensure all required fields are present
+            });
+            await newIntern.save();
+        } else if (role === 'mentor') {
+            const newMentor = new Mentor({
+                _id: newUser._id, // Use the same ID
+                name,
+                email,
+                expertise: 'General', // Provide a default
+                avatar: '', // Ensure all required fields are present
+            });
+            await newMentor.save();
+        }
         
         return { success: true, message: 'Registration successful! You can now log in.' };
 
     } catch (error) {
         console.error('Registration failed:', error);
         // Provide a more specific error message
+        if (error instanceof mongoose.Error.ValidationError) {
+             return { success: false, message: `Validation error: ${error.message}` };
+        }
         if (error instanceof mongoose.Error) {
              return { success: false, message: 'Database error during registration. Please try again.' };
         }
@@ -836,3 +833,6 @@ export async function updatePassword(prevState: any, formData: FormData) {
 
     
 
+
+
+    
