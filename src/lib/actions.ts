@@ -24,9 +24,11 @@ import DocumentModel, { DocumentType } from './models/Document';
 
 
 export async function logout() {
-    cookies().set('session', '', { expires: new Date(0) });
-    redirect('/');
+    // ✅ Correct async delete
+    (await cookies()).delete("session");
   }
+
+
 // ✅ User Registration
 export async function registerUser(prevState: any, formData: FormData) {
     const name = formData.get('name') as string;
@@ -86,12 +88,17 @@ export async function registerUser(prevState: any, formData: FormData) {
 }
 
 
-// ✅ User Authentication
+// ✅ login User Authentication
 export async function authenticate(prevState: any, formData: FormData) {
     try {
         await dbConnect();
+
         const email = formData.get('email') as string;
         const password = formData.get('password') as string;
+
+        if (!email || !password) {
+            return { success: false, message: 'Email and password are required.' };
+        }
 
         const user = await User.findOne({ email });
         if (!user) {
@@ -102,12 +109,13 @@ export async function authenticate(prevState: any, formData: FormData) {
         if (!passwordsMatch) {
             return { success: false, message: 'Invalid credentials.' };
         }
-        
-        // Fetch role-specific details to add to session
-        let roleDetails = {};
-        if(user.role === 'mentor') {
-            const mentorProfile = await Mentor.findById(user._id).lean();
-            if(mentorProfile) roleDetails = { expertise: mentorProfile.expertise };
+
+        let roleDetails: any = {};
+        if (user.role === 'mentor') {
+            const mentorProfile = await Mentor.findOne({ userId: user._id }).lean();
+            if (mentorProfile) {
+                roleDetails.expertise = mentorProfile.expertise;
+            }
         }
 
         const sessionUser: SessionUser = {
@@ -122,21 +130,21 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         const session = await encrypt({ user: sessionUser });
 
-        cookies().set('session', session, {
+        (await cookies()).set({
+            name: "session",
+            value: session,
             httpOnly: true,
-            secure: process.env.NODE_ENV === 'production',
-            path: '/',
-            maxAge: 60 * 60 * 24 * 7, // 7 days
-        });
-        
+            secure: process.env.NODE_ENV === "production",
+            path: "/",
+            sameSite: "strict",
+            maxAge: 60 * 60 * 24, // 1 day
+          });
+
+        return { success: true };
     } catch (error) {
-        console.error(error);
-        if (error instanceof Error && error.name === 'CredentialsSignin') {
-            return { success: false, message: error.message };
-        }
-        return { success: false, message: 'An internal server error occurred.' };
+        console.error('Authentication error:', error);
+        return { success: false, message: 'Something went wrong.' };
     }
-    redirect('/dashboard');
 }
 
 // ✅ Task Update

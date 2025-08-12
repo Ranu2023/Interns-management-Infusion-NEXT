@@ -1,8 +1,7 @@
-
 'use client';
 
-import { useActionState } from 'react';
-import { useFormStatus } from 'react-dom';
+import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -12,7 +11,7 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import Link from 'next/link';
 
 function Icon(props: React.ComponentProps<'svg'>) {
-    return (
+  return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
       viewBox="0 0 256 256"
@@ -34,71 +33,85 @@ function Icon(props: React.ComponentProps<'svg'>) {
   );
 }
 
-function SubmitButton() {
-    const { pending } = useFormStatus();
-    return (
-        <Button type="submit" className="w-full" disabled={pending}>
-             {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Log In
-        </Button>
-    )
-}
-
 export function LoginForm() {
-    const [state, formAction] = useActionState(authenticate, undefined);
+  const router = useRouter();
+  const [pending, setPending] = useState(false);
+  const [error, setError] = useState('');
 
-    return (
-        <div className="w-full max-w-sm space-y-8">
-            <div className="text-center space-y-2">
-                <div className="mx-auto h-12 w-12 text-primary">
-                    <Icon className="h-full w-full" />
-                </div>
-                <h1 className="text-3xl font-bold font-headline">Infusion NEXT</h1>
-                <p className="text-muted-foreground">
-                    Welcome back! Please log in to your account.
-                </p>
-            </div>
-            <form action={formAction} className="space-y-6">
-                <div className="space-y-4">
-                    <div className="space-y-2">
-                        <Label htmlFor="email">Email</Label>
-                        <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            placeholder="name@example.com"
-                            required
-                            className="bg-gray-800 border-gray-700"
-                        />
-                    </div>
-                    <div className="space-y-2">
-                        <Label htmlFor="password">Password</Label>
-                        <Input
-                            id="password"
-                            name="password"
-                            type="password"
-                            placeholder="Enter your password"
-                            required
-                            className="bg-gray-800 border-gray-700"
-                        />
-                    </div>
-                </div>
-                
-                {state?.message && (
-                    <Alert variant="destructive">
-                        <AlertTitle>Login Failed</AlertTitle>
-                        <AlertDescription>{state.message}</AlertDescription>
-                    </Alert>
-                )}
-                
-                <SubmitButton />
-            </form>
-             <p className="text-center text-sm text-muted-foreground">
-                Don't have an account?{' '}
-                <Link href="/register" className="font-medium text-primary hover:underline">
-                    Register
-                </Link>
-            </p>
+  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setError('');
+    setPending(true);
+
+    const formData = new FormData(e.currentTarget);
+    const result = await authenticate(null, formData);
+
+    setPending(false);
+
+    if (result.success) {
+      router.push('/dashboard');
+    } else {
+      setError(result.message || 'Login failed.');
+    }
+  }
+
+  return (
+    <div className="w-full max-w-sm space-y-8">
+      <div className="text-center space-y-2">
+        <div className="mx-auto h-12 w-12 text-primary">
+          <Icon className="h-full w-full" />
         </div>
-    );
+        <h1 className="text-3xl font-bold font-headline">Infusion NEXT</h1>
+        <p className="text-muted-foreground">
+          Welcome back! Please log in to your account.
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="email">Email</Label>
+            <Input
+              id="email"
+              name="email"
+              type="email"
+              placeholder="name@example.com"
+              required
+              className="bg-gray-800 border-gray-700"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="password">Password</Label>
+            <Input
+              id="password"
+              name="password"
+              type="password"
+              placeholder="Enter your password"
+              required
+              className="bg-gray-800 border-gray-700"
+            />
+          </div>
+        </div>
+
+        {error && (
+          <Alert variant="destructive">
+            <AlertTitle>Login Failed</AlertTitle>
+            <AlertDescription>{error}</AlertDescription>
+          </Alert>
+        )}
+
+        <Button type="submit" className="w-full" disabled={pending}>
+          {pending && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+          Log In
+        </Button>
+      </form>
+
+      <p className="text-center text-sm text-muted-foreground">
+        Don't have an account?{' '}
+        <Link href="/register" className="font-medium text-primary hover:underline">
+          Register
+        </Link>
+      </p>
+    </div>
+  );
 }
