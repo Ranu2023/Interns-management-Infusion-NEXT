@@ -65,7 +65,6 @@ export async function registerUser(prevState: any, formData: FormData) {
                 _id: newUserId,
                 name,
                 email,
-                avatar: '', // Ensure default value
             });
             await newIntern.save({ session });
         } else if (role === 'mentor') {
@@ -74,7 +73,6 @@ export async function registerUser(prevState: any, formData: FormData) {
                 name,
                 email,
                 expertise: 'General', // Ensure default value
-                avatar: '', // Ensure default value
             });
             await newMentor.save({ session });
         }
@@ -86,7 +84,6 @@ export async function registerUser(prevState: any, formData: FormData) {
             email,
             password: hashedPassword,
             role,
-            avatar: '',
         });
         await newUser.save({ session });
         
@@ -739,7 +736,6 @@ export async function addApplicant(prevState: any, formData: FormData) {
       email,
       password: hashedPassword,
       role,
-      avatar: '',
     });
     await newUser.save();
 
@@ -759,7 +755,6 @@ export async function addApplicant(prevState: any, formData: FormData) {
         course,
         interestField,
         internshipDuration: Number(internshipDuration),
-        avatar: '',
       });
       await newIntern.save();
     } else if (role === 'mentor') {
@@ -772,7 +767,6 @@ export async function addApplicant(prevState: any, formData: FormData) {
         email,
         expertise,
         experience,
-        avatar: '',
       });
       await newMentor.save();
     }
@@ -849,3 +843,4 @@ export async function updatePassword(prevState: any, formData: FormData) {
     
 
     
+
