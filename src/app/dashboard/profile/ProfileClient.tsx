@@ -76,11 +76,11 @@ export function ProfileClient({ user, profileData }: Props) {
                             <>
                                 <div className="space-y-1">
                                     <Label>Field of Interest</Label>
-                                    <p className="text-muted-foreground">{profileData.interestField || 'N/A'}</p>
+                                    <p className="text-muted-foreground">{profileData?.interestField || 'N/A'}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <Label>College</Label>
-                                    <p className="text-muted-foreground">{profileData.college || 'N/A'}</p>
+                                    <p className="text-muted-foreground">{profileData?.college || 'N/A'}</p>
                                 </div>
                             </>
                         )}
@@ -88,11 +88,11 @@ export function ProfileClient({ user, profileData }: Props) {
                             <>
                                 <div className="space-y-1">
                                     <Label>Area of Expertise</Label>
-                                    <p className="text-muted-foreground">{profileData.expertise || 'N/A'}</p>
+                                    <p className="text-muted-foreground">{profileData?.expertise || 'N/A'}</p>
                                 </div>
                                 <div className="space-y-1">
                                     <Label>Experience</Label>
-                                    <p className="text-muted-foreground">{profileData.experience || 'N/A'}</p>
+                                    <p className="text-muted-foreground">{profileData?.experience || 'N/A'}</p>
                                 </div>
                             </>
                         )}
@@ -139,3 +139,5 @@ export function ProfileClient({ user, profileData }: Props) {
     </div>
   );
 }
+
+    

@@ -25,7 +25,8 @@ import DocumentModel, { DocumentType } from './models/Document';
 
 export async function logout() {
     // ✅ Correct async delete
-    (await cookies()).delete("session");
+    cookies().delete("session");
+    redirect('/');
   }
 
 
@@ -55,7 +56,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             email,
             password: hashedPassword,
             role,
-            avatar: ``
+            avatar: ''
         });
         await newUser.save();
 
@@ -112,7 +113,7 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         let roleDetails: any = {};
         if (user.role === 'mentor') {
-            const mentorProfile = await Mentor.findOne({ userId: user._id }).lean();
+            const mentorProfile = await Mentor.findOne({ _id: user._id }).lean();
             if (mentorProfile) {
                 roleDetails.expertise = mentorProfile.expertise;
             }
@@ -130,7 +131,7 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         const session = await encrypt({ user: sessionUser });
 
-        (await cookies()).set({
+        cookies().set({
             name: "session",
             value: session,
             httpOnly: true,
@@ -819,5 +820,7 @@ export async function updatePassword(prevState: any, formData: FormData) {
       return { success: false, message: 'An internal server error occurred.' };
     }
   }
+
+    
 
     
