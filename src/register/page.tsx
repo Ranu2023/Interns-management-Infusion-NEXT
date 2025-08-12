@@ -32,22 +32,18 @@ import { registerUser } from '@/lib/actions';
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
     <svg
+      {...props}
       xmlns="http://www.w3.org/2000/svg"
-      viewBox="0 0 256 256"
       width="24"
       height="24"
-      {...props}
+      viewBox="0 0 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
     >
-      <defs>
-        <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
-        </linearGradient>
-      </defs>
-      <path
-        fill="url(#grad1)"
-        d="M171.13,24.88,84.87,143.19V24.88H24.88V231.12h58.7L171.13,112.81V231.12h60V24.88Z"
-      />
+      <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
     </svg>
   );
 }
@@ -94,7 +90,7 @@ export default function RegisterPage() {
                     </div>
                     <CardTitle className="text-2xl font-headline">Create an Account</CardTitle>
                     <CardDescription className="text-gray-400">
-                    Join Infusion NEXT to start your journey.
+                    Join Synergy Interns to start your journey.
                     </CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-4">
