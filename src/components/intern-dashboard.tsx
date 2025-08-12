@@ -146,7 +146,7 @@ export async function InternDashboard({ user }: { user: User }) {
             <div className="text-center p-6">
               <p className="text-lg font-semibold">No Project Assigned Yet</p>
               <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                Welcome to Synergy! It looks like you haven't been assigned to a project.
+                Welcome to Infusion! It looks like you haven't been assigned to a project.
                 Your mentor will assign one to you soon. Please check back later.
               </p>
             </div>
