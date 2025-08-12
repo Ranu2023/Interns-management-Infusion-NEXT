@@ -6,7 +6,7 @@ export interface IUser extends Document {
   email: string;
   password?: string;
   role: Role;
-  avatar?: string;
+  avatar: string;
   expertise?: string;
 }
 
@@ -15,7 +15,7 @@ const UserSchema: Schema<IUser> = new Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
   role: { type: String, required: true, enum: ['intern', 'mentor', 'hr', 'employee'] },
-  avatar: { type: String },
+  avatar: { type: String, required: true },
   expertise: { type: String },
 },
 {
@@ -24,3 +24,5 @@ const UserSchema: Schema<IUser> = new Schema({
 
 // The key fix: Ensure the model is always registered as 'User' to match the 'ref' in other schemas.
 export default mongoose.models.User || mongoose.model<IUser>('User', UserSchema);
+
+    

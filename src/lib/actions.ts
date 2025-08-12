@@ -65,6 +65,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 _id: newUserId,
                 name,
                 email,
+                avatar: '',
             });
             await newIntern.save({ session });
         } else if (role === 'mentor') {
@@ -73,6 +74,7 @@ export async function registerUser(prevState: any, formData: FormData) {
                 name,
                 email,
                 expertise: 'General', // Ensure default value
+                avatar: '',
             });
             await newMentor.save({ session });
         }
@@ -84,6 +86,7 @@ export async function registerUser(prevState: any, formData: FormData) {
             email,
             password: hashedPassword,
             role,
+            avatar: '',
         });
         await newUser.save({ session });
         
@@ -141,7 +144,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             name: user.name,
             email: user.email,
             role: user.role,
-            avatar: user.avatar,
+            avatar: user.avatar || '',
             ...roleDetails
         };
 
@@ -731,13 +734,17 @@ export async function addApplicant(prevState: any, formData: FormData) {
     const tempPassword = Math.random().toString(36).slice(-8);
     const hashedPassword = await bcrypt.hash(tempPassword, 10);
 
+    const newUserId = new mongoose.Types.ObjectId();
+
     const newUser = new User({
+      _id: newUserId,
       name,
       email,
       password: hashedPassword,
       role,
+      avatar: '',
     });
-    await newUser.save();
+    
 
     if (role === 'intern') {
       const college = formData.get('college') as string;
@@ -755,6 +762,7 @@ export async function addApplicant(prevState: any, formData: FormData) {
         course,
         interestField,
         internshipDuration: Number(internshipDuration),
+        avatar: '',
       });
       await newIntern.save();
     } else if (role === 'mentor') {
@@ -767,9 +775,13 @@ export async function addApplicant(prevState: any, formData: FormData) {
         email,
         expertise,
         experience,
+        avatar: '',
       });
       await newMentor.save();
     }
+    
+    await newUser.save();
+
 
     revalidatePath('/dashboard/interns');
     revalidatePath('/dashboard/mentors');
@@ -844,3 +856,6 @@ export async function updatePassword(prevState: any, formData: FormData) {
 
     
 
+
+
+    
