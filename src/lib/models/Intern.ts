@@ -3,7 +3,7 @@ import mongoose, { Schema, Document, models, Model } from 'mongoose';
 export interface IIntern extends Document {
     name: string;
     email: string;
-    avatar: string;
+    avatar?: string;
     project: string;
     mentor: string;
     status: 'Active' | 'Completed' | 'On-Hold';
@@ -27,7 +27,7 @@ export interface IIntern extends Document {
 const InternSchema: Schema<IIntern> = new Schema({
     name: { type: String, required: true },
     email: { type: String, required: true, unique: true },
-    avatar: { type: String, required: true },
+    avatar: { type: String },
     project: { type: String, required: true, default: 'Unassigned' },
     mentor: { type: String, required: true, default: 'Unassigned' },
     status: { 
