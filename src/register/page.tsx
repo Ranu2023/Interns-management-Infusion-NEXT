@@ -32,18 +32,22 @@ import { registerUser } from '@/lib/actions';
 function Icon(props: React.ComponentProps<'svg'>) {
   return (
     <svg
-      {...props}
       xmlns="http://www.w3.org/2000/svg"
+      viewBox="0 0 256 256"
       width="24"
       height="24"
-      viewBox="0 0 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
+      {...props}
     >
-      <path d="M9.37 7.72a4.44 4.44 0 0 1 5.26 0l1.18 1.18a4.44 4.44 0 0 1 0 5.26l-1.18 1.18a4.44 4.44 0 0 1-5.26 0l-1.18-1.18a4.44 4.44 0 0 1 0-5.26l1.18-1.18zM9.37 16.28a4.44 4.44 0 0 1 5.26 0l1.18-1.18a4.44 4.44 0 0 1 0-5.26l-1.18-1.18a4.44 4.44 0 0 1-5.26 0l-1.18 1.18a4.44 4.44 0 0 1 0 5.26l1.18 1.18z" />
+      <defs>
+        <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
+          <stop offset="0%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
+          <stop offset="100%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
+        </linearGradient>
+      </defs>
+      <path
+        fill="url(#grad1)"
+        d="M171.13,24.88,84.87,143.19V24.88H24.88V231.12h58.7L171.13,112.81V231.12h60V24.88Z"
+      />
     </svg>
   );
 }
