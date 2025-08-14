@@ -39,12 +39,13 @@ async function getChatPageData(currentUserId: string, otherUserId: string) {
 }
 
 
-export default async function ChatSessionPage({ params: { userId } }: { params: { userId: string }}) {
+export default async function ChatSessionPage({ params }: { params: { userId: string }}) {
     const session = await getSession();
     if (!session?.user) {
         redirect('/');
     }
     const currentUser = session.user as AuthUser;
+    const { userId } = params;
 
     const { otherUser, initialMessages } = await getChatPageData(currentUser.id, userId);
     
