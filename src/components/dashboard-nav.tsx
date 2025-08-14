@@ -24,6 +24,7 @@ import {
   UserPlus,
   FileUp,
   Settings,
+  MessageSquare,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -62,6 +63,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
     { href: '/dashboard/reports', label: 'Reports', icon: FileBarChart2 },
     { href: '/dashboard/mentorship', label: 'Mentorship Requests', icon: Handshake },
+    { href: '/dashboard/chat', label: 'Chat', icon: MessageSquare },
     { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
   intern: [
@@ -71,6 +73,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/my-feedback', label: 'My Feedback', icon: Star },
     { href: '/dashboard/mentorship', label: 'Mentorship Hub', icon: Handshake },
     { href: '/dashboard/my-mentorship', label: 'My Mentorship', icon: UserCheck },
+    { href: '/dashboard/chat', label: 'Chat', icon: MessageSquare },
     { href: '/dashboard/ppo-status', label: 'PPO Status', icon: Briefcase },
     { href: '/dashboard/documents', label: 'Documents', icon: FileDown },
     { href: '/dashboard/my-review', label: 'My Review', icon: PenSquare },
