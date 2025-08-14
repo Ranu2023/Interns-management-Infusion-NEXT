@@ -1,22 +1,19 @@
 
 'use client';
 
-import { useActionState, useRef } from 'react';
+import { useActionState, useRef, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { Separator } from '@/components/ui/separator';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import { Loader2, KeyRound } from 'lucide-react';
+import { Loader2, KeyRound, Save, Pencil, X } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { updatePassword } from '@/lib/actions';
+import { updatePassword, updateProfile } from '@/lib/actions';
 import { User as AuthUser } from '@/context/AuthContext';
-import { IIntern } from '@/lib/models/Intern';
-import { IMentor } from '@/lib/models/Mentor';
 
-function SubmitButton() {
+function PasswordSubmitButton() {
   const { pending } = useFormStatus();
   return (
     <Button type="submit" disabled={pending}>
@@ -26,6 +23,16 @@ function SubmitButton() {
   );
 }
 
+function ProfileSubmitButton() {
+    const { pending } = useFormStatus();
+    return (
+        <Button type="submit" disabled={pending}>
+            {pending ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2" />}
+            Save Changes
+        </Button>
+    )
+}
+
 type Props = {
     user: AuthUser;
     profileData: any;
@@ -33,18 +40,32 @@ type Props = {
 
 export function ProfileClient({ user, profileData }: Props) {
   const { toast } = useToast();
-  const formRef = useRef<HTMLFormElement>(null);
+  const passwordFormRef = useRef<HTMLFormElement>(null);
+  const profileFormRef = useRef<HTMLFormElement>(null);
+  const [isEditing, setIsEditing] = useState(false);
   
-  const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+  const [passwordState, passwordFormAction] = useActionState(async (prevState: any, formData: FormData) => {
     const result = await updatePassword(prevState, formData);
     if (result.success) {
         toast({ title: 'Success!', description: result.message });
-        formRef.current?.reset();
+        passwordFormRef.current?.reset();
     } else {
         toast({ variant: 'destructive', title: 'Error', description: result.message });
     }
     return result;
   }, { success: false, message: '' });
+
+  const [profileState, profileFormAction] = useActionState(async (prevState: any, formData: FormData) => {
+      const result = await updateProfile(formData);
+       if (result.success) {
+            toast({ title: 'Success!', description: result.message });
+            setIsEditing(false);
+            // The page will be revalidated by the server action, so new data will be fetched.
+        } else {
+            toast({ variant: 'destructive', title: 'Error', description: result.message });
+        }
+        return result;
+  }, { success: false, message: ''});
 
   return (
     <div className="space-y-6">
@@ -55,49 +76,64 @@ export function ProfileClient({ user, profileData }: Props) {
 
         <div className="grid lg:grid-cols-3 gap-6">
             <div className="lg:col-span-1">
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Account Details</CardTitle>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="space-y-1">
-                            <Label>Full Name</Label>
-                            <p className="text-muted-foreground">{user.name}</p>
-                        </div>
-                         <div className="space-y-1">
-                            <Label>Email Address</Label>
-                            <p className="text-muted-foreground">{user.email}</p>
-                        </div>
-                         <div className="space-y-1">
-                            <Label>Role</Label>
-                            <p className="text-muted-foreground capitalize">{user.role}</p>
-                        </div>
-                        {user.role === 'intern' && (
-                            <>
-                                <div className="space-y-1">
-                                    <Label>Field of Interest</Label>
-                                    <p className="text-muted-foreground">{profileData?.interestField || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label>College</Label>
-                                    <p className="text-muted-foreground">{profileData?.college || 'N/A'}</p>
-                                </div>
-                            </>
+                <form action={profileFormAction} ref={profileFormRef}>
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Account Details</CardTitle>
+                            {!isEditing && (
+                                <Button variant="outline" size="sm" onClick={() => setIsEditing(true)}>
+                                    <Pencil className="mr-2 h-4 w-4"/> Edit
+                                </Button>
+                            )}
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <div className="space-y-1">
+                                <Label htmlFor="name">Full Name</Label>
+                                <Input id="name" name="name" defaultValue={profileData?.name} disabled={!isEditing} />
+                            </div>
+                            <div className="space-y-1">
+                                <Label htmlFor="email">Email Address</Label>
+                                <Input id="email" name="email" defaultValue={profileData?.email} disabled />
+                            </div>
+                            <div className="space-y-1">
+                                <Label>Role</Label>
+                                <p className="text-muted-foreground capitalize">{user.role}</p>
+                            </div>
+                            {user.role === 'intern' && (
+                                <>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="interestField">Field of Interest</Label>
+                                        <Input id="interestField" name="interestField" defaultValue={profileData?.interestField || ''} disabled={!isEditing} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="college">College</Label>
+                                        <Input id="college" name="college" defaultValue={profileData?.college || ''} disabled={!isEditing} />
+                                    </div>
+                                </>
+                            )}
+                             {user.role === 'mentor' && (
+                                <>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="expertise">Area of Expertise</Label>
+                                        <Input id="expertise" name="expertise" defaultValue={profileData?.expertise || ''} disabled={!isEditing} />
+                                    </div>
+                                    <div className="space-y-1">
+                                        <Label htmlFor="experience">Experience</Label>
+                                        <Input id="experience" name="experience" defaultValue={profileData?.experience || ''} disabled={!isEditing} />
+                                    </div>
+                                </>
+                            )}
+                        </CardContent>
+                        {isEditing && (
+                            <CardFooter className="justify-end gap-2">
+                                <Button variant="ghost" onClick={() => setIsEditing(false)}>
+                                    <X className="mr-2"/> Cancel
+                                </Button>
+                                <ProfileSubmitButton />
+                            </CardFooter>
                         )}
-                        {user.role === 'mentor' && (
-                            <>
-                                <div className="space-y-1">
-                                    <Label>Area of Expertise</Label>
-                                    <p className="text-muted-foreground">{profileData?.expertise || 'N/A'}</p>
-                                </div>
-                                <div className="space-y-1">
-                                    <Label>Experience</Label>
-                                    <p className="text-muted-foreground">{profileData?.experience || 'N/A'}</p>
-                                </div>
-                            </>
-                        )}
-                    </CardContent>
-                </Card>
+                    </Card>
+                </form>
             </div>
 
             <div className="lg:col-span-2">
@@ -106,7 +142,7 @@ export function ProfileClient({ user, profileData }: Props) {
                         <CardTitle>Security</CardTitle>
                         <CardDescription>Update your password here. Remember to use a strong password.</CardDescription>
                     </CardHeader>
-                    <form ref={formRef} action={formAction}>
+                    <form ref={passwordFormRef} action={passwordFormAction}>
                         <CardContent className="space-y-4">
                             <div className="grid gap-2">
                                 <Label htmlFor="currentPassword">Current Password</Label>
@@ -122,15 +158,15 @@ export function ProfileClient({ user, profileData }: Props) {
                                     <Input id="confirmPassword" name="confirmPassword" type="password" required />
                                 </div>
                             </div>
-                            {state && !state.success && state.message && (
+                            {passwordState && !passwordState.success && passwordState.message && (
                                 <Alert variant="destructive">
                                     <AlertTitle>Error</AlertTitle>
-                                    <AlertDescription>{state.message}</AlertDescription>
+                                    <AlertDescription>{passwordState.message}</AlertDescription>
                                 </Alert>
                             )}
                         </CardContent>
                         <CardFooter>
-                           <SubmitButton />
+                           <PasswordSubmitButton />
                         </CardFooter>
                     </form>
                 </Card>
@@ -139,5 +175,3 @@ export function ProfileClient({ user, profileData }: Props) {
     </div>
   );
 }
-
-    

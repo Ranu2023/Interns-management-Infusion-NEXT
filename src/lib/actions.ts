@@ -829,7 +829,48 @@ export async function updatePassword(prevState: any, formData: FormData) {
       console.error('Failed to update password:', error);
       return { success: false, message: 'An internal server error occurred.' };
     }
-  }
+}
+
+export async function updateProfile(formData: FormData) {
+    const session = await getSession();
+    if (!session?.user) {
+        return { success: false, message: 'You must be logged in to update your profile.' };
+    }
+
+    const { id, role } = session.user;
+    const name = formData.get('name') as string;
+
+    try {
+        await dbConnect();
+        
+        // Update the main User document
+        await User.findByIdAndUpdate(id, { name });
+
+        // Update the role-specific document
+        if (role === 'intern') {
+            const interestField = formData.get('interestField') as string;
+            const college = formData.get('college') as string;
+            await Intern.findByIdAndUpdate(id, { name, interestField, college });
+        } else if (role === 'mentor') {
+            const expertise = formData.get('expertise') as string;
+            const experience = formData.get('experience') as string;
+            await Mentor.findByIdAndUpdate(id, { name, expertise, experience });
+        }
+
+        // Re-encrypt the session with the new name
+        const updatedUser = { ...session.user, name: name };
+        const newSession = await encrypt({ user: updatedUser });
+        cookies().set('session', newSession, { httpOnly: true, maxAge: 60 * 60 * 24 });
+
+
+        revalidatePath('/dashboard/profile');
+        return { success: true, message: 'Profile updated successfully!' };
+
+    } catch (error) {
+        console.error('Failed to update profile:', error);
+        return { success: false, message: 'An internal server error occurred.' };
+    }
+}
 
     
 
