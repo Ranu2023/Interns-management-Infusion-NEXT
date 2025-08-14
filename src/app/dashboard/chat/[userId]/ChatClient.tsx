@@ -39,13 +39,19 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
     });
 
     newSocket.on('privateMessage', (message: IMessage) => {
-      setMessages((prevMessages) => [...prevMessages, message]);
+      // Only add message if it's part of the current conversation
+      const isRelevant = (message.senderId.toString() === user.id && message.receiverId.toString() === otherUser._id) ||
+                         (message.senderId.toString() === otherUser._id && message.receiverId.toString() === user.id);
+      
+      if(isRelevant) {
+        setMessages((prevMessages) => [...prevMessages, message]);
+      }
     });
 
     return () => {
       newSocket.disconnect();
     };
-  }, [user]);
+  }, [user, otherUser._id]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -80,7 +86,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
 
   return (
     <div className="flex flex-col h-full">
-      <div ref={messagesEndRef} className="flex-1 space-y-4 overflow-y-auto p-4">
+      <div className="flex-1 space-y-4 overflow-y-auto p-4">
         {messages.map((msg, index) => (
           <div
             key={index}
@@ -115,6 +121,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
             )}
           </div>
         ))}
+         <div ref={messagesEndRef} />
       </div>
       <div className="border-t p-4">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
