@@ -41,64 +41,52 @@ export async function registerUser(prevState: any, formData: FormData) {
         return { success: false, message: 'All fields are required.' };
     }
 
-    await dbConnect();
-
-    // Start a session for atomicity
-    const session = await mongoose.startSession();
-    session.startTransaction();
-
     try {
-        const existingUser = await User.findOne({ email }).session(session);
+        await dbConnect();
+        
+        const existingUser = await User.findOne({ email });
         if (existingUser) {
-            await session.abortTransaction();
-            session.endSession();
             return { success: false, message: 'User with this email already exists.' };
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        let newUserId;
-
-        // 1. Create the role-specific profile first
-        if (role === 'intern') {
-            const newIntern = new Intern({
-                name,
-                email,
-            });
-            await newIntern.save({ session });
-            newUserId = newIntern._id;
-        } else if (role === 'mentor') {
-            const newMentor = new Mentor({
-                name,
-                email,
-                expertise: 'General', // Ensure default value
-            });
-            await newMentor.save({ session });
-            newUserId = newMentor._id;
-        } else {
-             newUserId = new mongoose.Types.ObjectId();
-        }
-        
-        // 2. Create the main User for authentication
         const newUser = new User({
-            _id: newUserId, // Use the same ID
             name,
             email,
             password: hashedPassword,
             role,
         });
-        await newUser.save({ session });
-        
-        await session.commitTransaction();
-        session.endSession();
+        await newUser.save();
+
+        if (role === 'intern') {
+            const newIntern = new Intern({
+                _id: newUser._id,
+                name,
+                email,
+                avatar: ''
+            });
+            await newIntern.save();
+        } else if (role === 'mentor') {
+            const newMentor = new Mentor({
+                _id: newUser._id,
+                name,
+                email,
+                expertise: 'General',
+                avatar: ''
+            });
+            await newMentor.save();
+        }
 
         return { success: true, message: 'Registration successful! You can now log in.' };
 
     } catch (error) {
-        await session.abortTransaction();
-        session.endSession();
-
         console.error('Registration failed:', error);
+        // Attempt to clean up if user was created but profile failed
+        const user = await User.findOne({ email });
+        if (user) {
+            await User.deleteOne({ email });
+        }
         if (error instanceof mongoose.Error.ValidationError) {
              return { success: false, message: `Validation error: ${error.message}` };
         }
@@ -709,90 +697,91 @@ export async function assignDocuments(internId: string, prevState: any, formData
 
 
 export async function addApplicant(prevState: any, formData: FormData) {
-  const session = await getSession();
-  if (!session?.user || session.user.role !== 'hr') {
-    return { success: false, message: 'Unauthorized: Only HR can add applicants.' };
-  }
-
-  const name = formData.get('name') as string;
-  const email = formData.get('email') as string;
-  const role = formData.get('role') as Role;
-
-  if (!name || !email || !role) {
-    return { success: false, message: 'Full Name, Email, and Role are required.' };
-  }
-
-  try {
-    await dbConnect();
-    const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return { success: false, message: 'A user with this email already exists.' };
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+      return { success: false, message: 'Unauthorized: Only HR can add applicants.' };
     }
-
-    // Generate random password
-    const tempPassword = Math.random().toString(36).slice(-8);
-    const hashedPassword = await bcrypt.hash(tempPassword, 10);
-
-    const newUserId = new mongoose.Types.ObjectId();
-
-    const newUser = new User({
-      _id: newUserId,
-      name,
-      email,
-      password: hashedPassword,
-      role,
-    });
-    
-
-    if (role === 'intern') {
-      const college = formData.get('college') as string;
-      const year = formData.get('year') as string;
-      const course = formData.get('course') as string;
-      const interestField = formData.get('interestField') as string;
-      const internshipDuration = formData.get('internshipDuration') as string;
-
-      const newIntern = new Intern({
-        _id: newUser._id,
+  
+    const name = formData.get('name') as string;
+    const email = formData.get('email') as string;
+    const role = formData.get('role') as Role;
+  
+    if (!name || !email || !role) {
+      return { success: false, message: 'Full Name, Email, and Role are required.' };
+    }
+  
+    try {
+      await dbConnect();
+      const existingUser = await User.findOne({ email });
+      if (existingUser) {
+        return { success: false, message: 'A user with this email already exists.' };
+      }
+  
+      // Generate random password
+      const tempPassword = Math.random().toString(36).slice(-8);
+      const hashedPassword = await bcrypt.hash(tempPassword, 10);
+  
+      const newUser = new User({
         name,
         email,
-        college,
-        year,
-        course,
-        interestField,
-        internshipDuration: Number(internshipDuration),
+        password: hashedPassword,
+        role,
       });
-      await newIntern.save();
-    } else if (role === 'mentor') {
-      const expertise = formData.get('expertise') as string;
-      const experience = formData.get('experience') as string;
-
-      const newMentor = new Mentor({
-        _id: newUser._id,
-        name,
-        email,
-        expertise,
-        experience,
-      });
-      await newMentor.save();
+      await newUser.save();
+  
+      if (role === 'intern') {
+        const college = formData.get('college') as string;
+        const year = formData.get('year') as string;
+        const course = formData.get('course') as string;
+        const interestField = formData.get('interestField') as string;
+        const internshipDuration = formData.get('internshipDuration') as string;
+  
+        const newIntern = new Intern({
+          _id: newUser._id,
+          name,
+          email,
+          college,
+          year,
+          course,
+          interestField,
+          internshipDuration: Number(internshipDuration),
+          avatar: ''
+        });
+        await newIntern.save();
+      } else if (role === 'mentor') {
+        const expertise = formData.get('expertise') as string;
+        const experience = formData.get('experience') as string;
+  
+        const newMentor = new Mentor({
+          _id: newUser._id,
+          name,
+          email,
+          expertise,
+          experience,
+          avatar: ''
+        });
+        await newMentor.save();
+      }
+      
+  
+      revalidatePath('/dashboard/interns');
+      revalidatePath('/dashboard/mentors');
+      revalidatePath('/dashboard');
+  
+      return {
+        success: true,
+        message: `${role.charAt(0).toUpperCase() + role.slice(1)} added successfully!`,
+        password: tempPassword,
+      };
+    } catch (error) {
+      console.error('Failed to add applicant:', error);
+      const user = await User.findOne({email});
+      if (user) {
+        await User.deleteOne({email});
+      }
+      return { success: false, message: 'An internal server error occurred.' };
     }
-    
-    await newUser.save();
-
-
-    revalidatePath('/dashboard/interns');
-    revalidatePath('/dashboard/mentors');
-    revalidatePath('/dashboard');
-
-    return {
-      success: true,
-      message: `${role.charAt(0).toUpperCase() + role.slice(1)} added successfully!`,
-      password: tempPassword,
-    };
-  } catch (error) {
-    console.error('Failed to add applicant:', error);
-    return { success: false, message: 'An internal server error occurred.' };
   }
-}
 
 export async function updatePassword(prevState: any, formData: FormData) {
     const session = await getSession();
@@ -857,3 +846,6 @@ export async function updatePassword(prevState: any, formData: FormData) {
     
 
 
+
+
+    
