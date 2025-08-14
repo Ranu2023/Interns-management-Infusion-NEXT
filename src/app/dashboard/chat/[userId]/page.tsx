@@ -45,43 +45,46 @@ async function getChatPageData(currentUserId: string, otherUserId: string) {
 }
   
 
-export default async function ChatSessionPage({ params }: { params: { userId: string } }) {
-  const { userId } = params;
-
-  const session = await getSession();
-  if (!session?.user) {
-    redirect('/');
-  }
-
-  const currentUser = session.user as AuthUser;
-  const { otherUser, initialMessages } = await getChatPageData(
-    currentUser.id,
-    userId
-  );
-
-  if (!otherUser) {
-    notFound();
-  }
-
-  return (
-    <Card className="h-full flex flex-col max-h-[calc(100vh-8rem)]">
-      <CardHeader className="border-b">
-        <div className="flex items-center gap-3">
-          <Avatar>
-            <AvatarImage src={otherUser.avatar} alt={otherUser.name} />
-            <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
-          </Avatar>
-          <div>
-            <CardTitle>{otherUser.name}</CardTitle>
+export default async function ChatSessionPage(
+    { params }: { params: { userId: string } }
+  ) {
+    const { userId } = params;
+  
+    const session = await getSession();
+    if (!session?.user) {
+      redirect('/');
+    }
+  
+    const currentUser = session.user as AuthUser;
+    const { otherUser, initialMessages } = await getChatPageData(
+      currentUser.id,
+      userId
+    );
+  
+    if (!otherUser) {
+      notFound();
+    }
+  
+    return (
+      <Card className="h-full flex flex-col max-h-[calc(100vh-8rem)]">
+        <CardHeader className="border-b">
+          <div className="flex items-center gap-3">
+            <Avatar>
+              <AvatarImage src={otherUser.avatar} alt={otherUser.name} />
+              <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
+            </Avatar>
+            <div>
+              <CardTitle>{otherUser.name}</CardTitle>
+            </div>
           </div>
-        </div>
-      </CardHeader>
-      <CardContent className="flex-grow p-0">
-        <ChatClient
-          otherUser={otherUser}
-          initialMessages={initialMessages}
-        />
-      </CardContent>
-    </Card>
-  );
-}
+        </CardHeader>
+        <CardContent className="flex-grow p-0">
+          <ChatClient
+            otherUser={otherUser}
+            initialMessages={initialMessages}
+          />
+        </CardContent>
+      </Card>
+    );
+  }
+  
