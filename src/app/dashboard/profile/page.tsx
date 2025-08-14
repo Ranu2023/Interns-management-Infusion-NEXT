@@ -13,20 +13,23 @@ import { type User as AuthUser } from "@/context/AuthContext";
 async function getProfileData(user: AuthUser) {
     await dbConnect();
 
-    let details = {};
+    let details: any = {};
 
     if (user.role === 'intern') {
-        const internProfile = await Intern.findById(user.id).lean();
-        details = JSON.parse(JSON.stringify(internProfile));
+        details = await Intern.findById(user.id).lean();
     } else if (user.role === 'mentor') {
-        const mentorProfile = await Mentor.findById(user.id).lean();
-        details = JSON.parse(JSON.stringify(mentorProfile));
-    } else {
-        // For HR, we can just use the base user info from the session
-        details = user;
+        details = await Mentor.findById(user.id).lean();
+    } else if (user.role === 'hr') {
+        details = await User.findById(user.id).lean();
+    }
+    
+    // Fallback for user details if specific role profile not found
+    if (!details) {
+        details = await User.findById(user.id).lean();
     }
 
-    return details;
+
+    return JSON.parse(JSON.stringify(details || user));
 }
 
 export default async function ProfilePage() {
