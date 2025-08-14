@@ -45,8 +45,8 @@ async function getChatPageData(currentUserId: string, otherUserId: string) {
 }
   
 
-export default async function ChatSessionPage(props: { params: { userId: string } }) {
-  const { userId } = props.params;
+export default async function ChatSessionPage({ params }: { params: { userId: string } }) {
+  const { userId } = params;
 
   const session = await getSession();
   if (!session?.user) {

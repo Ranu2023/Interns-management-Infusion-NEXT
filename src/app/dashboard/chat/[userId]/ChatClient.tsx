@@ -46,7 +46,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
       if(isRelevant) {
         setMessages((prevMessages) => {
             // Avoid adding duplicates from optimistic update
-            if (prevMessages.find(m => m._id === message._id)) return prevMessages;
+            if (prevMessages.some(m => m._id === message._id)) return prevMessages;
             return [...prevMessages, message];
         });
       }
