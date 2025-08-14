@@ -38,11 +38,16 @@ export function UserNav() {
 
   const handleLogout = async () => {
     try {
-      await logout();        // clear auth state
-      router.replace('/');   // forcefully replace page
+      await logout();
+      router.push('/');
     } catch (error) {
       console.error('Logout error:', error);
     }
+  };
+
+  const getInitials = (name: string | undefined) => {
+    if (!name) return 'U';
+    return name.charAt(0).toUpperCase();
   };
 
   return (
@@ -50,8 +55,8 @@ export function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" className="relative h-8 w-8 rounded-full">
           <Avatar className="h-9 w-9">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{user.name.charAt(0)}</AvatarFallback>
+            <AvatarImage src={user.avatar} alt={user.name || 'User'} />
+            <AvatarFallback>{getInitials(user.name)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

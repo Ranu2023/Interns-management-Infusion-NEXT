@@ -56,7 +56,7 @@ export default async function MentorsPage() {
                                     <TableCell>
                                         <div className="flex items-center gap-3">
                                             <Avatar>
-                                                <AvatarImage src={mentor.avatar} alt={mentor.name} data-ai-hint="avatar person" />
+                                                <AvatarImage src={mentor.avatar || `https://placehold.co/100x100.png`} alt={mentor.name} data-ai-hint="avatar person" />
                                                 <AvatarFallback>{mentor.name.charAt(0)}</AvatarFallback>
                                             </Avatar>
                                             <div>
