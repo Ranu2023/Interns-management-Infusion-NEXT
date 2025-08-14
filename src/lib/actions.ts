@@ -57,24 +57,26 @@ export async function registerUser(prevState: any, formData: FormData) {
 
         const hashedPassword = await bcrypt.hash(password, 10);
         
-        const newUserId = new mongoose.Types.ObjectId();
+        let newUserId;
 
         // 1. Create the role-specific profile first
         if (role === 'intern') {
             const newIntern = new Intern({
-                _id: newUserId,
                 name,
                 email,
             });
             await newIntern.save({ session });
+            newUserId = newIntern._id;
         } else if (role === 'mentor') {
             const newMentor = new Mentor({
-                _id: newUserId,
                 name,
                 email,
                 expertise: 'General', // Ensure default value
             });
             await newMentor.save({ session });
+            newUserId = newMentor._id;
+        } else {
+             newUserId = new mongoose.Types.ObjectId();
         }
         
         // 2. Create the main User for authentication
@@ -853,4 +855,5 @@ export async function updatePassword(prevState: any, formData: FormData) {
 
 
     
+
 
