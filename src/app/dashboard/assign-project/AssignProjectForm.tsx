@@ -24,7 +24,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { FileUp, Send, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { type Intern } from "@/lib/types";
+import { type IIntern } from "@/lib/models/Intern";
 import { assignProject } from '@/lib/actions';
 
 
@@ -39,7 +39,7 @@ function SubmitButton() {
 }
 
 
-export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string})[] }) {
+export function AssignProjectForm({ interns }: { interns: (IIntern & {_id: string})[] }) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
   
@@ -91,14 +91,14 @@ export function AssignProjectForm({ interns }: { interns: (Intern & {_id: string
                     <SelectContent>
                         {interns.map((intern) => (
                         <SelectItem key={intern._id} value={intern._id}>
-                            {intern.name}
+                            {intern.name} ({intern.project && intern.project !== 'Unassigned' ? intern.project : 'Unassigned'})
                         </SelectItem>
                         ))}
                     </SelectContent>
                 </Select>
             ): (
                 <p className="text-sm text-muted-foreground p-3 bg-muted rounded-md">
-                    All of your assigned interns already have projects.
+                    You have no interns assigned to you.
                 </p>
             )}
           </div>
