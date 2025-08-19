@@ -19,9 +19,6 @@ import {
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import { ArrowRight, Trash2 } from 'lucide-react';
-import dbConnect from '@/lib/db';
-import Intern from '@/lib/models/Intern';
-import { getSession } from '@/lib/session';
 import { User, useAuth } from '@/context/AuthContext';
 import { redirect } from 'next/navigation';
 import { useEffect, useState } from 'react';
@@ -37,20 +34,8 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { archiveUser } from '@/lib/actions';
+import { archiveUser, getInternsForHR } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
-
-
-async function getDataForUser(user: User | null) {
-  if (!user) {
-    return [];
-  }
-
-  await dbConnect();
-  const query = user.role === 'hr' ? {} : { email: user.email };
-  const interns = await Intern.find(query).lean();
-  return JSON.parse(JSON.stringify(interns));
-}
 
 export default function InternsPage() {
   const { user } = useAuth();
@@ -58,8 +43,8 @@ export default function InternsPage() {
   const { toast } = useToast();
 
   useEffect(() => {
-    if (user) {
-      getDataForUser(user).then(setInterns);
+    if (user?.role === 'hr') {
+        getInternsForHR().then(setInterns);
     }
   }, [user]);
 
@@ -76,6 +61,25 @@ export default function InternsPage() {
 
   if (!user) {
     return redirect('/');
+  }
+
+  // A non-HR user should not see this page, but if they land here, show empty.
+  if (user.role !== 'hr') {
+      return (
+          <Card>
+              <CardHeader>
+                  <CardTitle>Interns</CardTitle>
+                  <CardDescription>
+                      You do not have permission to view this page.
+                  </CardDescription>
+              </CardHeader>
+              <CardContent>
+                  <div className="text-center text-muted-foreground py-12">
+                      Access Denied.
+                  </div>
+              </CardContent>
+          </Card>
+      )
   }
 
   return (
@@ -162,3 +166,4 @@ export default function InternsPage() {
     </Card>
   );
 }
+

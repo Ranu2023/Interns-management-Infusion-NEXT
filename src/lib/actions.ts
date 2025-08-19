@@ -937,6 +937,29 @@ export async function archiveUser(userId: string, userRole: Role) {
     }
 }
 
+export async function getInternsForHR() {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+      return [];
+    }
+  
+    await dbConnect();
+    const interns = await Intern.find({}).lean();
+    return JSON.parse(JSON.stringify(interns));
+}
+  
+export async function getAllMentors() {
+    await dbConnect();
+    const mentors = await Mentor.find({}).lean();
+    return JSON.parse(JSON.stringify(mentors));
+}
+
+    
+
+    
+
+
+
     
 
     
@@ -945,14 +968,9 @@ export async function archiveUser(userId: string, userRole: Role) {
 
     
 
-    
 
 
 
     
 
-
-
-
-    
 

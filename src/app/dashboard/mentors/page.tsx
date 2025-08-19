@@ -33,16 +33,8 @@ import { Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/context/AuthContext";
 import { useEffect, useState } from "react";
-import dbConnect from '@/lib/db';
-import Mentor, { type IMentor } from '@/lib/models/Mentor';
-import { archiveUser } from "@/lib/actions";
-
-async function getMentors() {
-    await dbConnect();
-    let mentors = await Mentor.find({}).lean();
-    return JSON.parse(JSON.stringify(mentors));
-}
-
+import { type IMentor } from '@/lib/models/Mentor';
+import { archiveUser, getAllMentors } from "@/lib/actions";
 
 export default function MentorsPage() {
     const { user } = useAuth();
@@ -50,7 +42,7 @@ export default function MentorsPage() {
     const [mentors, setMentors] = useState<IMentor[]>([]);
 
     useEffect(() => {
-        getMentors().then(setMentors);
+        getAllMentors().then(setMentors);
     }, []);
 
     const handleDelete = async (mentorId: string) => {
