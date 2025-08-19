@@ -1,5 +1,5 @@
 
-'use server';
+'use client'
 
 import {
   Table,
@@ -17,19 +17,53 @@ import {
   CardDescription,
   CardContent,
 } from "@/components/ui/card";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { Button } from "@/components/ui/button";
+import { Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/context/AuthContext";
+import { useEffect, useState } from "react";
 import dbConnect from '@/lib/db';
-import Mentor from '@/lib/models/Mentor';
+import Mentor, { type IMentor } from '@/lib/models/Mentor';
+import { archiveUser } from "@/lib/actions";
 
 async function getMentors() {
     await dbConnect();
-    // This page is for HR/Admins, so we fetch all mentors.
-    // The on-the-fly seeding logic is removed.
     let mentors = await Mentor.find({}).lean();
-    return mentors.map(mentor => ({...mentor, _id: mentor._id.toString()}));
+    return JSON.parse(JSON.stringify(mentors));
 }
 
-export default async function MentorsPage() {
-    const mentors = await getMentors();
+
+export default function MentorsPage() {
+    const { user } = useAuth();
+    const { toast } = useToast();
+    const [mentors, setMentors] = useState<IMentor[]>([]);
+
+    useEffect(() => {
+        getMentors().then(setMentors);
+    }, []);
+
+    const handleDelete = async (mentorId: string) => {
+        const result = await archiveUser(mentorId, 'mentor');
+        if (result.success) {
+            toast({ title: "Mentor Archived", description: result.message });
+            setMentors(prev => prev.filter(m => m._id.toString() !== mentorId));
+        } else {
+            toast({ variant: "destructive", title: "Error", description: result.message });
+        }
+    };
+
+
     return (
         <Card>
             <CardHeader>
@@ -48,6 +82,7 @@ export default async function MentorsPage() {
                                 <TableHead>Mentor</TableHead>
                                 <TableHead>Expertise</TableHead>
                                 <TableHead className="text-center">Interns Assigned</TableHead>
+                                {user?.role === 'hr' && <TableHead className="text-right">Actions</TableHead>}
                             </TableRow>
                         </TableHeader>
                         <TableBody>
@@ -67,6 +102,31 @@ export default async function MentorsPage() {
                                     </TableCell>
                                     <TableCell>{mentor.expertise}</TableCell>
                                     <TableCell className="text-center">{mentor.interns}</TableCell>
+                                    {user?.role === 'hr' && (
+                                        <TableCell className="text-right">
+                                            <AlertDialog>
+                                                <AlertDialogTrigger asChild>
+                                                    <Button variant="destructive" size="sm">
+                                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                                    </Button>
+                                                </AlertDialogTrigger>
+                                                <AlertDialogContent>
+                                                    <AlertDialogHeader>
+                                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                                    <AlertDialogDescription>
+                                                        This action will archive the mentor's record. It can be viewed in "Deleted Records" but cannot be easily undone.
+                                                    </AlertDialogDescription>
+                                                    </AlertDialogHeader>
+                                                    <AlertDialogFooter>
+                                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                                    <AlertDialogAction onClick={() => handleDelete(mentor._id.toString())}>
+                                                        Yes, archive mentor
+                                                    </AlertDialogAction>
+                                                    </AlertDialogFooter>
+                                                </AlertDialogContent>
+                                            </AlertDialog>
+                                        </TableCell>
+                                    )}
                                 </TableRow>
                             ))}
                         </TableBody>

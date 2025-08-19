@@ -25,6 +25,7 @@ import {
   FileUp,
   Settings,
   MessageSquare,
+  Archive,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -54,6 +55,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/assign-documents', label: 'Assign Documents', icon: FileUp },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
+    { href: '/dashboard/deleted-records', label: 'Deleted Records', icon: Archive },
     { href: '/dashboard/profile', label: 'Profile', icon: Settings },
   ],
   mentor: [

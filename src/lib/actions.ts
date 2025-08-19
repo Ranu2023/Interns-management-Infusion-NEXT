@@ -19,6 +19,8 @@ import mongoose from 'mongoose';
 import User from '@/lib/models/User';
 import MentorshipSession from './models/MentorshipSession';
 import DocumentModel, { DocumentType } from './models/Document';
+import ArchivedIntern from './models/ArchivedIntern';
+import ArchivedMentor from './models/ArchivedMentor';
 
 
 
@@ -872,6 +874,75 @@ export async function updateProfile(formData: FormData) {
     }
 }
 
+export async function archiveUser(userId: string, userRole: Role) {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+        return { success: false, message: 'Unauthorized' };
+    }
+
+    try {
+        await dbConnect();
+        const dbSession = await mongoose.startSession();
+        dbSession.startTransaction();
+
+        try {
+            const user = await User.findById(userId).session(dbSession);
+            if (!user) {
+                throw new Error('User not found.');
+            }
+
+            if (userRole === 'intern') {
+                const intern = await Intern.findById(userId).session(dbSession);
+                if (intern) {
+                    const archivedIntern = new ArchivedIntern({
+                        ...intern.toObject(),
+                        deletedAt: new Date(),
+                    });
+                    await archivedIntern.save({ session: dbSession });
+                    await Intern.findByIdAndDelete(userId).session(dbSession);
+                }
+            } else if (userRole === 'mentor') {
+                const mentor = await Mentor.findById(userId).session(dbSession);
+                if (mentor) {
+                    const archivedMentor = new ArchivedMentor({
+                        ...mentor.toObject(),
+                        deletedAt: new Date(),
+                    });
+                    await archivedMentor.save({ session: dbSession });
+                    await Mentor.findByIdAndDelete(userId).session(dbSession);
+                }
+            } else {
+                 throw new Error('Invalid role for archival.');
+            }
+
+            await User.findByIdAndDelete(userId).session(dbSession);
+            
+            await dbSession.commitTransaction();
+
+        } catch (error) {
+            await dbSession.abortTransaction();
+            throw error; // Rethrow to be caught by outer catch block
+        } finally {
+            dbSession.endSession();
+        }
+
+        revalidatePath('/dashboard/interns');
+        revalidatePath('/dashboard/mentors');
+        revalidatePath('/dashboard/deleted-records');
+        return { success: true, message: 'User archived successfully.' };
+
+    } catch (error: any) {
+        console.error('Failed to archive user:', error);
+        return { success: false, message: `Archival failed: ${error.message}` };
+    }
+}
+
+    
+
+    
+
+
+
     
 
     
@@ -880,13 +951,8 @@ export async function updateProfile(formData: FormData) {
 
     
 
-    
 
 
 
     
 
-
-
-
-    

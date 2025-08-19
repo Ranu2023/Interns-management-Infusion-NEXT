@@ -1,5 +1,5 @@
 
-'use server';
+'use client';
 import Link from 'next/link';
 import {
   Table,
@@ -18,35 +18,65 @@ import {
   CardContent,
 } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
-import { ArrowRight } from 'lucide-react';
+import { ArrowRight, Trash2 } from 'lucide-react';
 import dbConnect from '@/lib/db';
 import Intern from '@/lib/models/Intern';
 import { getSession } from '@/lib/session';
-import { User } from '@/context/AuthContext';
+import { User, useAuth } from '@/context/AuthContext';
 import { redirect } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { type IIntern } from '@/lib/models/Intern';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { archiveUser } from '@/lib/actions';
+import { useToast } from '@/hooks/use-toast';
 
-async function getDataForUser() {
-  const session = await getSession();
-  const user = session?.user as User;
 
+async function getDataForUser(user: User | null) {
   if (!user) {
-    redirect('/');
+    return [];
   }
 
   await dbConnect();
-
-  // HR sees all interns, other roles see only their own record.
   const query = user.role === 'hr' ? {} : { email: user.email };
   const interns = await Intern.find(query).lean();
-
-  return interns.map(intern => ({
-    ...intern,
-    _id: intern._id.toString(),
-  }));
+  return JSON.parse(JSON.stringify(interns));
 }
 
-export default async function InternsPage() {
-  const interns = await getDataForUser();
+export default function InternsPage() {
+  const { user } = useAuth();
+  const [interns, setInterns] = useState<IIntern[]>([]);
+  const { toast } = useToast();
+
+  useEffect(() => {
+    if (user) {
+      getDataForUser(user).then(setInterns);
+    }
+  }, [user]);
+
+  const handleDelete = async (internId: string) => {
+    const result = await archiveUser(internId, 'intern');
+    if (result.success) {
+        toast({ title: "Intern Archived", description: result.message });
+        setInterns(prev => prev.filter(i => i._id.toString() !== internId));
+    } else {
+        toast({ variant: "destructive", title: "Error", description: result.message });
+    }
+  };
+
+
+  if (!user) {
+    return redirect('/');
+  }
 
   return (
     <Card>
@@ -70,7 +100,7 @@ export default async function InternsPage() {
                 <TableHead>Project</TableHead>
                 <TableHead>Mentor</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Profile</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -93,12 +123,35 @@ export default async function InternsPage() {
                         {intern.status}
                     </Badge>
                     </TableCell>
-                    <TableCell className="text-right">
-                    <Button asChild variant="outline" size="sm">
-                        <Link href={`/dashboard/intern/${intern._id}`}>
-                        View <ArrowRight className="ml-2 h-4 w-4" />
-                        </Link>
-                    </Button>
+                    <TableCell className="text-right space-x-2">
+                        <Button asChild variant="outline" size="sm">
+                            <Link href={`/dashboard/intern/${intern._id}`}>
+                            View <ArrowRight className="ml-2 h-4 w-4" />
+                            </Link>
+                        </Button>
+                        {user.role === 'hr' && (
+                             <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                    <Button variant="destructive" size="sm">
+                                        <Trash2 className="mr-2 h-4 w-4" /> Delete
+                                    </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                    <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                        This action will archive the intern's record. It can be viewed in "Deleted Records" but cannot be easily undone.
+                                    </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => handleDelete(intern._id.toString())}>
+                                        Yes, archive intern
+                                    </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                </AlertDialogContent>
+                            </AlertDialog>
+                        )}
                     </TableCell>
                 </TableRow>
                 ))}
