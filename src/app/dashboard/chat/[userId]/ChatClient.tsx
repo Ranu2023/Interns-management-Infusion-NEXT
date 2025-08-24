@@ -103,21 +103,21 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
   return (
     <div className="flex flex-col h-full">
       <div className="flex-1 space-y-4 overflow-y-auto p-4">
-        {messages.length === 0 ? (
+        {messages?.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-muted-foreground">
             <MessageSquare className="h-12 w-12" />
             <p className="mt-4 text-lg">No messages yet.</p>
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages.map((msg, index) => (
+          messages?.map((msg, index) => (
             <div
-              key={msg._id.toString()}
+              key={msg?._id?.toString()}
               className={cn('flex items-end gap-2', {
-                'justify-end': msg.senderId.toString() === user?.id,
+                'justify-end': msg?.senderId?.toString() === user?.id,
               })}
             >
-              {msg.senderId.toString() !== user?.id && (
+              {msg?.senderId?.toString() !== user?.id && (
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={otherUser.avatar} />
                   <AvatarFallback>{otherUser.name.charAt(0)}</AvatarFallback>
@@ -126,7 +126,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
               <div
                 className={cn(
                   'max-w-xs rounded-lg p-3 lg:max-w-md',
-                  msg.senderId.toString() === user?.id
+                  msg?.senderId?.toString() === user?.id
                     ? 'bg-primary text-primary-foreground'
                     : 'bg-muted'
                 )}
@@ -136,7 +136,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
                   {format(new Date(msg.timestamp), 'h:mm a')}
                 </p>
               </div>
-               {msg.senderId.toString() === user?.id && (
+               {msg?.senderId?.toString() === user?.id && (
                 <Avatar className="h-8 w-8">
                   <AvatarImage src={user?.avatar} />
                   <AvatarFallback>{user?.name.charAt(0)}</AvatarFallback>
