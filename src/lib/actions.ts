@@ -147,7 +147,7 @@ export async function authenticate(prevState: any, formData: FormData) {
             maxAge: 60 * 60 * 24, // 1 day
           });
 
-        return { success: true };
+        return { success: true , token:session, message: 'Login successful.' };
     } catch (error) {
         console.error('Authentication error:', error);
         return { success: false, message: 'Something went wrong.' };

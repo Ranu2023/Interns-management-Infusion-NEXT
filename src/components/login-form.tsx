@@ -1,17 +1,16 @@
+"use client";
 
-'use client';
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { authenticate } from "@/lib/actions";
+import { Loader2 } from "lucide-react";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import Link from "next/link";
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { authenticate } from '@/lib/actions';
-import { Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
-import Link from 'next/link';
-
-function Icon(props: React.ComponentProps<'svg'>) {
+function Icon(props: React.ComponentProps<"svg">) {
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"
@@ -22,8 +21,14 @@ function Icon(props: React.ComponentProps<'svg'>) {
     >
       <defs>
         <linearGradient id="grad1" x1="0%" y1="0%" x2="0%" y2="100%">
-          <stop offset="0%" style={{ stopColor: 'rgb(83,59,255)', stopOpacity: 1 }} />
-          <stop offset="100%" style={{ stopColor: 'rgb(0,158,255)', stopOpacity: 1 }} />
+          <stop
+            offset="0%"
+            style={{ stopColor: "rgb(83,59,255)", stopOpacity: 1 }}
+          />
+          <stop
+            offset="100%"
+            style={{ stopColor: "rgb(0,158,255)", stopOpacity: 1 }}
+          />
         </linearGradient>
       </defs>
       <path
@@ -37,22 +42,24 @@ function Icon(props: React.ComponentProps<'svg'>) {
 export function LoginForm() {
   const router = useRouter();
   const [pending, setPending] = useState(false);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    setError('');
+    setError("");
     setPending(true);
 
     const formData = new FormData(e.currentTarget);
     const result = await authenticate(null, formData);
 
+    localStorage.setItem("token", result.token || "");
+
     setPending(false);
 
     if (result.success) {
-      router.push('/dashboard');
+      router.push("/dashboard");
     } else {
-      setError(result.message || 'Login failed.');
+      setError(result.message || "Login failed.");
     }
   }
 
@@ -108,8 +115,11 @@ export function LoginForm() {
       </form>
 
       <p className="text-center text-sm text-muted-foreground">
-        Don't have an account?{' '}
-        <Link href="/register" className="font-medium text-primary hover:underline">
+        Don't have an account?{" "}
+        <Link
+          href="/register"
+          className="font-medium text-primary hover:underline"
+        >
           Register
         </Link>
       </p>
