@@ -85,20 +85,20 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
     }
   };
   
-  if (isLoading) {
-      return (
-          <div className="flex flex-col h-full">
-              <div className="flex-1 p-6 space-y-4">
-                  <Skeleton className="h-12 w-2/3" />
-                  <Skeleton className="h-12 w-1/2 self-end" />
-                  <Skeleton className="h-16 w-3/4" />
-              </div>
-              <div className="p-4 border-t">
-                  <Skeleton className="h-10 w-full" />
-              </div>
-          </div>
-      )
-  }
+  // if (isLoading) {
+  //     return (
+  //         <div className="flex flex-col h-full">
+  //             <div className="flex-1 p-6 space-y-4">
+  //                 <Skeleton className="h-12 w-2/3" />
+  //                 <Skeleton className="h-12 w-1/2 self-end" />
+  //                 <Skeleton className="h-16 w-3/4" />
+  //             </div>
+  //             <div className="p-4 border-t">
+  //                 <Skeleton className="h-10 w-full" />
+  //             </div>
+  //         </div>
+  //     )
+  // }
 
   return (
     <div className="flex flex-col h-full">
