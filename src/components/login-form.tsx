@@ -114,7 +114,7 @@ export function LoginForm() {
         </Button>
       </form>
 
-      <p className="text-center text-sm text-muted-foreground">
+      {/* <p className="text-center text-sm text-muted-foreground">
         Don't have an account?{" "}
         <Link
           href="/register"
@@ -122,7 +122,7 @@ export function LoginForm() {
         >
           Register
         </Link>
-      </p>
+      </p> */}
     </div>
   );
 }
