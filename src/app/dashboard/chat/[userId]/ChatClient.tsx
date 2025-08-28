@@ -48,15 +48,30 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
         setMessages((prevMessages) => {
             // Avoid adding duplicates from optimistic update.
             // When real message comes from server, replace the optimistic one.
-            const optimisticMessageId = `${message.senderId}-${message.receiverId}-${message.timestamp}`;
-            const existingOptimistic = prevMessages.find(m => m._id === optimisticMessageId);
-
-            if (existingOptimistic) {
-                return prevMessages.map(m => m._id === optimisticMessageId ? message : m);
-            }
+            const optimisticMessageId = `${message.senderId}-${message.receiverId}-${message.timestamp}`; // This won't match exactly but we need a better way
             
-            // If it's not an optimistic update, just add it if it's not already there
+            // A more robust way to handle optimistic updates:
+            // The server-sent message has a real _id. The optimistic one does not.
+            // We can check if an optimistic message with the same content and rough timestamp exists.
+            
+            // For now, let's just check if we have a message with the same _id. If we do, don't add.
             if (prevMessages.some(m => m._id === message._id)) return prevMessages;
+
+            // This is a simple way to replace an optimistic message.
+            // A better way would be to assign a temporary ID on the client, send it to the server, and have the server return it.
+            // For simplicity, we find a message with the same sender and text that doesn't have a final `_id`.
+            const optimisticIndex = prevMessages.findIndex(
+              (m) =>
+                m.senderId.toString() === message.senderId.toString() &&
+                !m._id.toString().match(/^[0-9a-fA-F]{24}$/) && // Not a valid ObjectId
+                m.message === message.message
+            );
+
+            if (optimisticIndex > -1) {
+                const newMessages = [...prevMessages];
+                newMessages[optimisticIndex] = message;
+                return newMessages;
+            }
 
             return [...prevMessages, message];
         });
@@ -79,7 +94,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
       const newTimestamp = new Date();
       // Create an optimistic message to show in the UI instantly
       const optimisticMessage: IMessage = {
-        _id: `${user.id}-${otherUser._id}-${newTimestamp.toISOString()}`, // Temporary unique ID
+        _id: `optimistic-${Date.now()}`, // Temporary unique ID
         senderId: user.id as any,
         receiverId: otherUser._id as any,
         message: newMessage,
