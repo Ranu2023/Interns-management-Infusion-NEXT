@@ -30,7 +30,8 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
   useEffect(() => {
     if (!user) return;
 
-    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:3001');
+    // Use NEXT_PUBLIC_SOCKET_URL which should be http://localhost:4000
+    const newSocket = io(process.env.NEXT_PUBLIC_SOCKET_URL || 'http://localhost:4000');
     setSocket(newSocket);
     
     newSocket.on('connect', () => {
@@ -45,8 +46,18 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
       
       if(isRelevant) {
         setMessages((prevMessages) => {
-            // Avoid adding duplicates from optimistic update
+            // Avoid adding duplicates from optimistic update.
+            // When real message comes from server, replace the optimistic one.
+            const optimisticMessageId = `${message.senderId}-${message.receiverId}-${message.timestamp}`;
+            const existingOptimistic = prevMessages.find(m => m._id === optimisticMessageId);
+
+            if (existingOptimistic) {
+                return prevMessages.map(m => m._id === optimisticMessageId ? message : m);
+            }
+            
+            // If it's not an optimistic update, just add it if it's not already there
             if (prevMessages.some(m => m._id === message._id)) return prevMessages;
+
             return [...prevMessages, message];
         });
       }
@@ -65,12 +76,14 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
     e.preventDefault();
     if (newMessage.trim() && user && socket) {
       
+      const newTimestamp = new Date();
+      // Create an optimistic message to show in the UI instantly
       const optimisticMessage: IMessage = {
-        _id: new Date().toISOString(), // Temporary unique ID
+        _id: `${user.id}-${otherUser._id}-${newTimestamp.toISOString()}`, // Temporary unique ID
         senderId: user.id as any,
         receiverId: otherUser._id as any,
         message: newMessage,
-        timestamp: new Date(),
+        timestamp: newTimestamp,
         read: false,
       };
 
@@ -85,20 +98,22 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
     }
   };
   
-  // if (isLoading) {
-  //     return (
-  //         <div className="flex flex-col h-full">
-  //             <div className="flex-1 p-6 space-y-4">
-  //                 <Skeleton className="h-12 w-2/3" />
-  //                 <Skeleton className="h-12 w-1/2 self-end" />
-  //                 <Skeleton className="h-16 w-3/4" />
-  //             </div>
-  //             <div className="p-4 border-t">
-  //                 <Skeleton className="h-10 w-full" />
-  //             </div>
-  //         </div>
-  //     )
-  // }
+  if (isLoading) {
+      return (
+          <div className="flex flex-col h-full p-6">
+              <div className="flex-1 space-y-4">
+                  <Skeleton className="h-12 w-2/3 rounded-lg" />
+                  <div className="flex justify-end w-full">
+                    <Skeleton className="h-12 w-1/2 self-end rounded-lg" />
+                  </div>
+                  <Skeleton className="h-16 w-3/4 rounded-lg" />
+              </div>
+              <div className="mt-4">
+                  <Skeleton className="h-10 w-full rounded-md" />
+              </div>
+          </div>
+      )
+  }
 
   return (
     <div className="flex flex-col h-full">
@@ -110,7 +125,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
             <p className="text-sm">Start the conversation!</p>
           </div>
         ) : (
-          messages?.map((msg, index) => (
+          messages?.map((msg) => (
             <div
               key={msg?._id?.toString()}
               className={cn('flex items-end gap-2', {
@@ -147,7 +162,7 @@ export function ChatClient({ otherUser, initialMessages }: { otherUser: ChatUser
         )}
          <div ref={messagesEndRef} />
       </div>
-      <div className="border-t p-4">
+      <div className="border-t p-4 bg-background">
         <form onSubmit={handleSendMessage} className="flex items-center gap-2">
           <Input
             value={newMessage}

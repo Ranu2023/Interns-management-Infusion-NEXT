@@ -40,7 +40,7 @@ io.on('connection', (socket) => {
       if (receiverSocketId) {
         io.to(receiverSocketId).emit('privateMessage', newMessage);
       }
-      // Also send message back to sender to confirm it was sent
+      // Also send message back to sender to confirm it was sent and to update UI with DB-generated _id
       socket.emit('privateMessage', newMessage);
 
     } catch (error) {
@@ -60,7 +60,7 @@ io.on('connection', (socket) => {
   });
 });
 
-const PORT = process.env.SOCKET_PORT || 3001;
+const PORT = process.env.NEXT_PUBLIC_SOCKET_PORT || 4000;
 httpServer.listen(PORT, () => {
   console.log(`Socket.IO server running on port ${PORT}`);
 });
