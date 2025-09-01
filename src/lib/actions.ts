@@ -768,7 +768,8 @@ export async function addApplicant(prevState: any, formData: FormData) {
           course,
           interestField,
           internshipDuration: Number(internshipDuration),
-          avatar: ''
+          avatar: '',
+          firstLogin: false, // Explicitly set for new interns
         });
         await newIntern.save();
       } else if (role === 'mentor') {
@@ -993,4 +994,5 @@ export async function getAllMentors() {
 
 
     
+
 
