@@ -22,6 +22,8 @@ export interface IIntern extends Document {
     year?: string;
     course?: string;
     internshipDuration?: number;
+    firstLogin: boolean;
+    firstLoginAt?: Date;
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
@@ -68,6 +70,8 @@ const InternSchema: Schema<IIntern> = new Schema({
     year: { type: String },
     course: { type: String },
     internshipDuration: { type: Number },
+    firstLogin: { type: Boolean, default: false },
+    firstLoginAt: { type: Date },
 }, { timestamps: true }); // optional timestamps
 
 const Intern: Model<IIntern> = models.Intern || mongoose.model<IIntern>('Intern', InternSchema);

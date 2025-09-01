@@ -100,9 +100,9 @@ export default function InternsPage() {
             <TableHeader>
                 <TableRow>
                 <TableHead>Name</TableHead>
-                <TableHead>Email</TableHead>
                 <TableHead>Project</TableHead>
-                <TableHead>Mentor</TableHead>
+                <TableHead>First Login</TableHead>
+                <TableHead>Login Status</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -111,9 +111,18 @@ export default function InternsPage() {
                 {interns.map((intern) => (
                 <TableRow key={intern._id}>
                     <TableCell className="font-medium">{intern.name}</TableCell>
-                    <TableCell>{intern.email}</TableCell>
                     <TableCell>{intern.project}</TableCell>
-                    <TableCell>{intern.mentor}</TableCell>
+                     <TableCell>
+                      {intern.firstLoginAt 
+                        ? new Date(intern.firstLoginAt).toLocaleString()
+                        : 'N/A'
+                      }
+                    </TableCell>
+                    <TableCell>
+                      <Badge variant={intern.firstLogin ? 'default' : 'secondary'}>
+                        {intern.firstLogin ? 'Logged In' : 'Not Logged In Yet'}
+                      </Badge>
+                    </TableCell>
                     <TableCell>
                     <Badge
                         variant={
@@ -166,4 +175,5 @@ export default function InternsPage() {
     </Card>
   );
 }
+
 

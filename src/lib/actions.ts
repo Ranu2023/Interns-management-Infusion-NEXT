@@ -119,6 +119,27 @@ export async function authenticate(prevState: any, formData: FormData) {
             return { success: false, message: 'Invalid credentials.' };
         }
 
+        if (user.role === 'intern') {
+            const intern = await Intern.findById(user._id);
+            if (intern && !intern.firstLogin) {
+                intern.firstLogin = true;
+                intern.firstLoginAt = new Date();
+                await intern.save();
+
+                const hrUsers = await User.find({ role: 'hr' }).lean();
+                const notifications = hrUsers.map(hr => ({
+                    userId: hr._id,
+                    message: `${intern.name} has logged in for the first time.`,
+                    href: `/dashboard/interns`
+                }));
+                if(notifications.length > 0) {
+                    await Notification.insertMany(notifications);
+                }
+                 revalidatePath('/dashboard/interns'); // For HR
+            }
+        }
+
+
         let roleDetails: any = {};
         if (user.role === 'mentor') {
             const mentorProfile = await Mentor.findOne({ _id: user._id }).lean();
@@ -972,5 +993,6 @@ export async function getAllMentors() {
 
 
     
+
 
 
