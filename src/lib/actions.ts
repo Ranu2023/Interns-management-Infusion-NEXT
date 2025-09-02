@@ -976,6 +976,25 @@ export async function getAllMentors() {
     return JSON.parse(JSON.stringify(mentors));
 }
 
+export async function updateInternActiveStatus(internId: string, newStatus: 'active' | 'inactive') {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+        return { success: false, message: 'Unauthorized: Only HR can update status.' };
+    }
+
+    try {
+        await dbConnect();
+        const intern = await Intern.findByIdAndUpdate(internId, { activeStatus: newStatus }, { new: true });
+        if (!intern) {
+            return { success: false, message: 'Intern not found.' };
+        }
+        revalidatePath('/dashboard/interns');
+        return { success: true, message: `${intern.name}'s status updated to ${newStatus}.` };
+    } catch (error) {
+        console.error('Failed to update intern status:', error);
+        return { success: false, message: 'An internal server error occurred.' };
+    }
+}
     
 
     
@@ -997,5 +1016,7 @@ export async function getAllMentors() {
 
 
 
+
+    
 
     

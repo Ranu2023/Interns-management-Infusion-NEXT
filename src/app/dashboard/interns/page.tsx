@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { ArrowRight, Trash2 } from 'lucide-react';
 import { User, useAuth } from '@/context/AuthContext';
 import { redirect } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { type IIntern } from '@/lib/models/Intern';
 import {
   AlertDialog,
@@ -34,13 +34,17 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
-import { archiveUser, getInternsForHR } from '@/lib/actions';
+import { archiveUser, getInternsForHR, updateInternActiveStatus } from '@/lib/actions';
 import { useToast } from '@/hooks/use-toast';
+import { Switch } from '@/components/ui/switch';
+import { Label } from '@/components/ui/label';
 
 export default function InternsPage() {
   const { user } = useAuth();
   const [interns, setInterns] = useState<IIntern[]>([]);
   const { toast } = useToast();
+  const [isPending, startTransition] = useTransition();
+
 
   useEffect(() => {
     if (user?.role === 'hr') {
@@ -57,6 +61,19 @@ export default function InternsPage() {
         toast({ variant: "destructive", title: "Error", description: result.message });
     }
   };
+
+  const handleStatusChange = (internId: string, newStatus: boolean) => {
+    startTransition(async () => {
+        const status = newStatus ? 'active' : 'inactive';
+        const result = await updateInternActiveStatus(internId, status);
+        if (result.success) {
+            toast({ title: 'Status Updated', description: result.message });
+            setInterns(prev => prev.map(i => i._id.toString() === internId ? { ...i, activeStatus: status } : i));
+        } else {
+             toast({ variant: "destructive", title: "Error", description: result.message });
+        }
+    });
+  }
 
 
   if (!user) {
@@ -103,6 +120,7 @@ export default function InternsPage() {
                 <TableHead>Project</TableHead>
                 <TableHead>First Login</TableHead>
                 <TableHead>Login Status</TableHead>
+                <TableHead>Active Status</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
                 </TableRow>
@@ -122,6 +140,17 @@ export default function InternsPage() {
                       <Badge variant={intern.firstLogin ? 'default' : 'secondary'}>
                         {intern.firstLogin ? 'Logged In' : 'Not Logged In Yet'}
                       </Badge>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center space-x-2">
+                        <Switch
+                          id={`active-switch-${intern._id}`}
+                          checked={intern.activeStatus === 'active'}
+                          onCheckedChange={(checked) => handleStatusChange(intern._id.toString(), checked)}
+                          disabled={isPending}
+                        />
+                        <Label htmlFor={`active-switch-${intern._id}`} className="capitalize">{intern.activeStatus}</Label>
+                      </div>
                     </TableCell>
                     <TableCell>
                     <Badge
@@ -175,3 +204,5 @@ export default function InternsPage() {
     </Card>
   );
 }
+
+    

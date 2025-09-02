@@ -24,6 +24,7 @@ export interface IIntern extends Document {
     internshipDuration?: number;
     firstLogin: boolean;
     firstLoginAt?: Date;
+    activeStatus: 'active' | 'inactive';
 }
 
 const InternSchema: Schema<IIntern> = new Schema({
@@ -72,10 +73,12 @@ const InternSchema: Schema<IIntern> = new Schema({
     internshipDuration: { type: Number },
     firstLogin: { type: Boolean, default: false },
     firstLoginAt: { type: Date },
+    activeStatus: { type: String, enum: ['active', 'inactive'], default: 'inactive' },
 }, { timestamps: true }); // optional timestamps
 
 const Intern: Model<IIntern> = models.Intern || mongoose.model<IIntern>('Intern', InternSchema);
 
 export default Intern;
 
+    
     

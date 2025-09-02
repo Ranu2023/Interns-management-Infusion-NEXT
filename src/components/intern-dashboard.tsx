@@ -12,15 +12,17 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
-import { ArrowRight, FileText, CheckCircle2, ListTodo } from 'lucide-react';
+import { ArrowRight, FileText, CheckCircle2, ListTodo, AlertTriangle } from 'lucide-react';
 import type { User } from '@/context/AuthContext';
 import dbConnect from '@/lib/db';
 import Intern from '@/lib/models/Intern';
 import Project from '@/lib/models/Project';
 import type { IProject } from '@/lib/models/Project';
+import type { IIntern } from '@/lib/models/Intern';
+
 
 async function getDashboardData(user: User): Promise<{
-  intern: any;
+  intern: (IIntern & { _id: string}) | null;
   project: (IProject & { _id: string }) | null;
   tasksCompleted: number;
   tasksTotal: number;
@@ -36,10 +38,12 @@ async function getDashboardData(user: User): Promise<{
   if (!intern) {
     return { intern: null, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
+  
+  const plainIntern = JSON.parse(JSON.stringify(intern));
 
   // If intern's project is unassigned, don't try to fetch a project.
   if (!intern.project || intern.project === 'Unassigned') {
-    return { intern: JSON.parse(JSON.stringify(intern)), project: null, tasksCompleted: 0, tasksTotal: 0 };
+    return { intern: plainIntern, project: null, tasksCompleted: 0, tasksTotal: 0 };
   }
 
   const projectData = await Project.findOne({ title: intern.project }).lean();
@@ -58,7 +62,7 @@ async function getDashboardData(user: User): Promise<{
   }
   
   return {
-    intern: JSON.parse(JSON.stringify(intern)),
+    intern: plainIntern,
     project: project ? JSON.parse(JSON.stringify(project)) : null,
     tasksCompleted,
     tasksTotal,
@@ -87,6 +91,24 @@ export async function InternDashboard({ user }: { user: User }) {
                 </CardContent>
             </Card>
         )
+    }
+
+    if (intern.activeStatus === 'inactive') {
+        return (
+            <Card>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-2">
+                        <AlertTriangle className="text-destructive h-6 w-6" />
+                        Account Inactive
+                    </CardTitle>
+                </CardHeader>
+                <CardContent>
+                    <p className="text-center text-lg text-muted-foreground">
+                        Your account is currently inactive. Please pay to activate your dashboard. Contact HR for more details.
+                    </p>
+                </CardContent>
+            </Card>
+        );
     }
 
   return (
@@ -156,3 +178,5 @@ export async function InternDashboard({ user }: { user: User }) {
     </div>
   );
 }
+
+    
