@@ -75,5 +75,3 @@ export default async function MyProjectsPage() {
         </div>
     );
 }
-
-    

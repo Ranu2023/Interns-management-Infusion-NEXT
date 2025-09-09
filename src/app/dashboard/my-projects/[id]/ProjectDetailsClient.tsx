@@ -24,23 +24,28 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
     const [isPending, startTransition] = useTransition();
 
     const handleTaskChange = (taskId: number) => {
+        // Find the task to determine its current state
+        const currentTask = tasks.find(t => t.id === taskId);
+        if (!currentTask || currentTask.completed) {
+            // If task is not found or already completed, do nothing.
+            return;
+        }
+
         // Optimistically update the UI
         const newTasks = tasks.map(task =>
-            task.id === taskId ? { ...task, completed: !task.completed } : task
+            task.id === taskId ? { ...task, completed: true } : task
         );
         setTasks(newTasks);
 
         // Call the server action to update the database
         startTransition(async () => {
-            const currentTask = tasks.find(t => t.id === taskId);
-            if (currentTask) {
-                try {
-                    await updateTaskCompletion(initialProject._id, taskId, !currentTask.completed);
-                } catch (error) {
-                    console.error("Failed to update task", error);
-                    // Revert UI on error
-                    setTasks(tasks); 
-                }
+            try {
+                // We are always setting it to true now.
+                await updateTaskCompletion(initialProject._id, taskId, true);
+            } catch (error) {
+                console.error("Failed to update task", error);
+                // Revert UI on error by resetting to original task state
+                setTasks(tasks); 
             }
         });
     };
@@ -52,7 +57,13 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
         const completed = tasks.filter(task => task.completed).length;
         const total = tasks.length;
         const progressPercentage = total > 0 ? Math.round((completed / total) * 100) : 0;
-        const newStatus = progressPercentage === 100 ? 'Completed' : 'In Progress';
+        let newStatus: Project['status'] = 'In Progress';
+        if (progressPercentage === 100) {
+            newStatus = 'Completed';
+        } else if (initialProject.completionDate && new Date(initialProject.completionDate) < new Date()) {
+            newStatus = 'On-Hold'; // Or some 'Overdue' status if you add it
+        }
+
         return { progress: progressPercentage, tasksCompleted: completed, tasksTotal: total, status: newStatus };
     }, [tasks, initialProject]);
 
@@ -75,7 +86,7 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
                 {initialProject.description}
               </CardDescription>
             </div>
-            <Badge variant={status === 'Completed' ? 'secondary' : 'default'}>
+            <Badge variant={status === 'Completed' ? 'secondary' : status === 'On-Hold' ? 'destructive' : 'default'}>
               {status}
             </Badge>
           </div>
@@ -99,7 +110,7 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
                       id={`task-${task.id}`}
                       checked={task.completed}
                       onCheckedChange={() => handleTaskChange(task.id)}
-                      disabled={isPending}
+                      disabled={isPending || task.completed}
                     />
                     <Label
                       htmlFor={`task-${task.id}`}
@@ -117,5 +128,3 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
     </div>
   );
 }
-
-    

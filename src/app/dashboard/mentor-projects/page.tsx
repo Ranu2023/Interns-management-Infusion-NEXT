@@ -17,6 +17,9 @@ import Project from '@/lib/models/Project';
 import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
+import { format, differenceInDays, isPast } from 'date-fns';
+import { cn } from '@/lib/utils';
+import { CalendarClock, AlertTriangle } from 'lucide-react';
 
 async function getMyAssignedProjects() {
     const session = await getSession();
@@ -47,7 +50,12 @@ export default async function MentorProjectsPage() {
                 </Card>
              ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {projects.map((project) => (
+                    {projects.map((project) => {
+                        const daysLeft = project.completionDate ? differenceInDays(new Date(project.completionDate), new Date()) : null;
+                        const isOverdue = daysLeft !== null && daysLeft < 0;
+                        const isNearingDeadline = daysLeft !== null && daysLeft >= 0 && daysLeft <= 5;
+                        
+                        return (
                         <Card key={project._id} className="flex flex-col">
                             <CardHeader>
                                 <div className="flex justify-between items-start">
@@ -66,12 +74,24 @@ export default async function MentorProjectsPage() {
                                     </div>
                                     <Progress value={project.progress} />
                                 </div>
+                                {project.completionDate && (
+                                    <div className={cn("text-sm p-2 rounded-md flex justify-between items-center", {
+                                        "bg-destructive/10 text-destructive": isNearingDeadline || isOverdue
+                                    })}>
+                                        <div className="flex items-center gap-2 font-medium">
+                                             {isNearingDeadline || isOverdue ? <AlertTriangle className="h-4 w-4"/> : <CalendarClock className="h-4 w-4"/>}
+                                             <span>{isOverdue ? `Overdue by ${Math.abs(daysLeft)} days` : `${daysLeft} days left`}</span>
+                                        </div>
+                                        <span>{format(new Date(project.completionDate), "MMM dd, yyyy")}</span>
+                                    </div>
+                                )}
                             </CardContent>
                             <CardFooter>
                             <p className="text-xs text-muted-foreground">Team: {project.team.join(', ') || 'Unassigned'}</p>
                             </CardFooter>
                         </Card>
-                    ))}
+                        )
+                    })}
                 </div>
              )}
         </div>

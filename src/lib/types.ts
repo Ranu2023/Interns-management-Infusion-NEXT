@@ -48,6 +48,7 @@ export interface Project {
     recentActivity: string;
     tasks: Task[];
     progress?: number;
+    completionDate?: Date;
 }
 
 export interface Application {

@@ -1,7 +1,7 @@
 
 'use client';
 
-import { useRef, useActionState, useEffect } from 'react';
+import { useRef, useActionState, useState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { Button } from "@/components/ui/button";
 import {
@@ -22,10 +22,14 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { FileUp, Send, Loader2 } from "lucide-react";
+import { FileUp, Send, Loader2, Calendar as CalendarIcon } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type IIntern } from "@/lib/models/Intern";
 import { assignProject } from '@/lib/actions';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 
 
 function SubmitButton() {
@@ -42,8 +46,12 @@ function SubmitButton() {
 export function AssignProjectForm({ interns }: { interns: (IIntern & {_id: string})[] }) {
   const { toast } = useToast();
   const formRef = useRef<HTMLFormElement>(null);
+  const [date, setDate] = useState<Date>();
   
   const [state, formAction] = useActionState(async (prevState: any, formData: FormData) => {
+    if (date) {
+        formData.set('completionDate', date.toISOString());
+    }
     try {
         const result = await assignProject(formData);
         if (result.success) {
@@ -52,6 +60,7 @@ export function AssignProjectForm({ interns }: { interns: (IIntern & {_id: strin
                 description: `${formData.get('projectName')} has been assigned.`,
             });
             formRef.current?.reset();
+            setDate(undefined);
         } else {
              toast({
                 variant: "destructive",
@@ -102,15 +111,43 @@ export function AssignProjectForm({ interns }: { interns: (IIntern & {_id: strin
                 </p>
             )}
           </div>
-          <div className="grid gap-2">
-            <Label htmlFor="project-name">Project Name</Label>
-            <Input
-              id="project-name"
-              name="projectName"
-              placeholder="e.g., Customer Feedback Analysis Tool"
-              required
-              disabled={interns.length === 0}
-            />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid gap-2">
+                <Label htmlFor="project-name">Project Name</Label>
+                <Input
+                id="project-name"
+                name="projectName"
+                placeholder="e.g., Customer Feedback Analysis Tool"
+                required
+                disabled={interns.length === 0}
+                />
+            </div>
+             <div className="grid gap-2">
+                <Label htmlFor="completion-date">Completion Deadline</Label>
+                 <Popover>
+                    <PopoverTrigger asChild>
+                        <Button
+                        variant={"outline"}
+                        className={cn(
+                            "justify-start text-left font-normal",
+                            !date && "text-muted-foreground"
+                        )}
+                        disabled={interns.length === 0}
+                        >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {date ? format(date, "PPP") : <span>Pick a date</span>}
+                        </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0">
+                        <Calendar
+                        mode="single"
+                        selected={date}
+                        onSelect={setDate}
+                        initialFocus
+                        />
+                    </PopoverContent>
+                </Popover>
+            </div>
           </div>
           <div className="grid gap-2">
             <Label htmlFor="project-description">Project Description</Label>

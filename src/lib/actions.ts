@@ -215,10 +215,11 @@ export async function assignProject(formData: FormData) {
     const projectDescription = formData.get('projectDescription') as string;
     const documentLink = formData.get('documentLink') as string | null;
     const projectTasks = formData.get('projectTasks') as string;
+    const completionDate = formData.get('completionDate') as string;
 
 
-    if (!internId || !projectName || !projectDescription || !projectTasks) {
-        return { success: false, message: 'Missing required fields. Project Name, Description and Tasks are required.' };
+    if (!internId || !projectName || !projectDescription || !projectTasks || !completionDate) {
+        return { success: false, message: 'All fields including deadline are required.' };
     }
 
     try {
@@ -254,6 +255,7 @@ export async function assignProject(formData: FormData) {
             recentActivity: 'Project created.',
             tasks,
             progress: 0,
+            completionDate: new Date(completionDate)
         });
 
         await newProject.save();

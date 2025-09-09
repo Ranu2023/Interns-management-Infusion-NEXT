@@ -8,15 +8,18 @@ import {
   CardTitle,
   CardContent,
   CardFooter,
+  CardDescription
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { CheckCircle2, ListTodo, GitFork, FileText, Download } from 'lucide-react';
+import { CheckCircle2, ListTodo, GitFork, FileText, Download, CalendarClock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import type { Project } from '@/lib/types';
+import type { IProject } from '@/lib/models/Project';
+import { format, differenceInDays, isPast } from 'date-fns';
+import { cn } from '@/lib/utils';
 
-export function ProjectCard({ project }: { project: Project }) {
+export function ProjectCard({ project }: { project: IProject & {tasksCompleted: number, tasksTotal: number} }) {
   const router = useRouter();
 
   const handleCardClick = () => {
@@ -26,6 +29,11 @@ export function ProjectCard({ project }: { project: Project }) {
   const handleDownloadClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
     e.stopPropagation();
   };
+  
+  const daysLeft = project.completionDate ? differenceInDays(new Date(project.completionDate), new Date()) : null;
+  const isOverdue = daysLeft !== null && daysLeft < 0;
+  const isNearingDeadline = daysLeft !== null && daysLeft >= 0 && daysLeft <= 5;
+
 
   return (
     <Card
@@ -85,9 +93,27 @@ export function ProjectCard({ project }: { project: Project }) {
           </Button>
         )}
       </CardContent>
-      <CardFooter className="flex items-center gap-2 text-xs text-muted-foreground border-t pt-4 mt-auto">
-        <GitFork className="h-4 w-4" />
-        <span>{project.recentActivity}</span>
+       <CardFooter className="flex flex-col items-start gap-3 text-xs text-muted-foreground border-t pt-4 mt-auto">
+         {project.completionDate && (
+             <div className={cn("w-full flex justify-between items-center text-sm p-2 rounded-md", {
+                 "bg-destructive/10 text-destructive": isNearingDeadline || isOverdue
+             })}>
+                <div className="flex items-center gap-2">
+                    {isNearingDeadline || isOverdue ? <AlertTriangle className="h-4 w-4"/> : <CalendarClock className="h-4 w-4"/>}
+                    <span className="font-medium">
+                        {isOverdue ? 'Deadline Missed' : 'Deadline'}
+                    </span>
+                </div>
+                <span>
+                    {format(new Date(project.completionDate), "PPP")}
+                    {daysLeft !== null && ` (${isOverdue ? Math.abs(daysLeft) + ' days ago' : daysLeft + ' days left'})`}
+                </span>
+             </div>
+         )}
+        <div className="flex items-center gap-2">
+            <GitFork className="h-4 w-4" />
+            <span>{project.recentActivity}</span>
+        </div>
       </CardFooter>
     </Card>
   );
