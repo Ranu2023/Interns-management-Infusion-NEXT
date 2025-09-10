@@ -45,18 +45,17 @@ async function getActivityData(internId: string) {
     }, {} as Record<string, IActivity[]>);
 
     // Further group by day within each month
-    for (const month in groupedActivities) {
+     for (const month in groupedActivities) {
         const activitiesForMonth = groupedActivities[month];
         const groupedByDay = activitiesForMonth.reduce((acc, activity) => {
             const dayKey = format(new Date(activity.date), 'yyyy-MM-dd');
-            if(!acc[dayKey]) {
+            if (!acc[dayKey]) {
                 acc[dayKey] = { sessions: [] };
             }
             acc[dayKey].sessions.push(activity);
             return acc;
-        }, {} as Record<string, { sessions: IActivity[]}>);
+        }, {} as Record<string, { sessions: IActivity[] }>);
         
-        // This assignment was incorrect, it needs to be assigned back to the month
         groupedActivities[month] = groupedByDay as any;
     }
 
@@ -134,7 +133,7 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                         </div>
 
                                                         {session.logoutTime && (
-                                                            <div className="flex items-center gap-3 absolute -left-3.5 bottom-2">
+                                                            <div className="flex items-center gap-3 absolute -left-3.5 bottom-2 mt-4">
                                                                 <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
                                                                     <LogOut className="h-4 w-4 text-white" />
                                                                 </div>
@@ -156,3 +155,5 @@ export default async function InternActivityDetailPage({ params }: { params: { i
         </div>
     )
 }
+
+    

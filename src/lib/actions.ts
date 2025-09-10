@@ -158,6 +158,7 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
 
         let activityId = null;
+        const now = new Date();
 
         if (user.role === 'intern') {
             const intern = await Intern.findById(user._id);
@@ -165,16 +166,16 @@ export async function authenticate(prevState: any, formData: FormData) {
                 // Create a new activity record for this session
                 const newActivity = new Activity({
                     internId: intern._id,
-                    loginTime: new Date(),
+                    loginTime: now,
                     activities: [],
-                    date: new Date()
+                    date: now,
                 });
                 await newActivity.save();
                 activityId = newActivity._id.toString();
 
                 if (!intern.firstLogin) {
                     intern.firstLogin = true;
-                    intern.firstLoginAt = new Date();
+                    intern.firstLoginAt = now;
                     
                     await intern.save();
 
