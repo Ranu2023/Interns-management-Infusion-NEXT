@@ -30,11 +30,17 @@ export async function logActivity(internId: string, action: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        await Activity.findOneAndUpdate(
-            { internId, date: today },
-            { $push: { activities: { action, timestamp: new Date() } } },
-            { upsert: true, setDefaultsOnInsert: true }
-        );
+        const activityLog = await Activity.findOne({ internId, date: today });
+        if (activityLog && activityLog.sessions.length > 0) {
+            // Find the last session to add the activity to.
+            const lastSession = activityLog.sessions[activityLog.sessions.length - 1];
+            if (!lastSession.logoutTime) { // Check if it's an active session
+                 await Activity.updateOne(
+                    { _id: activityLog._id, 'sessions._id': lastSession._id },
+                    { $push: { 'sessions.$.activities': { action, timestamp: new Date() } } }
+                );
+            }
+        }
     } catch (error) {
         console.error('Failed to log activity:', error);
     }
@@ -49,11 +55,19 @@ export async function logout() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            await Activity.findOneAndUpdate(
-                { internId: session.user.id, date: today },
-                { $set: { logoutTime: new Date() } },
-                { upsert: true, setDefaultsOnInsert: true }
-            );
+             const activityLog = await Activity.findOne({ internId: session.user.id, date: today });
+
+            if (activityLog && activityLog.sessions.length > 0) {
+                // Find the last session that doesn't have a logout time
+                const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
+                if (activeSessionIndex > -1) {
+                    const updateField = `sessions.${activeSessionIndex}.logoutTime`;
+                     await Activity.updateOne(
+                        { _id: activityLog._id },
+                        { $set: { [updateField]: new Date() } }
+                    );
+                }
+            }
         } catch (error) {
             console.error('Failed to log logout time:', error);
         }
@@ -155,19 +169,17 @@ export async function authenticate(prevState: any, formData: FormData) {
             if (intern) {
                  const today = new Date();
                  today.setHours(0, 0, 0, 0);
+
+                // Log the login session
+                 await Activity.findOneAndUpdate(
+                    { internId: intern._id, date: today },
+                    { $push: { sessions: { loginTime: new Date(), activities: [] } } },
+                    { upsert: true, setDefaultsOnInsert: true }
+                );
                  
                 if (!intern.firstLogin) {
                     intern.firstLogin = true;
                     intern.firstLoginAt = new Date();
-                    
-                    await Activity.findOneAndUpdate(
-                        { internId: intern._id, date: today },
-                        { 
-                            $set: { loginTime: new Date() },
-                            $setOnInsert: { internId: intern._id, date: today }
-                        },
-                        { upsert: true, setDefaultsOnInsert: true }
-                    );
                     
                     await intern.save();
 
@@ -181,15 +193,6 @@ export async function authenticate(prevState: any, formData: FormData) {
                         await Notification.insertMany(notifications);
                     }
                     revalidatePath('/dashboard/interns'); // For HR
-                } else {
-                     await Activity.findOneAndUpdate(
-                        { internId: intern._id, date: today },
-                        { 
-                            $set: { loginTime: new Date() },
-                            $setOnInsert: { internId: intern._id, date: today }
-                        },
-                        { upsert: true, setDefaultsOnInsert: true }
-                    );
                 }
             }
         }

@@ -20,7 +20,7 @@ async function getProject(id: string): Promise<any | null> {
         if (!project) return null;
 
         const session = await getSession();
-        if (session?.user.role === 'intern') {
+        if (session?.user && session.user.role === 'intern') {
             await logActivity(session.user.id, `Viewed project: ${project.title}`);
         }
 

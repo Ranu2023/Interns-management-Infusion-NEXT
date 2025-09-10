@@ -91,39 +91,42 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                             <AccordionContent className="p-4 bg-muted/50 rounded-b-lg">
                                 <div className="space-y-4">
                                      {activities.map(dayActivity => (
-                                        <div key={dayActivity._id}>
-                                            <h4 className="font-semibold mb-2">{format(new Date(dayActivity.date), 'EEEE, MMMM do')}</h4>
-                                            <div className="relative pl-6">
-                                                <div className="absolute left-2.5 h-full w-0.5 bg-border" />
-                                                <div className="space-y-4">
-                                                    {dayActivity.loginTime && (
-                                                        <div className="flex items-center gap-3">
-                                                            <div className="z-10 flex h-5 w-5 items-center justify-center rounded-full bg-green-500">
-                                                                <LogIn className="h-3 w-3 text-white" />
+                                        <Card key={dayActivity._id} className="bg-background">
+                                            <CardHeader>
+                                                <CardTitle className="text-base">{format(new Date(dayActivity.date), 'EEEE, MMMM do')}</CardTitle>
+                                            </CardHeader>
+                                            <CardContent className="space-y-4">
+                                                {dayActivity.sessions.map((session, index) => (
+                                                     <div key={index} className="relative pl-6 border-l-2 border-dashed ml-3 py-2">
+                                                        <div className="flex items-center gap-3 absolute -left-3.5 top-2">
+                                                             <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
+                                                                <LogIn className="h-4 w-4 text-white" />
                                                             </div>
-                                                            <span className="text-sm font-medium">{format(new Date(dayActivity.loginTime), 'hh:mm:ss a')}</span>
-                                                            <span className="text-sm text-muted-foreground">Logged In</span>
+                                                            <span className="text-sm font-medium">{format(new Date(session.loginTime), 'hh:mm:ss a')} - Logged In</span>
                                                         </div>
-                                                    )}
-                                                    {dayActivity.activities?.map(action => (
-                                                         <div key={action._id} className="flex items-center gap-3">
-                                                            <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
-                                                            <span className="text-sm font-medium">{format(new Date(action.timestamp), 'hh:mm:ss a')}</span>
-                                                            <span className="text-sm text-muted-foreground">{action.action}</span>
+
+                                                        <div className="space-y-2 mt-10 ml-3">
+                                                            {session.activities?.map(action => (
+                                                                <div key={action._id} className="flex items-center gap-3">
+                                                                    <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
+                                                                    <span className="text-sm font-medium">{format(new Date(action.timestamp), 'hh:mm:ss a')}</span>
+                                                                    <span className="text-sm text-muted-foreground">{action.action}</span>
+                                                                </div>
+                                                            ))}
                                                         </div>
-                                                    ))}
-                                                    {dayActivity.logoutTime && (
-                                                        <div className="flex items-center gap-3">
-                                                             <div className="z-10 flex h-5 w-5 items-center justify-center rounded-full bg-red-500">
-                                                                <LogOut className="h-3 w-3 text-white" />
+
+                                                        {session.logoutTime && (
+                                                            <div className="flex items-center gap-3 absolute -left-3.5 bottom-2">
+                                                                <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
+                                                                    <LogOut className="h-4 w-4 text-white" />
+                                                                </div>
+                                                                <span className="text-sm font-medium">{format(new Date(session.logoutTime), 'hh:mm:ss a')} - Logged Out</span>
                                                             </div>
-                                                            <span className="text-sm font-medium">{format(new Date(dayActivity.logoutTime), 'hh:mm:ss a')}</span>
-                                                            <span className="text-sm text-muted-foreground">Logged Out</span>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
+                                                        )}
+                                                     </div>
+                                                ))}
+                                            </CardContent>
+                                        </Card>
                                      ))}
                                 </div>
                             </AccordionContent>
