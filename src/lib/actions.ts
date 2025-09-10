@@ -30,17 +30,23 @@ export async function logActivity(internId: string, action: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        const activityLog = await Activity.findOne({ internId, date: today });
-        if (activityLog && activityLog.sessions.length > 0) {
+        // Find the activity log for the current day, or create it if it doesn't exist
+        const activityLog = await Activity.findOne({ internId: new mongoose.Types.ObjectId(internId), date: today });
+
+        if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
             // Find the last session to add the activity to.
-            const lastSession = activityLog.sessions[activityLog.sessions.length - 1];
-            if (!lastSession.logoutTime) { // Check if it's an active session
-                 await Activity.updateOne(
-                    { _id: activityLog._id, 'sessions._id': lastSession._id },
-                    { $push: { 'sessions.$.activities': { action, timestamp: new Date() } } }
-                );
+            const lastSessionIndex = activityLog.sessions.length - 1;
+            const lastSession = activityLog.sessions[lastSessionIndex];
+            
+            // Check if it's an active session (no logout time)
+            if (!lastSession.logoutTime) {
+                 const updateQuery = {
+                    $push: { [`sessions.${lastSessionIndex}.activities`]: { action, timestamp: new Date() } }
+                };
+                await Activity.updateOne({ _id: activityLog._id }, updateQuery);
             }
         }
+        // If no activity log or session, the login action will create it. We don't log if there's no active session.
     } catch (error) {
         console.error('Failed to log activity:', error);
     }
@@ -55,14 +61,15 @@ export async function logout() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-             const activityLog = await Activity.findOne({ internId: session.user.id, date: today });
+            const activityLog = await Activity.findOne({ internId: session.user.id, date: today });
 
-            if (activityLog && activityLog.sessions.length > 0) {
-                // Find the last session that doesn't have a logout time
+            if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
+                // Find the index of the last session that doesn't have a logout time
                 const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
+                
                 if (activeSessionIndex > -1) {
                     const updateField = `sessions.${activeSessionIndex}.logoutTime`;
-                     await Activity.updateOne(
+                    await Activity.updateOne(
                         { _id: activityLog._id },
                         { $set: { [updateField]: new Date() } }
                     );
@@ -74,7 +81,7 @@ export async function logout() {
     }
     cookies().delete("session");
     redirect('/');
-  }
+}
 
 
 // ✅ User Registration
@@ -171,10 +178,13 @@ export async function authenticate(prevState: any, formData: FormData) {
                  today.setHours(0, 0, 0, 0);
 
                 // Log the login session
-                 await Activity.findOneAndUpdate(
+                await Activity.findOneAndUpdate(
                     { internId: intern._id, date: today },
-                    { $push: { sessions: { loginTime: new Date(), activities: [] } } },
-                    { upsert: true, setDefaultsOnInsert: true }
+                    { 
+                        $push: { sessions: { loginTime: new Date(), activities: [] } },
+                        $setOnInsert: { internId: intern._id, date: today }
+                    },
+                    { upsert: true, new: true, setDefaultsOnInsert: true }
                 );
                  
                 if (!intern.firstLogin) {
@@ -1087,3 +1097,4 @@ export async function updateInternActiveStatus(internId: string, newStatus: 'act
     
 
     
+
