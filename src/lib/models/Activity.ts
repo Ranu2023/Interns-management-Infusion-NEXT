@@ -16,6 +16,7 @@ export interface IActivity extends Document {
   loginTime: Date;
   logoutTime?: Date;
   activities: IActivityDetail[];
+  date: Date;
 }
 
 const ActivitySchema: Schema<IActivity> = new Schema({
@@ -23,6 +24,7 @@ const ActivitySchema: Schema<IActivity> = new Schema({
   loginTime: { type: Date, required: true },
   logoutTime: { type: Date },
   activities: [ActivityDetailSchema],
+  date: { type: Date, required: true, default: Date.now },
 });
 
 ActivitySchema.index({ internId: 1, loginTime: -1 });

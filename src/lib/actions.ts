@@ -166,7 +166,8 @@ export async function authenticate(prevState: any, formData: FormData) {
                 const newActivity = new Activity({
                     internId: intern._id,
                     loginTime: new Date(),
-                    activities: []
+                    activities: [],
+                    date: new Date()
                 });
                 await newActivity.save();
                 activityId = newActivity._id.toString();
@@ -950,8 +951,8 @@ export async function updateProfile(formData: FormData) {
 
         // Re-encrypt the session with the new name
         const updatedUser = { ...session.user, name: name };
-        const newSession = await encrypt({ user: updatedUser, activityId: session.activityId });
         const cookieStore = await cookies();
+        const newSession = await encrypt({ user: updatedUser, activityId: session.activityId });
         cookieStore.set('session', newSession, { httpOnly: true, maxAge: 60 * 60 * 24 });
 
 
