@@ -31,10 +31,11 @@ async function getActivityData(internId: string) {
     const intern = await Intern.findById(internId).lean();
     if (!intern) notFound();
 
-    const activities = await Activity.find({ internId }).sort({ loginTime: -1 }).lean();
+    // Fetch all sessions for the intern
+    const allActivities = await Activity.find({ internId }).sort({ loginTime: -1 }).lean();
     
     // Group activities by month
-    const groupedActivities = activities.reduce((acc, activity) => {
+    const groupedActivities = allActivities.reduce((acc, activity) => {
         const month = format(new Date(activity.loginTime), 'MMMM yyyy');
         if (!acc[month]) {
             acc[month] = [];
@@ -45,14 +46,18 @@ async function getActivityData(internId: string) {
 
     // Further group by day within each month
     for (const month in groupedActivities) {
-        groupedActivities[month] = groupedActivities[month].reduce((acc, activity) => {
-            const day = format(new Date(activity.loginTime), 'yyyy-MM-dd');
-            if(!acc[day]) {
-                acc[day] = [];
+        const activitiesForMonth = groupedActivities[month];
+        const groupedByDay = activitiesForMonth.reduce((acc, activity) => {
+            const dayKey = format(new Date(activity.date), 'yyyy-MM-dd');
+            if(!acc[dayKey]) {
+                acc[dayKey] = { sessions: [] };
             }
-            acc[day].push(activity);
+            acc[dayKey].sessions.push(activity);
             return acc;
-        }, {} as any)
+        }, {} as Record<string, { sessions: IActivity[]}>);
+        
+        // This assignment was incorrect, it needs to be assigned back to the month
+        groupedActivities[month] = groupedByDay as any;
     }
 
 
@@ -103,26 +108,26 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                             </AccordionTrigger>
                             <AccordionContent className="p-4 bg-muted/50 rounded-b-lg">
                                 <div className="space-y-4">
-                                     {Object.entries(days as Record<string, IActivity[]>).map(([day, sessions]) => (
+                                     {Object.entries(days as Record<string, {sessions: IActivity[]}>).map(([day, dayActivity]) => (
                                         <Card key={day} className="bg-background">
                                             <CardHeader>
                                                 <CardTitle className="text-base">{format(new Date(day), 'EEEE, MMMM do')}</CardTitle>
                                             </CardHeader>
                                             <CardContent className="space-y-4">
-                                                {sessions.map((session, index) => (
+                                                {dayActivity.sessions.map((session, index) => (
                                                      <div key={index} className="relative pl-6 border-l-2 border-dashed ml-3 py-2">
                                                         <div className="flex items-center gap-3 absolute -left-3.5 top-2">
                                                              <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
                                                                 <LogIn className="h-4 w-4 text-white" />
                                                             </div>
-                                                            <span className="text-sm font-medium">{format(new Date(session.loginTime), 'hh:mm:ss a')} - Logged In</span>
+                                                            <span className="text-sm font-medium">{format(new Date(session.loginTime), 'p')} - Logged In</span>
                                                         </div>
 
                                                         <div className="space-y-2 mt-10 ml-3">
                                                             {session.activities?.map((action, actionIndex) => (
                                                                 <div key={actionIndex} className="flex items-center gap-3">
                                                                     <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
-                                                                    <span className="text-sm font-medium">{format(new Date(action.timestamp), 'hh:mm:ss a')}</span>
+                                                                    <span className="text-sm font-medium">{format(new Date(action.timestamp), 'p')}</span>
                                                                     <span className="text-sm text-muted-foreground">{action.action}</span>
                                                                 </div>
                                                             ))}
@@ -133,7 +138,7 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                                 <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
                                                                     <LogOut className="h-4 w-4 text-white" />
                                                                 </div>
-                                                                <span className="text-sm font-medium">{format(new Date(session.logoutTime), 'hh:mm:ss a')} - Logged Out</span>
+                                                                <span className="text-sm font-medium">{format(new Date(session.logoutTime), 'p')} - Logged Out</span>
                                                             </div>
                                                         )}
                                                      </div>
