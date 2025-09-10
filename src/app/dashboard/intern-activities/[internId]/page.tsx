@@ -96,7 +96,7 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                 <CardTitle className="text-base">{format(new Date(dayActivity.date), 'EEEE, MMMM do')}</CardTitle>
                                             </CardHeader>
                                             <CardContent className="space-y-4">
-                                                {dayActivity.sessions.map((session, index) => (
+                                                {dayActivity.sessions && dayActivity.sessions.map((session, index) => (
                                                      <div key={index} className="relative pl-6 border-l-2 border-dashed ml-3 py-2">
                                                         <div className="flex items-center gap-3 absolute -left-3.5 top-2">
                                                              <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
