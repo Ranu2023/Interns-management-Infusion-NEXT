@@ -21,12 +21,42 @@ import MentorshipSession from './models/MentorshipSession';
 import DocumentModel, { DocumentType } from './models/Document';
 import ArchivedIntern from './models/ArchivedIntern';
 import ArchivedMentor from './models/ArchivedMentor';
+import Activity from './models/Activity';
 
 
+export async function logActivity(internId: string, action: string) {
+    try {
+        await dbConnect();
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        await Activity.findOneAndUpdate(
+            { internId, date: today },
+            { $push: { activities: { action, timestamp: new Date() } } },
+            { upsert: true }
+        );
+    } catch (error) {
+        console.error('Failed to log activity:', error);
+    }
+}
 
 
 export async function logout() {
-    // ✅ Correct async delete
+    const session = await getSession();
+    if (session?.user && session.user.role === 'intern') {
+        try {
+            await dbConnect();
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            await Activity.findOneAndUpdate(
+                { internId: session.user.id, date: today },
+                { $set: { logoutTime: new Date() } }
+            );
+        } catch (error) {
+            console.error('Failed to log logout time:', error);
+        }
+    }
     cookies().delete("session");
     redirect('/');
   }
@@ -121,21 +151,36 @@ export async function authenticate(prevState: any, formData: FormData) {
 
         if (user.role === 'intern') {
             const intern = await Intern.findById(user._id);
-            if (intern && !intern.firstLogin) {
-                intern.firstLogin = true;
-                intern.firstLoginAt = new Date();
-                await intern.save();
+            if (intern) {
+                if (!intern.firstLogin) {
+                    intern.firstLogin = true;
+                    intern.firstLoginAt = new Date();
+                    await intern.save();
 
-                const hrUsers = await User.find({ role: 'hr' }).lean();
-                const notifications = hrUsers.map(hr => ({
-                    userId: hr._id,
-                    message: `${intern.name} has logged in for the first time.`,
-                    href: `/dashboard/interns`
-                }));
-                if(notifications.length > 0) {
-                    await Notification.insertMany(notifications);
+                    const hrUsers = await User.find({ role: 'hr' }).lean();
+                    const notifications = hrUsers.map(hr => ({
+                        userId: hr._id,
+                        message: `${intern.name} has logged in for the first time.`,
+                        href: `/dashboard/interns`
+                    }));
+                    if(notifications.length > 0) {
+                        await Notification.insertMany(notifications);
+                    }
+                    revalidatePath('/dashboard/interns'); // For HR
                 }
-                 revalidatePath('/dashboard/interns'); // For HR
+
+                // Log login activity
+                const today = new Date();
+                today.setHours(0, 0, 0, 0);
+
+                await Activity.findOneAndUpdate(
+                    { internId: intern._id, date: today },
+                    { 
+                        $set: { loginTime: new Date() },
+                        $setOnInsert: { internId: intern._id, date: today }
+                    },
+                    { upsert: true }
+                );
             }
         }
 

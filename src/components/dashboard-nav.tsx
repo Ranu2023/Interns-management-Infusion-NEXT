@@ -26,6 +26,7 @@ import {
   Settings,
   MessageSquare,
   Archive,
+  History,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -53,6 +54,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/add-applicant', label: 'Add Applicants', icon: UserPlus },
     { href: '/dashboard/assign-mentor', label: 'Assign Mentor', icon: UserPlus },
     { href: '/dashboard/assign-documents', label: 'Assign Documents', icon: FileUp },
+    { href: '/dashboard/intern-activities', label: 'Intern Activities', icon: History },
     { href: '/dashboard/stipends', label: 'Stipends', icon: DollarSign },
     { href: '/dashboard/ai-insights', label: 'AI Insights', icon: Lightbulb },
     { href: '/dashboard/deleted-records', label: 'Deleted Records', icon: Archive },
