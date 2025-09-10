@@ -33,7 +33,7 @@ export async function logActivity(internId: string, action: string) {
         await Activity.findOneAndUpdate(
             { internId, date: today },
             { $push: { activities: { action, timestamp: new Date() } } },
-            { upsert: true }
+            { upsert: true, setDefaultsOnInsert: true }
         );
     } catch (error) {
         console.error('Failed to log activity:', error);
@@ -51,7 +51,8 @@ export async function logout() {
 
             await Activity.findOneAndUpdate(
                 { internId: session.user.id, date: today },
-                { $set: { logoutTime: new Date() } }
+                { $set: { logoutTime: new Date() } },
+                { upsert: true, setDefaultsOnInsert: true }
             );
         } catch (error) {
             console.error('Failed to log logout time:', error);
@@ -152,9 +153,22 @@ export async function authenticate(prevState: any, formData: FormData) {
         if (user.role === 'intern') {
             const intern = await Intern.findById(user._id);
             if (intern) {
+                 const today = new Date();
+                 today.setHours(0, 0, 0, 0);
+                 
                 if (!intern.firstLogin) {
                     intern.firstLogin = true;
                     intern.firstLoginAt = new Date();
+                    
+                    await Activity.findOneAndUpdate(
+                        { internId: intern._id, date: today },
+                        { 
+                            $set: { loginTime: new Date() },
+                            $setOnInsert: { internId: intern._id, date: today }
+                        },
+                        { upsert: true, setDefaultsOnInsert: true }
+                    );
+                    
                     await intern.save();
 
                     const hrUsers = await User.find({ role: 'hr' }).lean();
@@ -167,20 +181,16 @@ export async function authenticate(prevState: any, formData: FormData) {
                         await Notification.insertMany(notifications);
                     }
                     revalidatePath('/dashboard/interns'); // For HR
+                } else {
+                     await Activity.findOneAndUpdate(
+                        { internId: intern._id, date: today },
+                        { 
+                            $set: { loginTime: new Date() },
+                            $setOnInsert: { internId: intern._id, date: today }
+                        },
+                        { upsert: true, setDefaultsOnInsert: true }
+                    );
                 }
-
-                // Log login activity
-                const today = new Date();
-                today.setHours(0, 0, 0, 0);
-
-                await Activity.findOneAndUpdate(
-                    { internId: intern._id, date: today },
-                    { 
-                        $set: { loginTime: new Date() },
-                        $setOnInsert: { internId: intern._id, date: today }
-                    },
-                    { upsert: true }
-                );
             }
         }
 
@@ -238,6 +248,11 @@ export async function updateTaskCompletion(projectId: string, taskId: number, co
         project.recentActivity = `Task "${task?.title}" marked as ${completed ? 'complete' : 'incomplete'}.`
 
         await project.save();
+
+        const session = await getSession();
+        if(session?.user && session.user.role === 'intern') {
+            await logActivity(session.user.id, `Completed task: "${task?.title}" in project: ${project.title}`);
+        }
 
         revalidatePath(`/dashboard/my-projects/${projectId}`);
         revalidatePath('/dashboard/my-projects');
@@ -358,6 +373,8 @@ export async function submitDailyReport(formData: FormData) {
             completedTasks
         });
         await report.save();
+
+        await logActivity(intern._id.toString(), `Submitted daily report for project: ${project.title}`);
 
         revalidatePath('/dashboard/daily-report');
         revalidatePath('/dashboard/reports'); // For mentor
