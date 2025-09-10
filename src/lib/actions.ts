@@ -85,7 +85,8 @@ export async function logout() {
             console.error('Failed to log logout time:', error);
         }
     }
-    cookies().delete("session");
+    const cookieStore = await cookies();
+    cookieStore.delete("session");
     redirect('/');
 }
 
@@ -233,8 +234,9 @@ export async function authenticate(prevState: any, formData: FormData) {
         };
 
         const session = await encrypt({ user: sessionUser });
+        const cookieStore = await cookies();
 
-        cookies().set({
+        cookieStore.set({
             name: "session",
             value: session,
             httpOnly: true,
@@ -967,7 +969,8 @@ export async function updateProfile(formData: FormData) {
         // Re-encrypt the session with the new name
         const updatedUser = { ...session.user, name: name };
         const newSession = await encrypt({ user: updatedUser });
-        cookies().set('session', newSession, { httpOnly: true, maxAge: 60 * 60 * 24 });
+        const cookieStore = await cookies();
+        cookieStore.set('session', newSession, { httpOnly: true, maxAge: 60 * 60 * 24 });
 
 
         revalidatePath('/dashboard/profile');
@@ -1105,5 +1108,7 @@ export async function updateInternActiveStatus(internId: string, newStatus: 'act
     
 
 
+
+    
 
     
