@@ -30,23 +30,25 @@ export async function logActivity(internId: string, action: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Find the activity log for the current day, or create it if it doesn't exist
-        const activityLog = await Activity.findOne({ internId: new mongoose.Types.ObjectId(internId), date: today });
+        // Find the activity log for the current day and find the last session that has no logout time.
+        const activityLog = await Activity.findOne({
+            internId: new mongoose.Types.ObjectId(internId),
+            date: today,
+        });
 
         if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-            // Find the last session to add the activity to.
-            const lastSessionIndex = activityLog.sessions.length - 1;
-            const lastSession = activityLog.sessions[lastSessionIndex];
+            // Find the index of the last session that doesn't have a logout time
+            const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
             
-            // Check if it's an active session (no logout time)
-            if (!lastSession.logoutTime) {
-                 const updateQuery = {
-                    $push: { [`sessions.${lastSessionIndex}.activities`]: { action, timestamp: new Date() } }
+            if (activeSessionIndex > -1) {
+                const updateQuery = {
+                    $push: { [`sessions.${activeSessionIndex}.activities`]: { action, timestamp: new Date() } }
                 };
                 await Activity.updateOne({ _id: activityLog._id }, updateQuery);
             }
         }
-        // If no activity log or session, the login action will create it. We don't log if there's no active session.
+        // If no activity log or no active session, we don't log the action. 
+        // This assumes login must happen first to create a session.
     } catch (error) {
         console.error('Failed to log activity:', error);
     }
@@ -61,7 +63,11 @@ export async function logout() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            const activityLog = await Activity.findOne({ internId: session.user.id, date: today });
+            // Find the activity document for today
+            const activityLog = await Activity.findOne({ 
+                internId: new mongoose.Types.ObjectId(session.user.id), 
+                date: today 
+            });
 
             if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
                 // Find the index of the last session that doesn't have a logout time
@@ -1098,3 +1104,6 @@ export async function updateInternActiveStatus(internId: string, newStatus: 'act
 
     
 
+
+
+    
