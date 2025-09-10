@@ -36,19 +36,27 @@ export async function logActivity(internId: string, action: string) {
         });
 
         if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
+            // Find the last session that doesn't have a logout time
             const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
             
             if (activeSessionIndex > -1) {
+                // If an active session is found, push the activity into it
                 const updateQuery = {
                     $push: { [`sessions.${activeSessionIndex}.activities`]: { action, timestamp: new Date() } }
                 };
                 await Activity.updateOne({ _id: activityLog._id }, updateQuery);
             }
+            // If no active session is found (e.g., user logged out and is performing an action somehow), do nothing.
+            // This might happen in odd edge cases, but we only log to active sessions.
         }
+        // If there's no activityLog for today or no sessions, we can't log the action,
+        // as it should only happen within a session started by a login.
     } catch (error) {
         console.error('Failed to log activity:', error);
+        // Fail silently to not interrupt user flow
     }
 }
+
 
 
 export async function logout() {
@@ -59,15 +67,17 @@ export async function logout() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
+            // Find the activity log for today
             const activityLog = await Activity.findOne({ 
                 internId: new mongoose.Types.ObjectId(session.user.id), 
                 date: today 
             });
 
             if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-                const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
+                // Find the index of the last session that doesn't have a logoutTime
+                const activeSessionIndex = activityLog.sessions.length - 1;
                 
-                if (activeSessionIndex > -1) {
+                if (activityLog.sessions[activeSessionIndex] && !activityLog.sessions[activeSessionIndex].logoutTime) {
                     const updateField = `sessions.${activeSessionIndex}.logoutTime`;
                     await Activity.updateOne(
                         { _id: activityLog._id },
@@ -83,6 +93,7 @@ export async function logout() {
     cookieStore.delete("session");
     redirect('/');
 }
+
 
 
 // ✅ User Registration
@@ -178,6 +189,7 @@ export async function authenticate(prevState: any, formData: FormData) {
                  const today = new Date();
                  today.setHours(0, 0, 0, 0);
 
+                // Find or create the activity log for the day and add a new session
                 await Activity.findOneAndUpdate(
                     { internId: intern._id, date: today },
                     { 
