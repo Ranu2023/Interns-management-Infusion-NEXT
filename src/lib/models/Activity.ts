@@ -1,7 +1,7 @@
 
 import mongoose, { Schema, Document, models, Model } from 'mongoose';
 
-export interface IActivityDetail {
+export interface IActivityDetail extends Document {
   action: string;
   timestamp: Date;
 }
@@ -26,6 +26,8 @@ const ActivitySchema: Schema<IActivity> = new Schema({
   logoutTime: { type: Date },
   activities: [ActivityDetailSchema],
 });
+
+ActivitySchema.index({ internId: 1, date: 1 }, { unique: true });
 
 const Activity: Model<IActivity> = models.Activity || mongoose.model<IActivity>('Activity', ActivitySchema);
 

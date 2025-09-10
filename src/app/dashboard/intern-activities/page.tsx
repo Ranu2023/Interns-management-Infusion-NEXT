@@ -81,7 +81,7 @@ export default async function InternActivitiesPage() {
                                     <TableCell>{intern.email}</TableCell>
                                     <TableCell>{intern.status}</TableCell>
                                     <TableCell className="text-right">
-                                        <Button asChild variant="outline" size="sm" disabled>
+                                        <Button asChild variant="outline" size="sm">
                                             <Link href={`/dashboard/intern-activities/${intern._id}`}>
                                                 View Logs <ArrowRight className="ml-2" />
                                             </Link>
