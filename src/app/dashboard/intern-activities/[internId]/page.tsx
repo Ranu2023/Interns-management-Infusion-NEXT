@@ -107,8 +107,8 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                         </div>
 
                                                         <div className="space-y-2 mt-10 ml-3">
-                                                            {session.activities?.map(action => (
-                                                                <div key={action._id} className="flex items-center gap-3">
+                                                            {session.activities?.map((action, actionIndex) => (
+                                                                <div key={actionIndex} className="flex items-center gap-3">
                                                                     <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
                                                                     <span className="text-sm font-medium">{format(new Date(action.timestamp), 'hh:mm:ss a')}</span>
                                                                     <span className="text-sm text-muted-foreground">{action.action}</span>
