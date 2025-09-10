@@ -46,3 +46,5 @@ export default async function ProjectDetailsPage({ params }: { params: { id: str
 
   return <ProjectDetailsClient project={project} />;
 }
+
+    

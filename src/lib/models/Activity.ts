@@ -41,3 +41,5 @@ ActivitySchema.index({ internId: 1, date: 1 }, { unique: true });
 const Activity: Model<IActivity> = models.Activity || mongoose.model<IActivity>('Activity', ActivitySchema);
 
 export default Activity;
+
+    
