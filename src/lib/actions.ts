@@ -30,14 +30,12 @@ export async function logActivity(internId: string, action: string) {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        // Find the activity log for the current day and find the last session that has no logout time.
         const activityLog = await Activity.findOne({
             internId: new mongoose.Types.ObjectId(internId),
             date: today,
         });
 
         if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-            // Find the index of the last session that doesn't have a logout time
             const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
             
             if (activeSessionIndex > -1) {
@@ -47,8 +45,6 @@ export async function logActivity(internId: string, action: string) {
                 await Activity.updateOne({ _id: activityLog._id }, updateQuery);
             }
         }
-        // If no activity log or no active session, we don't log the action. 
-        // This assumes login must happen first to create a session.
     } catch (error) {
         console.error('Failed to log activity:', error);
     }
@@ -63,14 +59,12 @@ export async function logout() {
             const today = new Date();
             today.setHours(0, 0, 0, 0);
 
-            // Find the activity document for today
             const activityLog = await Activity.findOne({ 
                 internId: new mongoose.Types.ObjectId(session.user.id), 
                 date: today 
             });
 
             if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-                // Find the index of the last session that doesn't have a logout time
                 const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
                 
                 if (activeSessionIndex > -1) {
@@ -184,7 +178,6 @@ export async function authenticate(prevState: any, formData: FormData) {
                  const today = new Date();
                  today.setHours(0, 0, 0, 0);
 
-                // Log the login session
                 await Activity.findOneAndUpdate(
                     { internId: intern._id, date: today },
                     { 
@@ -1081,34 +1074,3 @@ export async function updateInternActiveStatus(internId: string, newStatus: 'act
         return { success: false, message: 'An internal server error occurred.' };
     }
 }
-    
-
-    
-
-
-
-    
-
-    
-
-
-
-    
-
-
-
-
-    
-
-
-
-
-    
-
-    
-
-
-
-    
-
-    

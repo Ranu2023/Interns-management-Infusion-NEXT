@@ -51,8 +51,8 @@ async function getActivityData(internId: string) {
 }
 
 
-export default async function InternActivityDetailPage({ params }: { params: Promise<{ internId: string }> }) {
-    const { internId } = await params;
+export default async function InternActivityDetailPage({ params }: { params: { internId: string } }) {
+    const { internId } = params;
     const { intern, groupedActivities } = await getActivityData(internId);
 
     return (
