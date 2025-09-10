@@ -26,31 +26,21 @@ import Activity from './models/Activity';
 
 export async function logActivity(internId: string, action: string) {
     try {
-        await dbConnect();
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
+        const session = await getSession();
+        const activityId = session?.activityId;
 
-        const activityLog = await Activity.findOne({
-            internId: new mongoose.Types.ObjectId(internId),
-            date: today,
-        });
-
-        if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-            // Find the last session that doesn't have a logout time
-            const activeSessionIndex = activityLog.sessions.findIndex(s => !s.logoutTime);
-            
-            if (activeSessionIndex > -1) {
-                // If an active session is found, push the activity into it
-                const updateQuery = {
-                    $push: { [`sessions.${activeSessionIndex}.activities`]: { action, timestamp: new Date() } }
-                };
-                await Activity.updateOne({ _id: activityLog._id }, updateQuery);
-            }
-            // If no active session is found (e.g., user logged out and is performing an action somehow), do nothing.
-            // This might happen in odd edge cases, but we only log to active sessions.
+        if (!activityId) {
+             // Can't log if there's no active session ID
+            return;
         }
-        // If there's no activityLog for today or no sessions, we can't log the action,
-        // as it should only happen within a session started by a login.
+
+        await dbConnect();
+        
+        await Activity.updateOne(
+            { _id: new mongoose.Types.ObjectId(activityId), internId: new mongoose.Types.ObjectId(internId) },
+            { $push: { activities: { action, timestamp: new Date() } } }
+        );
+
     } catch (error) {
         console.error('Failed to log activity:', error);
         // Fail silently to not interrupt user flow
@@ -58,38 +48,22 @@ export async function logActivity(internId: string, action: string) {
 }
 
 
-
 export async function logout() {
     const session = await getSession();
-    if (session?.user && session.user.role === 'intern') {
+    const cookieStore = await cookies();
+
+    if (session?.user?.role === 'intern' && session.activityId) {
         try {
             await dbConnect();
-            const today = new Date();
-            today.setHours(0, 0, 0, 0);
-
-            // Find the activity log for today
-            const activityLog = await Activity.findOne({ 
-                internId: new mongoose.Types.ObjectId(session.user.id), 
-                date: today 
-            });
-
-            if (activityLog && activityLog.sessions && activityLog.sessions.length > 0) {
-                // Find the index of the last session that doesn't have a logoutTime
-                const activeSessionIndex = activityLog.sessions.length - 1;
-                
-                if (activityLog.sessions[activeSessionIndex] && !activityLog.sessions[activeSessionIndex].logoutTime) {
-                    const updateField = `sessions.${activeSessionIndex}.logoutTime`;
-                    await Activity.updateOne(
-                        { _id: activityLog._id },
-                        { $set: { [updateField]: new Date() } }
-                    );
-                }
-            }
+            await Activity.updateOne(
+                { _id: new mongoose.Types.ObjectId(session.activityId) },
+                { $set: { logoutTime: new Date() } }
+            );
         } catch (error) {
             console.error('Failed to log logout time:', error);
         }
     }
-    const cookieStore = await cookies();
+    
     cookieStore.delete("session");
     redirect('/');
 }
@@ -183,22 +157,20 @@ export async function authenticate(prevState: any, formData: FormData) {
             return { success: false, message: 'Invalid credentials.' };
         }
 
+        let activityId = null;
+
         if (user.role === 'intern') {
             const intern = await Intern.findById(user._id);
             if (intern) {
-                 const today = new Date();
-                 today.setHours(0, 0, 0, 0);
+                // Create a new activity record for this session
+                const newActivity = new Activity({
+                    internId: intern._id,
+                    loginTime: new Date(),
+                    activities: []
+                });
+                await newActivity.save();
+                activityId = newActivity._id.toString();
 
-                // Find or create the activity log for the day and add a new session
-                await Activity.findOneAndUpdate(
-                    { internId: intern._id, date: today },
-                    { 
-                        $push: { sessions: { loginTime: new Date(), activities: [] } },
-                        $setOnInsert: { internId: intern._id, date: today }
-                    },
-                    { upsert: true, new: true, setDefaultsOnInsert: true }
-                );
-                 
                 if (!intern.firstLogin) {
                     intern.firstLogin = true;
                     intern.firstLoginAt = new Date();
@@ -237,8 +209,13 @@ export async function authenticate(prevState: any, formData: FormData) {
             avatar: user.avatar || '',
             ...roleDetails
         };
+        
+        const sessionPayload: { user: SessionUser; activityId?: string } = { user: sessionUser };
+        if (activityId) {
+            sessionPayload.activityId = activityId;
+        }
 
-        const session = await encrypt({ user: sessionUser });
+        const session = await encrypt(sessionPayload);
         const cookieStore = await cookies();
 
         cookieStore.set({
@@ -973,7 +950,7 @@ export async function updateProfile(formData: FormData) {
 
         // Re-encrypt the session with the new name
         const updatedUser = { ...session.user, name: name };
-        const newSession = await encrypt({ user: updatedUser });
+        const newSession = await encrypt({ user: updatedUser, activityId: session.activityId });
         const cookieStore = await cookies();
         cookieStore.set('session', newSession, { httpOnly: true, maxAge: 60 * 60 * 24 });
 

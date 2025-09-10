@@ -11,35 +11,22 @@ const ActivityDetailSchema: Schema<IActivityDetail> = new Schema({
   timestamp: { type: Date, required: true, default: Date.now },
 });
 
-
-export interface ISession {
-    loginTime: Date;
-    logoutTime?: Date;
-    activities: IActivityDetail[];
-}
-
-const SessionSchema: Schema<ISession> = new Schema({
-    loginTime: { type: Date, required: true },
-    logoutTime: { type: Date },
-    activities: [ActivityDetailSchema],
-});
-
 export interface IActivity extends Document {
   internId: mongoose.Schema.Types.ObjectId;
-  date: Date;
-  sessions: ISession[];
+  loginTime: Date;
+  logoutTime?: Date;
+  activities: IActivityDetail[];
 }
 
 const ActivitySchema: Schema<IActivity> = new Schema({
   internId: { type: Schema.Types.ObjectId, ref: 'Intern', required: true },
-  date: { type: Date, required: true },
-  sessions: [SessionSchema],
+  loginTime: { type: Date, required: true },
+  logoutTime: { type: Date },
+  activities: [ActivityDetailSchema],
 });
 
-ActivitySchema.index({ internId: 1, date: 1 }, { unique: true });
+ActivitySchema.index({ internId: 1, loginTime: -1 });
 
 const Activity: Model<IActivity> = models.Activity || mongoose.model<IActivity>('Activity', ActivitySchema);
 
 export default Activity;
-
-    

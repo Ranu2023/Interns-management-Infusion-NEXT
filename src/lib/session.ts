@@ -1,3 +1,4 @@
+
 'use server';
 
 import { SignJWT, jwtVerify } from 'jose';
@@ -10,7 +11,7 @@ export async function encrypt(payload: any) {
   return await new SignJWT(payload)
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
-    .setExpirationTime('1h')
+    .setExpirationTime('24h') // Extend session to 24 hours
     .sign(key);
 }
 
@@ -26,7 +27,7 @@ export async function decrypt(token: string): Promise<any> {
 }
 
 export async function getSession() {
-  const cookies = await getCookies(); // ✅ now correctly awaited
+  const cookies = await getCookies();
   const sessionCookie = cookies.get('session')?.value;
   if (!sessionCookie) return null;
   const session = await decrypt(sessionCookie);
