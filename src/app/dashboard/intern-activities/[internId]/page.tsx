@@ -50,11 +50,11 @@ async function getActivityData(internId: string) {
         const groupedByDay = activitiesForMonth.reduce((acc, activity) => {
             const dayKey = formatInTimeZone(new Date(activity.date), 'Asia/Kolkata', 'yyyy-MM-dd');
             if (!acc[dayKey]) {
-                acc[dayKey] = { sessions: [] };
+                acc[dayKey] = [];
             }
-            acc[dayKey].sessions.push(activity);
+            acc[dayKey].push(activity);
             return acc;
-        }, {} as Record<string, { sessions: IActivity[] }>);
+        }, {} as Record<string, IActivity[]>);
         
         groupedActivities[month] = groupedByDay as any;
     }
@@ -114,15 +114,15 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                             </AccordionTrigger>
                             <AccordionContent className="p-4 bg-muted/50 rounded-b-lg">
                                 <div className="space-y-4">
-                                     {Object.entries(days as Record<string, {sessions: IActivity[]}>).map(([day, dayActivity]) => (
+                                     {Object.entries(days as Record<string, IActivity[]>).map(([day, sessions]) => (
                                         <Card key={day} className="bg-background">
                                             <CardHeader>
                                                 <CardTitle className="text-base">{formatISTDate(day)}</CardTitle>
                                             </CardHeader>
                                             <CardContent className="space-y-4">
-                                                {dayActivity.sessions.map((session, index) => (
-                                                     <div key={index} className="relative pl-6 border-l-2 border-dashed ml-3 py-2">
-                                                        <div className="flex items-center gap-3 absolute -left-3.5 top-2">
+                                                {sessions.map((session, index) => (
+                                                     <div key={session._id} className="relative pl-6 border-l-2 border-dashed ml-3 py-4">
+                                                        <div className="flex items-center gap-3 absolute -left-3.5 top-3">
                                                              <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
                                                                 <LogIn className="h-4 w-4 text-white" />
                                                             </div>
@@ -131,16 +131,16 @@ export default async function InternActivityDetailPage({ params }: { params: { i
 
                                                         <div className="space-y-2 mt-10 ml-3">
                                                             {session.activities?.map((action, actionIndex) => (
-                                                                <div key={actionIndex} className="flex items-center gap-3">
-                                                                    <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
-                                                                    <span className="text-sm font-medium">{formatIST(action.timestamp)}</span>
+                                                                <div key={actionIndex} className="flex items-start gap-3">
+                                                                    <div className="z-10 h-2 w-2 rounded-full bg-primary mt-1.5 ml-1.5" />
+                                                                    <span className="text-sm font-medium tabular-nums w-20 shrink-0">{formatIST(action.timestamp)}</span>
                                                                     <span className="text-sm text-muted-foreground">{action.action}</span>
                                                                 </div>
                                                             ))}
                                                         </div>
 
                                                         {session.logoutTime && (
-                                                            <div className="flex items-center gap-3 absolute -left-3.5 bottom-2 mt-4">
+                                                            <div className="flex items-center gap-3 absolute -left-3.5 bottom-3 mt-4">
                                                                 <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
                                                                     <LogOut className="h-4 w-4 text-white" />
                                                                 </div>
