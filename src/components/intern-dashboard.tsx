@@ -104,7 +104,7 @@ export async function InternDashboard({ user }: { user: User }) {
                 </CardHeader>
                 <CardContent>
                     <p className="text-center text-lg text-muted-foreground">
-                        Your account is currently inactive. Please pay to activate your dashboard. Contact HR for more details.
+                        Your account is currently inactive. Please send "confirm mail" to activate your dashboard. Contact HR for more details.
                     </p>
                 </CardContent>
             </Card>
