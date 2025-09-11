@@ -37,7 +37,7 @@ async function getActivityData(internId: string) {
     
     // Group activities by month
     const groupedActivities = allActivities.reduce((acc, activity) => {
-        const month = formatInTimeZone(new Date(activity.loginTime), 'Asia/Kolkata', 'MMMM yyyy');
+        const month = formatInTimeZone(new Date(activity.date), 'Asia/Kolkata', 'MMMM yyyy');
         if (!acc[month]) {
             acc[month] = [];
         }
@@ -110,12 +110,12 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                 <Accordion type="single" collapsible className="w-full" defaultValue={Object.keys(groupedActivities)[0]}>
                     {Object.entries(groupedActivities).map(([month, days]) => (
                         <AccordionItem key={month} value={month}>
-                            <AccordionTrigger className="text-lg font-medium bg-muted px-4 rounded-t-lg">
-                                <div className="flex items-center justify-between w-full">
-                                    <span>{month}</span>
-                                    <ActivityActionButtons internId={internId} month={month} />
-                                </div>
-                            </AccordionTrigger>
+                             <div className="flex items-center justify-between bg-muted px-4 rounded-t-lg">
+                                <AccordionTrigger className="text-lg font-medium flex-1">
+                                    {month}
+                                </AccordionTrigger>
+                                <ActivityActionButtons internId={internId} month={month} />
+                            </div>
                             <AccordionContent className="p-4 bg-muted/50 rounded-b-lg">
                                 <div className="space-y-4">
                                      {Object.entries(days as Record<string, IActivity[]>).map(([day, sessions]) => (
