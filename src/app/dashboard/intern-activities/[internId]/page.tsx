@@ -17,6 +17,7 @@ import {
 } from "@/components/ui/accordion";
 import { formatInTimeZone } from 'date-fns-tz';
 import { LogIn, LogOut, FileClock } from "lucide-react";
+import { ActivityActionButtons } from "./ActivityActionButtons";
 
 
 async function getActivityData(internId: string) {
@@ -110,14 +111,18 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                     {Object.entries(groupedActivities).map(([month, days]) => (
                         <AccordionItem key={month} value={month}>
                             <AccordionTrigger className="text-lg font-medium bg-muted px-4 rounded-t-lg">
-                                {month}
+                                <div className="flex items-center justify-between w-full">
+                                    <span>{month}</span>
+                                    <ActivityActionButtons internId={internId} month={month} />
+                                </div>
                             </AccordionTrigger>
                             <AccordionContent className="p-4 bg-muted/50 rounded-b-lg">
                                 <div className="space-y-4">
                                      {Object.entries(days as Record<string, IActivity[]>).map(([day, sessions]) => (
                                         <Card key={day} className="bg-background">
-                                            <CardHeader>
+                                            <CardHeader className="flex flex-row items-center justify-between">
                                                 <CardTitle className="text-base">{formatISTDate(day)}</CardTitle>
+                                                <ActivityActionButtons internId={internId} date={day} />
                                             </CardHeader>
                                             <CardContent className="space-y-4">
                                                 {sessions.map((session, index) => (

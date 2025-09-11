@@ -1066,4 +1066,40 @@ export async function updateInternActiveStatus(internId: string, newStatus: 'act
     }
 }
 
+export async function deleteInternActivities({ internId, month, date }: { internId: string; month?: string; date?: string; }) {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'hr') {
+      return { success: false, message: 'Unauthorized: Only HR can delete activities.' };
+    }
+  
+    try {
+      await dbConnect();
+      const query: any = { internId: new mongoose.Types.ObjectId(internId) };
+  
+      if (date) {
+        // Delete by specific date
+        const targetDate = new Date(date);
+        const nextDay = new Date(date);
+        nextDay.setDate(targetDate.getDate() + 1);
+        query.date = { $gte: targetDate, $lt: nextDay };
+      } else if (month) {
+        // Delete by month
+        const [monthName, year] = month.split(' ');
+        const monthIndex = new Date(Date.parse(monthName +" 1, 2012")).getMonth();
+        const startDate = new Date(Number(year), monthIndex, 1);
+        const endDate = new Date(Number(year), monthIndex + 1, 1);
+        query.date = { $gte: startDate, $lt: endDate };
+      } else {
+        return { success: false, message: 'A month or date must be provided to delete.' };
+      }
+  
+      await Activity.deleteMany(query);
+  
+      revalidatePath(`/dashboard/intern-activities/${internId}`);
+      return { success: true, message: 'Activities deleted successfully.' };
+    } catch (error: any) {
+      console.error('Failed to delete activities:', error);
+      return { success: false, message: `An internal error occurred: ${error.message}` };
+    }
+  }
     
