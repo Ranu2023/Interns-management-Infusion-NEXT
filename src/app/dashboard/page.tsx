@@ -13,6 +13,7 @@ import dbConnect from '@/lib/db';
 import Intern from '@/lib/models/Intern';
 import Mentor from '@/lib/models/Mentor';
 import Project from '@/lib/models/Project';
+import { ProjectStatusChart } from '@/components/project-status-chart';
 
 async function getHRDashboardData() {
     await dbConnect();
@@ -21,12 +22,69 @@ async function getHRDashboardData() {
     const projectCount = await Project.countDocuments({ status: 'In Progress' });
     const ppoCount = await Intern.countDocuments({ ppoStatus: 'Recommended' });
 
-    return { internCount, mentorCount, projectCount, ppoCount };
+    // PPO Trends Data Aggregation
+    const sixMonthsAgo = new Date();
+    sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
+
+    const ppoData = await Intern.aggregate([
+        { 
+            $match: { 
+                finalDecisionDate: { $gte: sixMonthsAgo },
+                ppoStatus: { $in: ['Recommended', 'Not Recommended'] }
+            } 
+        },
+        {
+            $group: {
+                _id: { 
+                    year: { $year: "$finalDecisionDate" }, 
+                    month: { $month: "$finalDecisionDate" },
+                    status: "$ppoStatus"
+                },
+                count: { $sum: 1 }
+            }
+        },
+        {
+            $group: {
+                _id: { year: "$_id.year", month: "$_id.month" },
+                statuses: { $push: { status: "$_id.status", count: "$count" } }
+            }
+        },
+        { $sort: { "_id.year": 1, "_id.month": 1 } }
+    ]);
+    
+    const monthNames = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    const ppoChartData = ppoData.map(d => {
+        const recommended = d.statuses.find((s:any) => s.status === 'Recommended')?.count || 0;
+        const notRecommended = d.statuses.find((s:any) => s.status === 'Not Recommended')?.count || 0;
+        return {
+            name: `${monthNames[d._id.month - 1]} ${d._id.year.toString().slice(-2)}`,
+            'PPOs Offered': recommended,
+            'PPOs Rejected': notRecommended,
+        }
+    });
+
+    // Project Status Data Aggregation
+    const projectStatusData = await Project.aggregate([
+      {
+        $group: {
+          _id: "$status",
+          count: { $sum: 1 },
+        },
+      },
+    ]);
+
+    const projectChartData = projectStatusData.map(item => ({
+        status: item._id,
+        value: item.count,
+    }));
+
+
+    return { internCount, mentorCount, projectCount, ppoCount, ppoChartData, projectChartData };
 }
 
 
 async function HRDashboard() {
-  const { internCount, mentorCount, projectCount, ppoCount } = await getHRDashboardData();
+  const { internCount, mentorCount, projectCount, ppoCount, ppoChartData, projectChartData } = await getHRDashboardData();
 
   return (
     <div className="grid gap-4 md:gap-8">
@@ -72,8 +130,9 @@ async function HRDashboard() {
           </CardContent>
         </Card>
       </div>
-      <div>
-        <OverviewChart />
+      <div className="grid gap-6 md:grid-cols-2">
+        <OverviewChart data={ppoChartData} />
+        <ProjectStatusChart data={projectChartData} />
       </div>
     </div>
   );

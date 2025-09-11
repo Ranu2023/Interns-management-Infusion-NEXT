@@ -1,18 +1,17 @@
+
 'use client';
 
 import { Bar, BarChart, CartesianGrid, XAxis, YAxis, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from './ui/card';
 
-const data = [
-  { name: 'Jan', ppo: 4, rejected: 1 },
-  { name: 'Feb', ppo: 3, rejected: 2 },
-  { name: 'Mar', ppo: 6, rejected: 1 },
-  { name: 'Apr', ppo: 5, rejected: 3 },
-  { name: 'May', ppo: 8, rejected: 2 },
-  { name: 'Jun', ppo: 7, rejected: 4 },
-];
+type ChartData = {
+    name: string;
+    'PPOs Offered': number;
+    'PPOs Rejected': number;
+}
 
-export function OverviewChart() {
+export function OverviewChart({ data }: { data: ChartData[] }) {
+  const hasData = data && data.length > 0;
   return (
     <Card>
       <CardHeader>
@@ -20,22 +19,28 @@ export function OverviewChart() {
         <CardDescription>PPO offers vs rejections in the last 6 months.</CardDescription>
       </CardHeader>
       <CardContent>
-        <ResponsiveContainer width="100%" height={300}>
-          <BarChart data={data}>
-            <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey="name" />
-            <YAxis />
-            <Tooltip
-              contentStyle={{
-                backgroundColor: 'hsl(var(--background))',
-                borderColor: 'hsl(var(--border))',
-              }}
-            />
-            <Legend />
-            <Bar dataKey="ppo" fill="hsl(var(--primary))" name="PPOs Offered" />
-            <Bar dataKey="rejected" fill="hsl(var(--accent))" name="PPOs Rejected" />
-          </BarChart>
-        </ResponsiveContainer>
+        {hasData ? (
+            <ResponsiveContainer width="100%" height={300}>
+                <BarChart data={data}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip
+                    contentStyle={{
+                        backgroundColor: 'hsl(var(--background))',
+                        borderColor: 'hsl(var(--border))',
+                    }}
+                    />
+                    <Legend />
+                    <Bar dataKey="PPOs Offered" fill="hsl(var(--primary))" name="PPOs Offered" />
+                    <Bar dataKey="PPOs Rejected" fill="hsl(var(--destructive))" name="PPOs Rejected" />
+                </BarChart>
+            </ResponsiveContainer>
+        ) : (
+            <div className="flex items-center justify-center h-[300px] text-muted-foreground">
+                <p>No PPO decision data available for the last 6 months.</p>
+            </div>
+        )}
       </CardContent>
     </Card>
   );
