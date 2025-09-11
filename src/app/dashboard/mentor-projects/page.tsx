@@ -17,7 +17,8 @@ import Project from '@/lib/models/Project';
 import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
-import { format, differenceInDays, isPast } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
 import { CalendarClock, AlertTriangle } from 'lucide-react';
 
@@ -82,7 +83,7 @@ export default async function MentorProjectsPage() {
                                              {isNearingDeadline || isOverdue ? <AlertTriangle className="h-4 w-4"/> : <CalendarClock className="h-4 w-4"/>}
                                              <span>{isOverdue ? `Overdue by ${Math.abs(daysLeft)} days` : `${daysLeft} days left`}</span>
                                         </div>
-                                        <span>{format(new Date(project.completionDate), "MMM dd, yyyy")}</span>
+                                        <span>{formatInTimeZone(new Date(project.completionDate), "Asia/Kolkata", "MMM dd, yyyy")}</span>
                                     </div>
                                 )}
                             </CardContent>

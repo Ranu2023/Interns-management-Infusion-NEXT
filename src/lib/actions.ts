@@ -22,7 +22,6 @@ import DocumentModel, { DocumentType } from './models/Document';
 import ArchivedIntern from './models/ArchivedIntern';
 import ArchivedMentor from './models/ArchivedMentor';
 import Activity from './models/Activity';
-import { DateTime } from 'luxon';
 
 
 export async function logActivity(internId: string, action: string) {
@@ -39,7 +38,7 @@ export async function logActivity(internId: string, action: string) {
         
         await Activity.updateOne(
             { _id: new mongoose.Types.ObjectId(activityId), internId: new mongoose.Types.ObjectId(internId) },
-            { $push: { activities: { action, timestamp: DateTime.now().setZone("Asia/Kolkata").toJSDate() } } }
+            { $push: { activities: { action, timestamp: new Date() } } }
         );
 
     } catch (error) {
@@ -58,7 +57,7 @@ export async function logout() {
             await dbConnect();
             await Activity.updateOne(
                 { _id: new mongoose.Types.ObjectId(session.activityId) },
-                { $set: { logoutTime: DateTime.now().setZone("Asia/Kolkata").toJSDate() } }
+                { $set: { logoutTime: new Date() } }
             );
         } catch (error) {
             console.error('Failed to log logout time:', error);
@@ -159,7 +158,7 @@ export async function authenticate(prevState: any, formData: FormData) {
         }
 
         let activityId = null;
-        const now = DateTime.now().setZone("Asia/Kolkata").toJSDate();
+        const now = new Date();
 
         if (user.role === 'intern') {
             const intern = await Intern.findById(user._id);

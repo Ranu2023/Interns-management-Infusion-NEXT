@@ -16,6 +16,7 @@ import Intern from "@/lib/models/Intern";
 import { type IIntern } from "@/lib/models/Intern";
 import { updatePPODecision } from "@/lib/actions";
 import { getSession } from '@/lib/session';
+import { formatInTimeZone } from "date-fns-tz";
 
 type TimelineStep = {
     id: number;
@@ -81,6 +82,10 @@ export default async function PPOStatusPage() {
 
     const acceptAction = updatePPODecision.bind(null, intern._id.toString(), 'Accepted');
     const rejectAction = updatePPODecision.bind(null, intern._id.toString(), 'Rejected');
+
+    const formatISTDate = (date: Date) => {
+        return formatInTimeZone(date, 'Asia/Kolkata', 'PP');
+    }
 
     // Dynamically generate the timeline
     const timelineSteps: TimelineStep[] = [
@@ -153,7 +158,7 @@ export default async function PPOStatusPage() {
                                                     <p className="font-medium">{item.title}</p>
                                                     {item.date && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            {new Date(item.date).toLocaleDateString()}
+                                                            {formatISTDate(item.date)}
                                                         </p>
                                                     )}
                                                 </div>

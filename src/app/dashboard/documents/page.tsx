@@ -24,6 +24,7 @@ import { getSession } from "@/lib/session";
 import { User } from "@/context/AuthContext";
 import { redirect } from "next/navigation";
 import { type DocumentType } from "@/lib/models/Document";
+import { formatInTimeZone } from "date-fns-tz";
 
 
 async function getMyDocuments() {
@@ -57,6 +58,10 @@ export default async function DocumentsPage() {
         }
     }
 
+    const formatIST = (date: Date | string) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+    }
+
     return (
         <Card>
             <CardHeader>
@@ -84,7 +89,7 @@ export default async function DocumentsPage() {
                                         </div>
                                     </TableCell>
                                     <TableCell>{doc.type}</TableCell>
-                                    <TableCell>{new Date(doc.date).toLocaleDateString()}</TableCell>
+                                    <TableCell>{formatIST(doc.date)}</TableCell>
                                     <TableCell className="text-right">
                                         <Button variant="outline" size="sm" asChild>
                                             <a href={doc.href} target="_blank" rel="noopener noreferrer">

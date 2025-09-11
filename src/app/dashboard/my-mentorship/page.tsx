@@ -29,6 +29,7 @@ import Intern from "@/lib/models/Intern";
 import Mentor, { type IMentor } from "@/lib/models/Mentor";
 import mongoose from "mongoose";
 import Link from "next/link";
+import { formatInTimeZone } from 'date-fns-tz';
 
 
 type PopulatedRequest = {
@@ -80,6 +81,10 @@ export default async function MyMentorshipPage() {
   }
 
   const mentorships = await getMyMentorships(internProfile._id.toString());
+  
+  const formatIST = (date: Date | string) => {
+    return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+  }
 
   return (
     <Card>
@@ -108,6 +113,7 @@ export default async function MyMentorshipPage() {
                 <TableHead>Mentor</TableHead>
                 <TableHead>Expertise</TableHead>
                 <TableHead>Status</TableHead>
+                <TableHead>Requested On</TableHead>
                 <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -161,6 +167,7 @@ export default async function MyMentorshipPage() {
                       {req.status}
                     </Badge>
                   </TableCell>
+                  <TableCell>{formatIST(req.createdAt)}</TableCell>
                   <TableCell className="text-right">
                     {req.status === "approved" && req.sessionId ? (
                       <Button asChild>

@@ -23,6 +23,7 @@ import ArchivedIntern from "@/lib/models/ArchivedIntern";
 import ArchivedMentor from "@/lib/models/ArchivedMentor";
 import { getSession } from "@/lib/session";
 import { redirect } from "next/navigation";
+import { formatInTimeZone } from "date-fns-tz";
 
 
 async function getArchivedData() {
@@ -43,6 +44,10 @@ async function getArchivedData() {
 
 export default async function DeletedRecordsPage() {
     const { interns, mentors } = await getArchivedData();
+
+    const formatIST = (date: Date | string) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PPp');
+    }
 
     return (
         <Tabs defaultValue="interns">
@@ -85,7 +90,7 @@ export default async function DeletedRecordsPage() {
                                         <TableCell>{intern.name}</TableCell>
                                         <TableCell>{intern.email}</TableCell>
                                         <TableCell>{intern.project || 'N/A'}</TableCell>
-                                        <TableCell>{new Date(intern.deletedAt).toLocaleString()}</TableCell>
+                                        <TableCell>{formatIST(intern.deletedAt)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>
@@ -123,7 +128,7 @@ export default async function DeletedRecordsPage() {
                                         <TableCell>{mentor.name}</TableCell>
                                         <TableCell>{mentor.email}</TableCell>
                                         <TableCell>{mentor.expertise}</TableCell>
-                                        <TableCell>{new Date(mentor.deletedAt).toLocaleString()}</TableCell>
+                                        <TableCell>{formatIST(mentor.deletedAt)}</TableCell>
                                     </TableRow>
                                 ))}
                             </TableBody>

@@ -38,6 +38,7 @@ import { archiveUser, getInternsForHR, updateInternActiveStatus } from '@/lib/ac
 import { useToast } from '@/hooks/use-toast';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
+import { formatInTimeZone } from 'date-fns-tz';
 
 export default function InternsPage() {
   const { user } = useAuth();
@@ -73,6 +74,10 @@ export default function InternsPage() {
              toast({ variant: "destructive", title: "Error", description: result.message });
         }
     });
+  }
+
+  const formatIST = (date: Date | string) => {
+    return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PPp');
   }
 
 
@@ -132,7 +137,7 @@ export default function InternsPage() {
                     <TableCell>{intern.project}</TableCell>
                      <TableCell>
                       {intern.firstLoginAt 
-                        ? new Date(intern.firstLoginAt).toLocaleString()
+                        ? formatIST(intern.firstLoginAt)
                         : 'N/A'
                       }
                     </TableCell>
@@ -204,5 +209,3 @@ export default function InternsPage() {
     </Card>
   );
 }
-
-    

@@ -15,7 +15,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import { format } from 'date-fns-tz';
+import { formatInTimeZone } from 'date-fns-tz';
 import { LogIn, LogOut, FileClock } from "lucide-react";
 
 
@@ -36,7 +36,7 @@ async function getActivityData(internId: string) {
     
     // Group activities by month
     const groupedActivities = allActivities.reduce((acc, activity) => {
-        const month = format(new Date(activity.loginTime), 'MMMM yyyy', { timeZone: 'Asia/Kolkata' });
+        const month = formatInTimeZone(new Date(activity.loginTime), 'Asia/Kolkata', 'MMMM yyyy');
         if (!acc[month]) {
             acc[month] = [];
         }
@@ -48,7 +48,7 @@ async function getActivityData(internId: string) {
      for (const month in groupedActivities) {
         const activitiesForMonth = groupedActivities[month];
         const groupedByDay = activitiesForMonth.reduce((acc, activity) => {
-            const dayKey = format(new Date(activity.date), 'yyyy-MM-dd', { timeZone: 'Asia/Kolkata' });
+            const dayKey = formatInTimeZone(new Date(activity.date), 'Asia/Kolkata', 'yyyy-MM-dd');
             if (!acc[dayKey]) {
                 acc[dayKey] = { sessions: [] };
             }
@@ -70,6 +70,13 @@ async function getActivityData(internId: string) {
 export default async function InternActivityDetailPage({ params }: { params: { internId: string } }) {
     const { internId } = params;
     const { intern, groupedActivities } = await getActivityData(internId);
+
+    const formatIST = (date: string | Date) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'p');
+    }
+    const formatISTDate = (date: string | Date) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'EEEE, MMMM do');
+    }
 
     return (
         <div className="space-y-6">
@@ -110,7 +117,7 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                      {Object.entries(days as Record<string, {sessions: IActivity[]}>).map(([day, dayActivity]) => (
                                         <Card key={day} className="bg-background">
                                             <CardHeader>
-                                                <CardTitle className="text-base">{format(new Date(day), 'EEEE, MMMM do', { timeZone: 'Asia/Kolkata' })}</CardTitle>
+                                                <CardTitle className="text-base">{formatISTDate(day)}</CardTitle>
                                             </CardHeader>
                                             <CardContent className="space-y-4">
                                                 {dayActivity.sessions.map((session, index) => (
@@ -119,14 +126,14 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                              <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-green-500">
                                                                 <LogIn className="h-4 w-4 text-white" />
                                                             </div>
-                                                            <span className="text-sm font-medium">{format(new Date(session.loginTime), 'p', { timeZone: 'Asia/Kolkata' })} - Logged In</span>
+                                                            <span className="text-sm font-medium">{formatIST(session.loginTime)} - Logged In</span>
                                                         </div>
 
                                                         <div className="space-y-2 mt-10 ml-3">
                                                             {session.activities?.map((action, actionIndex) => (
                                                                 <div key={actionIndex} className="flex items-center gap-3">
                                                                     <div className="z-10 h-2 w-2 rounded-full bg-primary ml-1.5" />
-                                                                    <span className="text-sm font-medium">{format(new Date(action.timestamp), 'p', { timeZone: 'Asia/Kolkata' })}</span>
+                                                                    <span className="text-sm font-medium">{formatIST(action.timestamp)}</span>
                                                                     <span className="text-sm text-muted-foreground">{action.action}</span>
                                                                 </div>
                                                             ))}
@@ -137,7 +144,7 @@ export default async function InternActivityDetailPage({ params }: { params: { i
                                                                 <div className="z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-500">
                                                                     <LogOut className="h-4 w-4 text-white" />
                                                                 </div>
-                                                                <span className="text-sm font-medium">{format(new Date(session.logoutTime), 'p', { timeZone: 'Asia/Kolkata' })} - Logged Out</span>
+                                                                <span className="text-sm font-medium">{formatIST(session.logoutTime)} - Logged Out</span>
                                                             </div>
                                                         )}
                                                      </div>

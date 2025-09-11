@@ -28,6 +28,7 @@ import { type IIntern } from "@/lib/models/Intern";
 import Link from 'next/link';
 import mongoose from 'mongoose';
 import Mentor from "@/lib/models/Mentor";
+import { formatInTimeZone } from 'date-fns-tz';
 
 type PopulatedRequest = {
   _id: string;
@@ -62,6 +63,10 @@ export async function MentorMentorshipRequests() {
   if (!session?.user || session.user.role !== 'mentor') return null;
   
   const requests = await getMyMentorshipRequests(session.user.email);
+
+  const formatIST = (date: Date | string) => {
+    return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+  }
 
   return (
     <Card>
@@ -117,7 +122,7 @@ export async function MentorMentorshipRequests() {
                   </TableCell>
                   <TableCell>{req.intern?.interestField || 'N/A'}</TableCell>
                   <TableCell>
-                    {new Date(req.createdAt).toLocaleDateString()}
+                    {formatIST(req.createdAt)}
                   </TableCell>
                   <TableCell>
                     <Badge

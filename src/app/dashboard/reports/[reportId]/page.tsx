@@ -13,6 +13,7 @@ import { type User } from '@/context/AuthContext';
 import { Badge } from '@/components/ui/badge';
 import { CheckCircle, Clock, FileText, Send, ThumbsDown, ThumbsUp, Briefcase, Award, GraduationCap, Mic, UserCheck, XCircle, AlertTriangle, ListChecks } from "lucide-react";
 import { FeedbackForm } from './FeedbackForm';
+import { formatInTimeZone } from 'date-fns-tz';
 
 
 async function getReportData(reportId: string, user: User) {
@@ -60,6 +61,10 @@ export default async function ReportFeedbackPage({ params }: { params: { reportI
         const task = report.projectId.tasks.find((t: any) => t.id === taskIdNumber);
         return task ? task.title : `Task ID ${id} not found`;
     }
+    
+    const formatIST = (date: Date | string) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+    }
 
     return (
         <div className="grid md:grid-cols-3 gap-6">
@@ -68,7 +73,7 @@ export default async function ReportFeedbackPage({ params }: { params: { reportI
                     <CardHeader>
                         <CardTitle>Daily Report Details</CardTitle>
                         <CardDescription>
-                            From {report.internId.name} for project "{report.projectName}" on {new Date(report.date).toLocaleDateString()}
+                            From {report.internId.name} for project "{report.projectName}" on {formatIST(report.date)}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-6">

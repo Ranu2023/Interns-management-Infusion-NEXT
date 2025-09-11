@@ -16,7 +16,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CheckCircle2, ListTodo, GitFork, FileText, Download, CalendarClock, AlertTriangle } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import type { IProject } from '@/lib/models/Project';
-import { format, differenceInDays, isPast } from 'date-fns';
+import { differenceInDays } from 'date-fns';
+import { formatInTimeZone } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
 
 export function ProjectCard({ project }: { project: IProject & {tasksCompleted: number, tasksTotal: number} }) {
@@ -105,7 +106,7 @@ export function ProjectCard({ project }: { project: IProject & {tasksCompleted: 
                     </span>
                 </div>
                 <span>
-                    {format(new Date(project.completionDate), "PPP")}
+                    {formatInTimeZone(new Date(project.completionDate), "Asia/Kolkata", "PP")}
                     {daysLeft !== null && ` (${isOverdue ? Math.abs(daysLeft) + ' days ago' : daysLeft + ' days left'})`}
                 </span>
              </div>

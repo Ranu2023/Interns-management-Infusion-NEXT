@@ -14,6 +14,7 @@ import dbConnect from "@/lib/db";
 import { getSession } from "@/lib/session";
 import Intern from "@/lib/models/Intern";
 import DailyReport, { type IDailyReport } from "@/lib/models/DailyReport";
+import { formatInTimeZone } from "date-fns-tz";
 
 async function getMyFeedback(): Promise<IDailyReport[]> {
     const session = await getSession();
@@ -42,6 +43,10 @@ const getFeedbackIcon = (status: string) => {
 
 export default async function MyFeedbackPage() {
     const feedbackItems = await getMyFeedback();
+    
+    const formatIST = (date: Date | string) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+    }
 
     return (
         <div>
@@ -57,7 +62,7 @@ export default async function MyFeedbackPage() {
                                 <div className="flex justify-between items-start">
                                     <div>
                                         <CardTitle className="text-lg">Feedback on Report for {item.projectName}</CardTitle>
-                                        <CardDescription>Submitted on {new Date(item.date).toLocaleDateString()} | Reviewed on {new Date(item.mentorFeedback!.date).toLocaleDateString()}</CardDescription>
+                                        <CardDescription>Submitted on {formatIST(item.date)} | Reviewed on {formatIST(item.mentorFeedback!.date)}</CardDescription>
                                     </div>
                                     <div className="flex items-center gap-2">
                                         {getFeedbackIcon(item.mentorFeedback!.status)}

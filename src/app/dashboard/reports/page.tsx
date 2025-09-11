@@ -26,6 +26,7 @@ import DailyReport from '@/lib/models/DailyReport';
 import Intern from '@/lib/models/Intern';
 import { type User } from '@/context/AuthContext';
 import { redirect } from 'next/navigation';
+import { formatInTimeZone } from 'date-fns-tz';
 
 async function getMyInternsReports() {
     const session = await getSession();
@@ -47,6 +48,10 @@ async function getMyInternsReports() {
 
 export default async function ReportsPage() {
     const reports = await getMyInternsReports();
+
+    const formatIST = (date: Date | string) => {
+        return formatInTimeZone(new Date(date), 'Asia/Kolkata', 'PP');
+    }
     
     return (
         <Card>
@@ -79,7 +84,7 @@ export default async function ReportsPage() {
                                 <TableRow key={report._id}>
                                     <TableCell className="font-medium">{report.internId?.name || 'N/A'}</TableCell>
                                     <TableCell>{report.projectName}</TableCell>
-                                    <TableCell>{new Date(report.date).toLocaleDateString()}</TableCell>
+                                    <TableCell>{formatIST(report.date)}</TableCell>
                                     <TableCell>
                                         <Badge variant={report.mentorFeedback ? "secondary" : "outline"}>
                                             {report.mentorFeedback ? 'Feedback Sent' : 'Pending Review'}

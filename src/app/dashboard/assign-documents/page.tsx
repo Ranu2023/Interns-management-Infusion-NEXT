@@ -25,6 +25,7 @@ import Intern from '@/lib/models/Intern';
 import { getSession } from '@/lib/session';
 import { User } from '@/context/AuthContext';
 import { redirect } from 'next/navigation';
+import { formatInTimeZone } from 'date-fns-tz';
 
 type InternWithTimeline = {
     _id: string;
@@ -59,8 +60,8 @@ async function getInternsForDocumentAssignment(): Promise<InternWithTimeline[]> 
             _id: intern._id.toString(),
             name: intern.name,
             email: intern.email,
-            internshipStartDate: new Date(intern.internshipStartDate || '').toLocaleDateString(),
-            internshipEndDate: endDate.toLocaleDateString(),
+            internshipStartDate: formatInTimeZone(new Date(intern.internshipStartDate || ''), 'Asia/Kolkata', 'PP'),
+            internshipEndDate: formatInTimeZone(endDate, 'Asia/Kolkata', 'PP'),
             daysRemaining,
             status,
         };
