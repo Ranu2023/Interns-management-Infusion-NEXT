@@ -14,7 +14,7 @@ import { Progress } from '@/components/ui/progress';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
-import { ArrowLeft, GitBranch, Github, AlertCircle, Loader2 } from 'lucide-react';
+import { ArrowLeft, GitBranch, Github, AlertCircle, Loader2, GitCommit } from 'lucide-react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { updateTaskCompletion, submitGithubRepo } from '@/lib/actions';
@@ -69,6 +69,11 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
         startTransition(async () => {
             try {
                 await updateTaskCompletion(initialProject._id, taskId, true);
+                toast({
+                    title: "Task Completed!",
+                    description: "Don't forget to push your latest code changes to your GitHub repository.",
+                    icon: <GitCommit className="h-5 w-5 text-primary" />,
+                });
             } catch (error) {
                 console.error("Failed to update task", error);
                 setTasks(tasks); 
@@ -124,10 +129,11 @@ export function ProjectDetailsClient({ project: initialProject }: { project: Pro
                  <Alert>
                     <Github className="h-4 w-4" />
                     <AlertTitle>Repository Submitted</AlertTitle>
-                    <AlertDescription className="flex items-center justify-between">
+                    <AlertDescription className="flex flex-col gap-2">
                        <Link href={initialProject.githubRepo!} target="_blank" rel="noopener noreferrer" className="text-primary underline hover:text-primary/80">
                          {initialProject.githubRepo}
                        </Link>
+                       <p className="text-xs text-muted-foreground">Remember to push your code regularly. Your mentor will review your progress from this repo.</p>
                     </AlertDescription>
                 </Alert>
             ) : (

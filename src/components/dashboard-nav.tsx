@@ -27,6 +27,7 @@ import {
   MessageSquare,
   Archive,
   History,
+  GitCommit,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -66,6 +67,7 @@ const navItems: Record<Role, NavItem[]> = {
     { href: '/dashboard/mentor-projects', label: 'My Projects', icon: FolderKanban },
     { href: '/dashboard/assign-project', label: 'Assign Project', icon: ClipboardPlus },
     { href: '/dashboard/reports', label: 'Reports', icon: FileBarChart2 },
+    { href: '/dashboard/code-reports', label: 'Code Reports', icon: GitCommit },
     { href: '/dashboard/mentorship', label: 'Mentorship Requests', icon: Handshake },
     { href: '/dashboard/chat', label: 'Chat', icon: MessageSquare },
     { href: '/dashboard/profile', label: 'Profile', icon: Settings },
