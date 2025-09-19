@@ -62,6 +62,12 @@ async function getLatestCommit(repoUrl: string): Promise<{ message: string; date
         });
 
         if (!response.ok) {
+            // A 409 Conflict status from the GitHub API means the repo is empty.
+            // This is an expected state, so we handle it gracefully without logging an error.
+            if (response.status === 409) {
+                return null;
+            }
+            // For all other errors, we log them.
             console.error(`GitHub API error for ${repoUrl}: ${response.statusText}`);
             return null;
         }
