@@ -39,6 +39,50 @@ type InternWithRepo = {
     lastCommitDate?: string;
 }
 
+async function getLatestCommit(repoUrl: string): Promise<{ message: string; date: string } | null> {
+    if (!process.env.GITHUB_API_TOKEN) {
+        console.warn("GITHUB_API_TOKEN is not set. Cannot fetch commit data.");
+        return null;
+    }
+
+    const urlParts = repoUrl.replace('https://github.com/', '').split('/');
+    if (urlParts.length < 2) return null;
+    const owner = urlParts[0];
+    const repo = urlParts[1].replace('.git', '');
+
+    try {
+        const response = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits`, {
+            headers: {
+                'Authorization': `Bearer ${process.env.GITHUB_API_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json',
+                'X-GitHub-Api-Version': '2022-11-28'
+            },
+            // Revalidate every hour to avoid hitting API limits excessively
+            next: { revalidate: 3600 } 
+        });
+
+        if (!response.ok) {
+            console.error(`GitHub API error for ${repoUrl}: ${response.statusText}`);
+            return null;
+        }
+
+        const commits = await response.json();
+        if (commits.length === 0) {
+            return null;
+        }
+
+        const latestCommit = commits[0];
+        return {
+            message: latestCommit.commit.message.split('\n')[0], // Get first line of message
+            date: latestCommit.commit.author.date,
+        };
+    } catch (error) {
+        console.error(`Failed to fetch commits for ${repoUrl}:`, error);
+        return null;
+    }
+}
+
+
 async function getMyInternsWithRepos(user: User): Promise<InternWithRepo[]> {
     if (!user || user.role !== 'mentor') {
         redirect('/dashboard');
@@ -53,16 +97,12 @@ async function getMyInternsWithRepos(user: User): Promise<InternWithRepo[]> {
 
     const repoMap = new Map(projects.map(p => [p.title, p.githubRepo]));
     
-    // Placeholder commit data
-    const commitData = {
-        'AI Chatbot Integration': { message: 'feat: Add streaming response handler', date: '2024-07-28T10:30:00Z' },
-        'Data Analytics Dashboard': { message: 'fix: Correct date filtering logic', date: '2024-07-28T11:00:00Z' },
-    };
-
-
-    return interns.map(intern => {
+    const internsWithCommits = await Promise.all(interns.map(async (intern) => {
         const repo = repoMap.get(intern.project);
-        const commit = repo ? (commitData as any)[intern.project] : null;
+        let commit = null;
+        if (repo) {
+            commit = await getLatestCommit(repo);
+        }
 
         return {
             _id: intern._id.toString(),
@@ -72,8 +112,10 @@ async function getMyInternsWithRepos(user: User): Promise<InternWithRepo[]> {
             githubRepo: repo,
             lastCommitMessage: commit?.message,
             lastCommitDate: commit?.date,
-        }
-    });
+        };
+    }));
+
+    return internsWithCommits;
 }
 
 
