@@ -1102,4 +1102,43 @@ export async function deleteInternActivities({ internId, month, date }: { intern
       return { success: false, message: `An internal error occurred: ${error.message}` };
     }
   }
+
+export async function submitGithubRepo(projectId: string, formData: FormData) {
+    const session = await getSession();
+    if (!session?.user || session.user.role !== 'intern') {
+        return { success: false, message: 'Only interns can submit a repository.' };
+    }
+
+    const repoLink = formData.get('githubRepo') as string;
+    if (!repoLink || !repoLink.startsWith('https://github.com/')) {
+        return { success: false, message: 'Please provide a valid GitHub repository link.' };
+    }
+
+    try {
+        await dbConnect();
+        const project = await Project.findById(projectId);
+
+        if (!project) {
+            return { success: false, message: 'Project not found.' };
+        }
+
+        // Ensure the current intern is part of the project team
+        if (!project.team.includes(session.user.name)) {
+            return { success: false, message: 'You are not authorized to modify this project.' };
+        }
+        
+        project.githubRepo = repoLink;
+        await project.save();
+
+        await logActivity(session.user.id, `Submitted GitHub repository for project: ${project.title}`);
+
+        revalidatePath(`/dashboard/my-projects/${projectId}`);
+        revalidatePath('/dashboard/mentor-projects');
+
+        return { success: true, message: 'GitHub repository submitted successfully.' };
+    } catch (error: any) {
+        console.error('Failed to submit GitHub repo:', error);
+        return { success: false, message: `An internal server error occurred: ${error.message}` };
+    }
+}
     

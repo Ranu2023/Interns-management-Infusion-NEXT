@@ -19,6 +19,7 @@ export interface IProject extends Document {
   tasks: Task[];
   progress?: number;
   completionDate?: Date;
+  githubRepo?: string;
 }
 
 const ProjectSchema: Schema<IProject> = new Schema({
@@ -32,6 +33,7 @@ const ProjectSchema: Schema<IProject> = new Schema({
   tasks: { type: [TaskSchema], required: true },
   progress: { type: Number, default: 0 },
   completionDate: { type: Date },
+  githubRepo: { type: String },
 });
 
 const Project: Model<IProject> = models.Project || mongoose.model<IProject>('Project', ProjectSchema);

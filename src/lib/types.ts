@@ -49,6 +49,7 @@ export interface Project {
     tasks: Task[];
     progress?: number;
     completionDate?: Date;
+    githubRepo?: string;
 }
 
 export interface Application {

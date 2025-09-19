@@ -20,7 +20,8 @@ import { redirect } from "next/navigation";
 import { differenceInDays } from 'date-fns';
 import { formatInTimeZone } from 'date-fns-tz';
 import { cn } from '@/lib/utils';
-import { CalendarClock, AlertTriangle } from 'lucide-react';
+import { CalendarClock, AlertTriangle, Github, GitBranch } from 'lucide-react';
+import Link from "next/link";
 
 async function getMyAssignedProjects() {
     const session = await getSession();
@@ -75,6 +76,22 @@ export default async function MentorProjectsPage() {
                                     </div>
                                     <Progress value={project.progress} />
                                 </div>
+
+                                {project.githubRepo ? (
+                                     <div className="text-sm p-2 rounded-md flex items-center gap-2 bg-muted/50">
+                                        <Github className="h-4 w-4 shrink-0" />
+                                        <Link href={project.githubRepo} target="_blank" rel="noopener noreferrer" className="text-primary underline truncate hover:text-primary/80">
+                                            {project.githubRepo.replace('https://github.com/', '')}
+                                        </Link>
+                                    </div>
+                                ) : (
+                                    <div className="text-sm p-2 rounded-md flex items-center gap-2 bg-destructive/10 text-destructive font-medium">
+                                        <AlertTriangle className="h-4 w-4 shrink-0"/>
+                                        <span>No repo submitted yet.</span>
+                                    </div>
+                                )}
+
+
                                 {project.completionDate && (
                                     <div className={cn("text-sm p-2 rounded-md flex justify-between items-center", {
                                         "bg-destructive/10 text-destructive": isNearingDeadline || isOverdue
