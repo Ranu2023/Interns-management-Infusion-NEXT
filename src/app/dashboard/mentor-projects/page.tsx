@@ -92,7 +92,7 @@ export default async function MentorProjectsPage() {
                                 )}
 
 
-                                {project.completionDate && (
+                                {project.completionDate && project.progress !== 100 && (
                                     <div className={cn("text-sm p-2 rounded-md flex justify-between items-center", {
                                         "bg-destructive/10 text-destructive": isNearingDeadline || isOverdue
                                     })}>

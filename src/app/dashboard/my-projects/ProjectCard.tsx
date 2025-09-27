@@ -95,7 +95,7 @@ export function ProjectCard({ project }: { project: IProject & {tasksCompleted: 
         )}
       </CardContent>
        <CardFooter className="flex flex-col items-start gap-3 text-xs text-muted-foreground border-t pt-4 mt-auto">
-         {project.completionDate && (
+         {project.completionDate && project.progress !== 100 && (
              <div className={cn("w-full flex justify-between items-center text-sm p-2 rounded-md", {
                  "bg-destructive/10 text-destructive": isNearingDeadline || isOverdue
              })}>
